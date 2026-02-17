@@ -24,5 +24,8 @@ matplotlib>=3.8
 seaborn>=0.13
 scipy>=1.11
 
+# PDF parsing
+pypdf>=4.0
+
 # Frontend
 streamlit>=1.38
