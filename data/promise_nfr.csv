@@ -1,0 +1,251 @@
+id,text,label,label_binary
+1,"The system shall refresh the display every 60 seconds.",NF,NF
+2,"The application shall match the color of the schema set forth by Department of Homeland Security.",NF,NF
+3,"If projected requirement changes are so drastic, the developer should break the COTS component up into two parts.",NF,NF
+4,"The product shall be available during normal business hours.",NF,NF
+5,"The system shall provide a contractual, legal-based access point via the Internet.",F,F
+6,"The product shall be able to be downloaded via the Internet.",NF,NF
+7,"The system shall have all reports made in a format that allows for importing into Excel.",NF,NF
+8,"If projected, the system may be scaled up in the future.",NF,NF
+9,"The product shall comply with the Americans with Disabilities Act.",NF,NF
+10,"The system should provide multi-currency handling capability.",F,F
+11,"The system shall record changes based on timestamp.",F,F
+12,"The system shall automatically log out users after a period of inactivity.",NF,NF
+13,"The system shall allow users to search for products by name.",F,F
+14,"The response time for any request shall not exceed 2 seconds.",NF,NF
+15,"The system shall encrypt all sensitive data using AES-256.",NF,NF
+16,"Users shall be able to reset their password via email.",F,F
+17,"The system shall support at least 1000 concurrent users.",NF,NF
+18,"The application shall be compatible with Chrome, Firefox, and Safari.",NF,NF
+19,"The system shall generate monthly sales reports.",F,F
+20,"All user interfaces shall be available in English and Spanish.",NF,NF
+21,"The system shall validate email addresses before registration.",F,F
+22,"The database shall be backed up daily.",NF,NF
+23,"The system shall allow administrators to manage user roles.",F,F
+24,"The application shall load within 3 seconds on a standard connection.",NF,NF
+25,"The system shall send email notifications for order confirmations.",F,F
+26,"The system shall maintain 99.9% uptime.",NF,NF
+27,"Users shall be able to filter search results by category.",F,F
+28,"The system shall comply with GDPR regulations.",NF,NF
+29,"The system shall allow users to add items to a shopping cart.",F,F
+30,"The interface shall be intuitive and easy to navigate.",NF,NF
+31,"The system shall process credit card payments securely.",F,F
+32,"The application shall work offline with limited functionality.",NF,NF
+33,"The system shall display product images in high resolution.",F,F
+34,"Response time shall be under 1 second for search queries.",NF,NF
+35,"The system shall track user activity for analytics.",F,F
+36,"The system shall be accessible to users with visual impairments.",NF,NF
+37,"Users shall be able to create wishlists.",F,F
+38,"The system shall handle peak loads during sales events.",NF,NF
+39,"The system shall allow users to rate and review products.",F,F
+40,"All communications shall be encrypted using TLS 1.3.",NF,NF
+41,"The system shall calculate shipping costs automatically.",F,F
+42,"The application shall be maintainable with documented code.",NF,NF
+43,"The system shall integrate with third-party payment gateways.",F,F
+44,"The system shall recover from failures within 5 minutes.",NF,NF
+45,"Users shall be able to view their order history.",F,F
+46,"The system shall log all security-related events.",NF,NF
+47,"The system shall allow bulk product uploads via CSV.",F,F
+48,"The application shall support mobile devices.",NF,NF
+49,"The system shall send SMS notifications for delivery updates.",F,F
+50,"The system shall prevent SQL injection attacks.",NF,NF
+51,"Users shall be able to compare up to 4 products.",F,F
+52,"The system shall be scalable to handle growth.",NF,NF
+53,"The system shall generate invoices automatically.",F,F
+54,"The interface shall follow WCAG 2.1 guidelines.",NF,NF
+55,"The system shall allow users to save multiple addresses.",F,F
+56,"Database queries shall be optimized for performance.",NF,NF
+57,"The system shall provide real-time inventory updates.",F,F
+58,"The system shall be portable across different operating systems.",NF,NF
+59,"Users shall be able to subscribe to product alerts.",F,F
+60,"The system shall validate all input data.",NF,NF
+61,"The system shall display personalized product recommendations.",F,F
+62,"The application shall be usable without training.",NF,NF
+63,"The system shall process returns and refunds.",F,F
+64,"The system shall maintain data integrity during transactions.",NF,NF
+65,"The system shall allow users to export their data.",F,F
+66,"Error messages shall be clear and helpful.",NF,NF
+67,"The system shall support multiple payment methods.",F,F
+68,"The system shall be available 24/7.",NF,NF
+69,"Users shall be able to track their orders in real-time.",F,F
+70,"The system shall comply with PCI DSS standards.",NF,NF
+71,"The system shall allow guest checkout.",F,F
+72,"Page load time shall not exceed 2 seconds.",NF,NF
+73,"The system shall manage product categories hierarchically.",F,F
+74,"The system shall be resistant to DDoS attacks.",NF,NF
+75,"Users shall receive confirmation emails after purchase.",F,F
+76,"The system shall support horizontal scaling.",NF,NF
+77,"The system shall allow coupon code redemption.",F,F
+78,"All user data shall be stored securely.",NF,NF
+79,"The system shall calculate taxes based on location.",F,F
+80,"The system shall have a modular architecture.",NF,NF
+81,"Users shall be able to share products on social media.",F,F
+82,"The system shall handle 10000 transactions per hour.",NF,NF
+83,"The system shall display stock availability.",F,F
+84,"The interface shall be consistent across all pages.",NF,NF
+85,"The system shall allow partial order shipments.",F,F
+86,"Session timeout shall occur after 30 minutes of inactivity.",NF,NF
+87,"The system shall provide advanced search with filters.",F,F
+88,"The system shall be easy to update and maintain.",NF,NF
+89,"Users shall be able to print invoices.",F,F
+90,"The system shall support multi-language content.",NF,NF
+91,"The system shall manage customer loyalty points.",F,F
+92,"API response time shall be under 500ms.",NF,NF
+93,"The system shall allow scheduling of promotions.",F,F
+94,"The system shall be documented for developers.",NF,NF
+95,"Users shall be able to chat with customer support.",F,F
+96,"The system shall encrypt passwords using bcrypt.",NF,NF
+97,"The system shall generate sales analytics dashboards.",F,F
+98,"The application shall be testable with automated tests.",NF,NF
+99,"The system shall allow product bundling.",F,F
+100,"The system shall meet ISO 27001 security standards.",NF,NF
+101,"The system shall manage supplier information.",F,F
+102,"Memory usage shall not exceed 2GB under normal load.",NF,NF
+103,"Users shall be able to request price alerts.",F,F
+104,"The system shall provide audit trails for all changes.",NF,NF
+105,"The system shall support gift wrapping options.",F,F
+106,"The system shall be compatible with legacy systems.",NF,NF
+107,"The system shall manage warehouse locations.",F,F
+108,"The system shall have fault tolerance mechanisms.",NF,NF
+109,"Users shall be able to schedule deliveries.",F,F
+110,"The interface shall load progressively.",NF,NF
+111,"The system shall support barcode scanning.",F,F
+112,"The system shall be configurable without code changes.",NF,NF
+113,"The system shall manage product variants.",F,F
+114,"The system shall gracefully degrade under heavy load.",NF,NF
+115,"Users shall receive low stock notifications.",F,F
+116,"The system shall comply with accessibility standards.",NF,NF
+117,"The system shall generate packing slips.",F,F
+118,"API endpoints shall follow RESTful conventions.",NF,NF
+119,"The system shall manage vendor relationships.",F,F
+120,"The system shall be deployable on cloud platforms.",NF,NF
+121,"Users shall be able to set preferences.",F,F
+122,"The system shall handle timezone differences.",NF,NF
+123,"The system shall process batch orders.",F,F
+124,"The system shall be secure against XSS attacks.",NF,NF
+125,"The system shall manage digital product downloads.",F,F
+126,"The system shall support incremental backups.",NF,NF
+127,"Users shall be able to view recently viewed items.",F,F
+128,"The system shall validate credit card numbers.",NF,NF
+129,"The system shall support subscription products.",F,F
+130,"The system shall be optimized for SEO.",NF,NF
+131,"The system shall manage shipping carriers.",F,F
+132,"The system shall provide real-time monitoring.",NF,NF
+133,"Users shall be able to request quotes.",F,F
+134,"The system shall comply with export regulations.",NF,NF
+135,"The system shall support split payments.",F,F
+136,"The system shall be energy efficient.",NF,NF
+137,"The system shall manage return policies.",F,F
+138,"The system shall have comprehensive logging.",NF,NF
+139,"Users shall be able to create accounts.",F,F
+140,"The system shall be resistant to brute force attacks.",NF,NF
+141,"The system shall display product specifications.",F,F
+142,"The system shall support load balancing.",NF,NF
+143,"The system shall manage tax exemptions.",F,F
+144,"The system shall have disaster recovery procedures.",NF,NF
+145,"Users shall be able to leave product questions.",F,F
+146,"The system shall minimize bandwidth usage.",NF,NF
+147,"The system shall support pre-orders.",F,F
+148,"The system shall be compliant with local laws.",NF,NF
+149,"The system shall manage promotional banners.",F,F
+150,"The system shall cache frequently accessed data.",NF,NF
+151,"Users shall be able to redeem gift cards.",F,F
+152,"The system shall implement rate limiting.",NF,NF
+153,"The system shall manage product warranties.",F,F
+154,"The system shall have automated health checks.",NF,NF
+155,"The system shall support affiliate programs.",F,F
+156,"The system shall be interoperable with ERP systems.",NF,NF
+157,"Users shall be able to manage subscriptions.",F,F
+158,"The system shall compress images automatically.",NF,NF
+159,"The system shall generate shipping labels.",F,F
+160,"The system shall validate data consistency.",NF,NF
+161,"The system shall support dropshipping.",F,F
+162,"The system shall have configurable caching policies.",NF,NF
+163,"Users shall be able to see order status.",F,F
+164,"The system shall be protected against CSRF attacks.",NF,NF
+165,"The system shall manage inventory reservations.",F,F
+166,"The system shall support content delivery networks.",NF,NF
+167,"The system shall allow merchandise returns.",F,F
+168,"The system shall have version control for content.",NF,NF
+169,"Users shall be able to set communication preferences.",F,F
+170,"The system shall optimize database connections.",NF,NF
+171,"The system shall support dynamic pricing.",F,F
+172,"The system shall have centralized configuration.",NF,NF
+173,"The system shall manage cross-selling.",F,F
+174,"The system shall support database replication.",NF,NF
+175,"Users shall be able to view detailed product info.",F,F
+176,"The system shall implement circuit breakers.",NF,NF
+177,"The system shall support upselling features.",F,F
+178,"The system shall have automated scaling policies.",NF,NF
+179,"The system shall manage product reviews moderation.",F,F
+180,"The system shall support blue-green deployments.",NF,NF
+181,"Users shall be able to contact sellers.",F,F
+182,"The system shall have request throttling.",NF,NF
+183,"The system shall support marketplace features.",F,F
+184,"The system shall be observable with metrics.",NF,NF
+185,"The system shall manage shipping zones.",F,F
+186,"The system shall support canary releases.",NF,NF
+187,"Users shall be able to view shipping options.",F,F
+188,"The system shall have automated failover.",NF,NF
+189,"The system shall support flash sales.",F,F
+190,"The system shall be compliant with SOC 2.",NF,NF
+191,"The system shall manage customer segments.",F,F
+192,"The system shall support feature flags.",NF,NF
+193,"Users shall be able to apply filters to search.",F,F
+194,"The system shall have distributed tracing.",NF,NF
+195,"The system shall support loyalty programs.",F,F
+196,"The system shall be resilient to network partitions.",NF,NF
+197,"The system shall manage email campaigns.",F,F
+198,"The system shall support graceful shutdown.",NF,NF
+199,"Users shall be able to see estimated delivery dates.",F,F
+200,"The system shall have comprehensive API documentation.",NF,NF
+201,"The product shall provide a login screen for user authentication.",F,F
+202,"The system shall store customer purchase history for future reference.",F,F
+203,"The application shall support user profile management.",F,F
+204,"The system shall calculate discounts automatically based on rules.",F,F
+205,"The product shall enable batch processing of transactions.",F,F
+206,"The system shall generate weekly inventory reports.",F,F
+207,"The application shall support multi-factor authentication.",F,F
+208,"The system shall allow configuration of notification preferences.",F,F
+209,"The product shall provide data export functionality.",F,F
+210,"The system shall support role-based access control.",F,F
+211,"The application shall enable document upload and storage.",F,F
+212,"The system shall process recurring payments automatically.",F,F
+213,"The product shall provide dashboard customization options.",F,F
+214,"The system shall integrate with external accounting software.",F,F
+215,"The application shall support workflow automation.",F,F
+216,"The system shall enable customer feedback collection.",F,F
+217,"The product shall provide audit log functionality.",F,F
+218,"The system shall support data import from legacy systems.",F,F
+219,"The application shall enable report scheduling.",F,F
+220,"The system shall provide API access for third-party integrations.",F,F
+221,"The product shall support electronic signatures.",F,F
+222,"The system shall enable automated email responses.",F,F
+223,"The application shall provide search history functionality.",F,F
+224,"The system shall support content versioning.",F,F
+225,"The product shall enable user activity tracking.",F,F
+226,"The system shall provide data archiving capabilities.",F,F
+227,"The application shall support template management.",F,F
+228,"The system shall enable automated inventory reordering.",F,F
+229,"The product shall provide notification management.",F,F
+230,"The system shall support custom field creation.",F,F
+231,"The application shall enable appointment scheduling.",F,F
+232,"The system shall provide backup and restore functionality.",F,F
+233,"The product shall support multi-tenant architecture.",F,F
+234,"The system shall enable document collaboration.",F,F
+235,"The application shall provide task management features.",F,F
+236,"The system shall support calendar integration.",F,F
+237,"The product shall enable form builder functionality.",F,F
+238,"The system shall provide reporting dashboard.",F,F
+239,"The application shall support file sharing capabilities.",F,F
+240,"The system shall enable automated testing integration.",F,F
+241,"The product shall provide comment and annotation features.",F,F
+242,"The system shall support webhook configuration.",F,F
+243,"The application shall enable user group management.",F,F
+244,"The system shall provide data visualization tools.",F,F
+245,"The product shall support custom reporting.",F,F
+246,"The system shall enable integration with CRM systems.",F,F
+247,"The application shall provide inventory tracking.",F,F
+248,"The system shall support document templates.",F,F
+249,"The product shall enable project tracking functionality.",F,F
+250,"The system shall provide customer communication tools.",F,F
