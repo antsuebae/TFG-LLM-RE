@@ -4,10 +4,12 @@ Gestores de modelos LLM (Ollama, OpenAI y NVIDIA NIM)
 
 import os
 import time
+import logging
 import ollama
 from openai import OpenAI
 from typing import Optional
 
+logger = logging.getLogger(__name__)
 
 # Modelos disponibles en NVIDIA NIM (build.nvidia.com)
 NIM_MODELS = {
@@ -16,6 +18,26 @@ NIM_MODELS = {
     "mistral-7b": "mistralai/mistral-7b-instruct-v0.3",
     "mixtral-8x7b": "mistralai/mixtral-8x7b-instruct-v0.1",
 }
+
+MAX_RETRIES = 3
+RETRY_BASE_DELAY = 2  # seconds
+
+
+def _retry_with_backoff(func, max_retries=MAX_RETRIES):
+    """Execute func with exponential backoff on failure."""
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                delay = RETRY_BASE_DELAY * (2 ** attempt)
+                logger.warning(f"Attempt {attempt + 1}/{max_retries} failed: {e}. Retrying in {delay}s...")
+                time.sleep(delay)
+            else:
+                logger.error(f"All {max_retries} attempts failed. Last error: {e}")
+    raise last_error
 
 
 class OllamaModel:
@@ -30,28 +52,39 @@ class OllamaModel:
         start_time = time.time()
 
         try:
-            response = ollama.chat(
-                model=self.model_name,
-                messages=[{"role": "user", "content": prompt}],
-                options={
-                    "temperature": self.temperature,
-                    "num_predict": max_tokens,
-                }
-            )
+            def _call():
+                return ollama.chat(
+                    model=self.model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    options={
+                        "temperature": self.temperature,
+                        "num_predict": max_tokens,
+                    }
+                )
+
+            response = _retry_with_backoff(_call)
             elapsed = time.time() - start_time
 
+            content = response["message"]["content"]
+            # Estimate tokens from response (rough: 1 token ~ 4 chars)
+            eval_count = response.get("eval_count", len(content) // 4)
+            tokens_per_second = eval_count / elapsed if elapsed > 0 else 0
+
             return {
-                "content": response["message"]["content"],
+                "content": content,
                 "model": self.model_name,
                 "time_seconds": elapsed,
+                "tokens_per_second": round(tokens_per_second, 1),
                 "success": True,
                 "error": None
             }
         except Exception as e:
+            logger.error(f"OllamaModel error ({self.model_name}): {e}")
             return {
                 "content": "",
                 "model": self.model_name,
                 "time_seconds": time.time() - start_time,
+                "tokens_per_second": 0,
                 "success": False,
                 "error": str(e)
             }
@@ -70,28 +103,37 @@ class OpenAIModel:
         start_time = time.time()
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=self.temperature,
-                max_tokens=max_tokens,
-            )
+            def _call():
+                return self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=self.temperature,
+                    max_tokens=max_tokens,
+                )
+
+            response = _retry_with_backoff(_call)
             elapsed = time.time() - start_time
+
+            tokens_used = response.usage.total_tokens if response.usage else 0
+            tokens_per_second = tokens_used / elapsed if elapsed > 0 else 0
 
             return {
                 "content": response.choices[0].message.content,
                 "model": self.model_name,
                 "time_seconds": elapsed,
-                "tokens_used": response.usage.total_tokens if response.usage else 0,
+                "tokens_used": tokens_used,
+                "tokens_per_second": round(tokens_per_second, 1),
                 "success": True,
                 "error": None
             }
         except Exception as e:
+            logger.error(f"OpenAIModel error ({self.model_name}): {e}")
             return {
                 "content": "",
                 "model": self.model_name,
                 "time_seconds": time.time() - start_time,
                 "tokens_used": 0,
+                "tokens_per_second": 0,
                 "success": False,
                 "error": str(e)
             }
@@ -120,28 +162,37 @@ class NVIDIANIMModel:
         start_time = time.time()
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=self.temperature,
-                max_tokens=max_tokens,
-            )
+            def _call():
+                return self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=self.temperature,
+                    max_tokens=max_tokens,
+                )
+
+            response = _retry_with_backoff(_call)
             elapsed = time.time() - start_time
+
+            tokens_used = response.usage.total_tokens if response.usage else 0
+            tokens_per_second = tokens_used / elapsed if elapsed > 0 else 0
 
             return {
                 "content": response.choices[0].message.content,
                 "model": self.model_name,
                 "time_seconds": elapsed,
-                "tokens_used": response.usage.total_tokens if response.usage else 0,
+                "tokens_used": tokens_used,
+                "tokens_per_second": round(tokens_per_second, 1),
                 "success": True,
                 "error": None
             }
         except Exception as e:
+            logger.error(f"NVIDIANIMModel error ({self.model_name}): {e}")
             return {
                 "content": "",
                 "model": self.model_name,
                 "time_seconds": time.time() - start_time,
                 "tokens_used": 0,
+                "tokens_per_second": 0,
                 "success": False,
                 "error": str(e)
             }

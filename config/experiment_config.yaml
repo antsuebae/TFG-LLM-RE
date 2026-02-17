@@ -1,7 +1,7 @@
 # Configuracion del Experimento
-# TFG: Evaluacion Comparativa de LLMs en Analisis de Requisitos
+# TFG: Optimizacion de la respuesta de los LLMs en el proceso de RE
 
-# Modelos a evaluar
+# Modelos a evaluar (5 total)
 models:
   local:
     - name: "qwen2.5-coder:7b-instruct-q5_K_M"
@@ -21,7 +21,15 @@ models:
       short_name: "nim_mistral"
       type: "nvidia_nim"
 
-# Patrones de prompt
+# Estrategias de prompting (5)
+prompting_strategies:
+  - question_refinement
+  - cognitive_verifier
+  - persona_context
+  - few_shot
+  - chain_of_thought
+
+# Patrones legacy (backward compat)
 patterns:
   - name: "question_refinement"
     short_name: "QR"
@@ -29,6 +37,10 @@ patterns:
     short_name: "CV"
   - name: "persona_context"
     short_name: "PC"
+  - name: "few_shot"
+    short_name: "FS"
+  - name: "chain_of_thought"
+    short_name: "CoT"
 
 # Parametros del experimento
 experiment:
@@ -36,9 +48,37 @@ experiment:
   seeds: [42, 123, 456, 789, 1024]
   sample_size: 50
   temperature: 0.4
-  max_tokens: 256
+  max_tokens: 512
 
-# Dataset
+# Tareas de RE
+tasks:
+  classification:
+    dataset: "../data/promise_nfr.csv"
+    sample_size: 50
+    text_column: "text"
+    label_column: "label_binary"
+  ambiguity:
+    dataset: "../data/ambiguity_dataset.csv"
+    sample_size: null  # usar todo el dataset
+    text_column: "text"
+    label_column: "is_ambiguous"
+  completeness:
+    dataset: "../data/completeness_dataset.csv"
+    sample_size: null
+    text_column: "text"
+    label_column: "is_complete"
+  inconsistency:
+    dataset: "../data/inconsistency_dataset.csv"
+    sample_size: null
+    text_column: "text_a"
+    label_column: "are_inconsistent"
+  testability:
+    dataset: "../data/testability_dataset.csv"
+    sample_size: null
+    text_column: "text"
+    label_column: "is_testable"
+
+# Dataset principal (backward compat)
 dataset:
   path: "../data/promise_nfr.csv"
   text_column: "text"
