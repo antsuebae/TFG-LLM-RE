@@ -1,0 +1,32 @@
+# API Keys y secretos
+.env
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Resultados y checkpoints (se regeneran con experimentos)
+results/*.json
+results/*.csv
+results/logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
