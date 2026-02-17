@@ -14,9 +14,7 @@ dist/
 build/
 
 # Resultados y checkpoints (se regeneran con experimentos)
-results/*.json
-results/*.csv
-results/logs/
+results/
 
 # IDE
 .vscode/

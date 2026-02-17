@@ -293,6 +293,24 @@ PROMPTS = {
     },
 }
 
+# ── Prompt de reescritura de requisitos ────────────────────
+REWRITE_PROMPT = (
+    'Eres un ingeniero de requisitos senior. Tu tarea es reescribir un requisito de software '
+    'para corregir los problemas de calidad detectados.\n\n'
+    'Requisito original: "{requirement}"\n\n'
+    'Problemas detectados:\n{problems}\n\n'
+    'Instrucciones:\n'
+    '- Reescribe el requisito corrigiendo TODOS los problemas listados\n'
+    '- Mantén la intencion original del requisito\n'
+    '- Hazlo especifico, medible, completo y testable\n'
+    '- Si es ambiguo, reemplaza terminos vagos por valores concretos\n'
+    '- Si es incompleto, anade los elementos faltantes\n'
+    '- Si no es testable, anade criterios medibles\n'
+    '- Responde SOLO con el requisito reescrito, sin explicaciones adicionales\n\n'
+    'Requisito corregido:'
+)
+
+
 # All valid task names
 TASK_NAMES = list(PROMPTS.keys())
 
@@ -363,6 +381,20 @@ def parse_classification(response: str) -> str:
     return "INVALID"
 
 
+def _detect_yes_no(response: str, keyword: str) -> bool | None:
+    """Detect YES/NO in response, handling both 'KEYWORD: YES' and standalone 'YES' at start."""
+    upper = response.upper().strip()
+    # Try explicit pattern: KEYWORD: YES/NO
+    m = re.search(rf'{keyword}\s*[:\-]\s*(YES|NO|SI|SÍ)\b', upper)
+    if m:
+        return m.group(1) in ("YES", "SI", "SÍ")
+    # Fallback: response starts with YES/NO (when prompt ends with "KEYWORD:")
+    m = re.match(r'^\s*(YES|NO|SI|SÍ)\b', upper)
+    if m:
+        return m.group(1) in ("YES", "SI", "SÍ")
+    return None
+
+
 def parse_ambiguity(response: str) -> dict:
     """Parse ambiguity detection response.
 
@@ -372,10 +404,10 @@ def parse_ambiguity(response: str) -> dict:
     upper = response.upper()
     result = {"is_ambiguous": False, "ambiguity_type": "none", "ambiguous_words": []}
 
-    # Parse AMBIGUOUS field
-    m = re.search(r'AMBIGUOUS\s*[:\-]\s*(YES|NO)', upper)
-    if m:
-        result["is_ambiguous"] = m.group(1) == "YES"
+    # Parse AMBIGUOUS field (or standalone YES/NO)
+    detected = _detect_yes_no(response, "AMBIGUOUS")
+    if detected is not None:
+        result["is_ambiguous"] = detected
 
     # Parse TYPE field
     m = re.search(r'TYPE\s*[:\-]\s*(VAGUE_TERM|PRONOUN|QUANTIFIER|NONE)', upper)
@@ -398,23 +430,27 @@ def parse_completeness(response: str) -> dict:
     Returns:
         dict with keys: is_complete (bool), missing_elements (list)
     """
-    upper = response.upper()
     result = {"is_complete": False, "missing_elements": []}
 
-    m = re.search(r'COMPLETE\s*[:\-]\s*(YES|NO)', upper)
-    if m:
-        result["is_complete"] = m.group(1) == "YES"
+    # Parse COMPLETE field (or standalone YES/NO)
+    detected = _detect_yes_no(response, "COMPLETE")
+    if detected is not None:
+        result["is_complete"] = detected
 
+    # Parse MISSING field - try single-line format first
     m = re.search(r'MISSING\s*[:\-]\s*(.+?)(?:\n|$)', response, re.IGNORECASE)
     if m:
         missing_str = m.group(1).strip()
-        if missing_str.lower() != "none":
-            valid_elements = {"error_handling", "boundary_conditions", "acceptance_criteria", "preconditions"}
-            elements = [e.strip().lower() for e in missing_str.split(',')]
-            result["missing_elements"] = [e for e in elements if e in valid_elements]
-            # If no valid elements matched but there was text, keep raw
-            if not result["missing_elements"] and elements:
-                result["missing_elements"] = [e.strip() for e in elements if e.strip()]
+        if missing_str.lower() not in ("none", "n/a", ""):
+            elements = [e.strip().strip('-').strip() for e in missing_str.split(',')]
+            result["missing_elements"] = [e for e in elements if e and e.lower() != "none"]
+
+    # Fallback: collect bullet points after MISSING
+    if not result["missing_elements"]:
+        m = re.search(r'MISSING\s*[:\-]\s*\n((?:\s*[-*]\s*.+\n?)+)', response, re.IGNORECASE)
+        if m:
+            bullets = re.findall(r'[-*]\s*(.+)', m.group(1))
+            result["missing_elements"] = [b.strip().rstrip('.') for b in bullets if b.strip()]
 
     return result
 
@@ -425,16 +461,18 @@ def parse_inconsistency(response: str) -> dict:
     Returns:
         dict with keys: is_inconsistent (bool), description (str)
     """
-    upper = response.upper()
     result = {"is_inconsistent": False, "description": "none"}
 
-    m = re.search(r'INCONSISTENT\s*[:\-]\s*(YES|NO)', upper)
-    if m:
-        result["is_inconsistent"] = m.group(1) == "YES"
+    # Parse INCONSISTENT field (or standalone YES/NO)
+    detected = _detect_yes_no(response, "INCONSISTENT")
+    if detected is not None:
+        result["is_inconsistent"] = detected
 
     m = re.search(r'DESCRIPTION\s*[:\-]\s*(.+?)(?:\n|$)', response, re.IGNORECASE)
     if m:
-        result["description"] = m.group(1).strip()
+        desc = m.group(1).strip()
+        if desc.lower() not in ("none", "n/a", ""):
+            result["description"] = desc
 
     return result
 
@@ -448,9 +486,10 @@ def parse_testability(response: str) -> dict:
     upper = response.upper()
     result = {"is_testable": False, "reason": "vague"}
 
-    m = re.search(r'TESTABLE\s*[:\-]\s*(YES|NO)', upper)
-    if m:
-        result["is_testable"] = m.group(1) == "YES"
+    # Parse TESTABLE field (or standalone YES/NO)
+    detected = _detect_yes_no(response, "TESTABLE")
+    if detected is not None:
+        result["is_testable"] = detected
 
     m = re.search(r'REASON\s*[:\-]\s*(MEASURABLE|VAGUE|SUBJECTIVE)', upper)
     if m:

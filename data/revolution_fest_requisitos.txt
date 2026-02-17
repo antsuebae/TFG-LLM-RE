@@ -1,0 +1,46 @@
+# Requisitos del Sistema - Revolution Fest (REM-CMS)
+# Extraido de dataset_ejemplo.pdf
+
+# OBJ - Objetivos del Sistema
+El sistema debera aumentar los ingresos de la empresa en al menos un 30% gracias a alcanzar mas publico.
+El sistema debera superar el numero de clientes y de facturacion de empresas similares en Sevilla.
+El sistema debera garantizar que todos los trabajadores comprendan como utilizar eficazmente el sistema, desde el personal de puerta, ventas y los cocteleros que preparan las bebidas.
+
+# IRQ - Requisitos de Informacion
+El sistema debera almacenar la informacion correspondiente a la pagina principal, que debera contar con encabezado, menu de navegacion, imagenes de eventos, redes sociales, pie de pagina, mapa y ChatBot.
+El sistema debera almacenar la informacion correspondiente al menu de navegacion: Pagina Principal, Eventos, Merchandising, Promociones/fidelizacion, Reserva la sala, Cesta, Perfil.
+El sistema debera almacenar la informacion correspondiente a los eventos: nombre del evento, precio, fecha y lugar, imagenes, valoraciones.
+El sistema debera almacenar la informacion correspondiente a los usuarios: nombre, email, nombre de usuario.
+El sistema debera almacenar la informacion correspondiente a la cesta: productos seleccionados, precio por producto, cantidad de cada producto, precio total.
+El sistema debera almacenar la informacion correspondiente al merchandising: nombre, descripcion, precio, imagenes, valoraciones.
+El sistema debera almacenar las resenas relacionadas a eventos y merchandising: usuario, fecha, calificacion, comentario.
+El sistema debera almacenar la informacion correspondiente a las promociones y fidelizacion: nombre promocion, coste, imagen.
+El sistema debera ofrecer al usuario un formulario para reservar la sala con: fecha y hora, tipo de fiesta, comentario, nombre completo, telefono, email, direccion.
+
+# FRQ - Requisitos Funcionales (Interfaz)
+El sistema debera permitir la integracion con Facebook, Twitter, Youtube e Instagram.
+El sistema debera tener el diseno de la web con colores oscuros que destaquen las carteleras de las fiestas asi como los productos de merchandasing. Debera contener en la cabecera un menu de navegacion y un footer con informacion de redes sociales.
+El sistema debera mostrar nada mas entrar una imagen de una fiesta y seguidamente los productos destacados para que el usuario sepa que tipo de empresa es y su localizacion.
+
+# FRQ - Requisitos Funcionales
+El sistema debera dejar hacer pedidos, por lo que debera tener una pasarela de pago. Las dos opciones de compra seran entradas para eventos y merchandasing.
+El sistema debera dar puntos a los usuarios que hagan compras para luego con esos puntos poder canjear promociones.
+El sistema debera almacenar toda la informacion de cada evento y merchandising que se venda.
+El sistema debera tener un mapa en la web para que la gente pueda ubicar el local.
+El sistema debera tener un calendario para poder reservar la sala de manera que no tengan que tener otro calendario cerca.
+El sistema debera tener en el footer todas las redes sociales para que se comuniquen directamente a traves de la RRSS que mas le convenga. Ademas tendra un formulario de contacto para reservar la sala.
+El sistema debera dar a los clientes acceso a su cesta y a su cuenta.
+El sistema debera tener un ChatBot para que pueda responder cualquier tipo de preguntas sobre la pagina web.
+
+# NFR - Requisitos No Funcionales
+El sistema debera facilitar el proceso de compra de forma que sea lo mas simple posible para el usuario: debe ser capaz de completar la compra en un maximo de 3 pasos.
+El sistema debera soportar una cantidad de trafico reducido ya que en el hosting tenemos un plan de pago mas barato.
+El sistema debera ser compatible con la version mas reciente de WordPress y se debe mantener actualizado.
+El sistema debera realizar al menos una copia de seguridad semanal.
+El sistema debera dar servicio responsivo a usuarios de ordenador y sobre todo a movil, ya que gran parte de los usuarios lo haran desde el movil.
+
+# CRQ - Reglas de Negocio
+El sistema debera respetar que los productos deben estar disponibles en el inventario para aceptar pedidos.
+El sistema debera respetar que todos los pedidos en linea deben pagarse por adelantado.
+El sistema debera respetar que el cliente debe poder reservar la sala unicamente de jueves a domingo desde las 6 de la tarde.
+El sistema debera respetar que por cada compra realizada el cliente debe obtener puntos en funcion de lo que haya gastado.
