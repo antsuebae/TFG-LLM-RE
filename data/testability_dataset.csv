@@ -1,0 +1,51 @@
+id,text,is_testable,reason
+1,"The system shall respond to search queries within 500 milliseconds.",True,measurable
+2,"The system should be user-friendly.",False,subjective
+3,"The login page shall load in under 2 seconds on a 4G connection.",True,measurable
+4,"The system should handle many users simultaneously.",False,vague
+5,"The API shall return HTTP 200 for successful requests and HTTP 400 for invalid input.",True,measurable
+6,"The software must be of high quality.",False,subjective
+7,"The system shall support at least 1000 concurrent users without degradation.",True,measurable
+8,"The system should be reliable.",False,subjective
+9,"The password must be at least 12 characters and contain uppercase, lowercase, number, and special character.",True,measurable
+10,"The system should perform well under stress.",False,vague
+11,"The database backup shall complete within 30 minutes for databases up to 100GB.",True,measurable
+12,"The application should look professional.",False,subjective
+13,"The system shall achieve 99.9% uptime measured monthly.",True,measurable
+14,"The system should be easy to learn.",False,subjective
+15,"File upload shall accept JPEG and PNG files between 10KB and 5MB.",True,measurable
+16,"The system should be scalable.",False,vague
+17,"The search shall return a maximum of 20 results per page sorted by relevance score.",True,measurable
+18,"The system must ensure data integrity.",False,vague
+19,"The session shall timeout after 30 minutes of inactivity.",True,measurable
+20,"The interface should be attractive.",False,subjective
+21,"The API rate limiter shall block requests exceeding 100 per minute per API key.",True,measurable
+22,"The system should be maintainable.",False,subjective
+23,"Email notifications shall be delivered within 60 seconds of the triggering event.",True,measurable
+24,"The system should have good performance.",False,vague
+25,"The export function shall generate a CSV file with UTF-8 encoding and comma separators.",True,measurable
+26,"The system must be robust.",False,subjective
+27,"The image compression shall reduce file size by at least 50% while maintaining SSIM above 0.95.",True,measurable
+28,"The system should be efficient.",False,vague
+29,"The two-factor authentication code shall expire after 30 seconds.",True,measurable
+30,"The system should be secure.",False,vague
+31,"The auto-save feature shall save document changes every 60 seconds.",True,measurable
+32,"The system should be flexible.",False,subjective
+33,"The checkout process shall complete in no more than 5 steps.",True,measurable
+34,"The system should be portable.",False,vague
+35,"The dashboard shall refresh data every 60 seconds via WebSocket connection.",True,measurable
+36,"The system should have a nice design.",False,subjective
+37,"The PDF report shall not exceed 10 pages and shall include a table of contents.",True,measurable
+38,"The system should be fast.",False,vague
+39,"The system shall hash passwords using bcrypt with a cost factor of 12.",True,measurable
+40,"The application should be stable.",False,vague
+41,"The error message shall display within 1 second and include an error code and description under 200 characters.",True,measurable
+42,"The system should minimize downtime.",False,vague
+43,"The pagination shall display page numbers and allow navigation to first, previous, next, and last pages.",True,measurable
+44,"The system should be adaptable.",False,subjective
+45,"The log retention policy shall keep entries for exactly 365 days before automatic deletion.",True,measurable
+46,"The system should handle errors gracefully.",False,subjective
+47,"The health check endpoint shall return JSON with status field and respond within 1 second.",True,measurable
+48,"The system should support future growth.",False,vague
+49,"The CAPTCHA shall require users to solve a challenge after 3 consecutive failed login attempts.",True,measurable
+50,"The system should be cost-effective.",False,subjective
