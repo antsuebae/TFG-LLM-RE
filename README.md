@@ -70,8 +70,14 @@ Abre `http://localhost:8501`. Desde ahi puedes:
 # Ejecutar experimento completo
 ./run.sh experiment --task classification --models qwen7b llama8b --strategies few_shot chain_of_thought
 
+# Reanudar desde checkpoint
+./run.sh experiment --task classification --resume results/checkpoints/checkpoint_classification_XXXXX.json
+
 # Generar graficos y analisis estadistico
-./run.sh analysis results/results_classification_XXXXX.csv
+./run.sh analysis results/experiments/results_classification_XXXXX.csv
+
+# Analisis de todas las tareas a la vez
+./run.sh analysis --all --results-dir results/experiments/
 ```
 
 ### API REST
@@ -86,7 +92,8 @@ Documentacion en `http://localhost:8000/docs`.
 
 ```
 config/                  Configuracion de experimentos
-data/                    Datasets (PROMISE NFR + 4 datasets anotados)
+data/                    Datasets (PROMISE, FNFC, ReqEval, PURE)
+  sources/               Fuentes raw descargadas (excluido parcialmente de git)
 src/
   app.py                 Frontend Streamlit
   pipeline.py            Pipeline de analisis de documentos
@@ -97,6 +104,11 @@ src/
   analysis.py            Graficos y analisis estadistico
   api.py                 API REST (FastAPI)
 results/                 Resultados generados (excluido de git)
+  experiments/           CSVs de resultados de experimentos
+  checkpoints/           Checkpoints temporales (se borran al acabar)
+  analysis/              Graficos y tablas generadas
+  logs/                  Logs de ejecucion
+  pipeline/              Resultados del pipeline de documentos
 ```
 
 ## Modelos
@@ -126,3 +138,13 @@ results/                 Resultados generados (excluido de git)
 3. **Evaluacion de completitud** - Detecta elementos faltantes
 4. **Deteccion de inconsistencias** - Busca contradicciones entre pares de requisitos
 5. **Evaluacion de testabilidad** - Determina si un requisito es verificable
+
+## Datasets
+
+| Dataset | Tarea | Muestras | Fuente |
+|---------|-------|----------|--------|
+| promise_nfr_v2.csv | Clasificacion F/NF | 625 | PROMISE + FNFC (HuggingFace) |
+| ambiguity_dataset_v2.csv | Ambiguedad | 262 | Sintetico + ReqEval (NLP4RE 2020) |
+| completeness_dataset_v2.csv | Completitud | 150 | Sintetico + PURE (Ferrari et al. 2017) |
+| testability_dataset_v2.csv | Testabilidad | 97 | Sintetico + PURE |
+| inconsistency_dataset.csv | Inconsistencias | 30 | Sintetico (pares anotados) |
