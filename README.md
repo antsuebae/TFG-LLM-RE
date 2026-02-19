@@ -2,7 +2,7 @@
 
 Optimizacion de la respuesta de los LLMs en el proceso de Ingenieria de Requisitos.
 
-TFG de Ingenieria de Software que evalua modelos LLM locales (Qwen 7B, Llama 8B) frente a modelos via API (NVIDIA NIM: Llama 70B, Llama 8B, Mistral 7B) en 5 tareas de ingenieria de requisitos, comparando 5 estrategias de prompting.
+TFG de Ingenieria de Software que evalua modelos LLM locales (Qwen 7B, Llama 8B, Gemma 9B) frente a modelos via API (NVIDIA NIM: Llama 70B, Llama 8B, Mistral 7B) en 5 tareas de ingenieria de requisitos, comparando 5 estrategias de prompting.
 
 ## Requisitos previos
 
@@ -21,8 +21,9 @@ cd TFG-LLM-RE
 Para los modelos locales, descarga los modelos con Ollama:
 
 ```bash
-ollama pull qwen2.5-coder:7b-instruct-q5_K_M
+ollama pull qwen2.5:7b-instruct-q5_K_M
 ollama pull llama3.1:8b-instruct-q4_K_M
+ollama pull gemma2:9b-instruct-q4_K_M
 ```
 
 Para los modelos API, crea un archivo `.env` en la raiz del proyecto:
@@ -97,11 +98,11 @@ data/                    Datasets (PROMISE, FNFC, ReqEval, PURE)
 src/
   app.py                 Frontend Streamlit
   pipeline.py            Pipeline de analisis de documentos
-  experiment.py          Pipeline de experimentos (benchmark)
-  prompts.py             25 prompts (5 tareas x 5 estrategias) + parsers
+  experiment.py          Pipeline de experimentos con checkpoint/resume
+  prompts.py             30 prompts (5 tareas x 6 estrategias) + parsers
   models.py              Wrappers para Ollama y NVIDIA NIM
   metrics.py             Metricas de evaluacion
-  analysis.py            Graficos y analisis estadistico
+  analysis.py            Graficos y analisis estadistico (ANOVA, t-test, Cohen's d)
   api.py                 API REST (FastAPI)
 results/                 Resultados generados (excluido de git)
   experiments/           CSVs de resultados de experimentos
@@ -115,11 +116,12 @@ results/                 Resultados generados (excluido de git)
 
 | Modelo | Tipo | Backend |
 |--------|------|---------|
-| Qwen 2.5 Coder 7B | Local | Ollama |
+| Qwen 2.5 7B | Local | Ollama |
 | Llama 3.1 8B | Local | Ollama |
+| Gemma 2 9B | Local | Ollama |
 | Llama 3.1 70B | API | NVIDIA NIM |
 | Llama 3.1 8B | API | NVIDIA NIM |
-| Mistral 7B | API | NVIDIA NIM |
+| Mistral 7B v0.3 | API | NVIDIA NIM |
 
 ## Estrategias de prompting
 
@@ -148,3 +150,10 @@ results/                 Resultados generados (excluido de git)
 | completeness_dataset_v2.csv | Completitud | 150 | Sintetico + PURE (Ferrari et al. 2017) |
 | testability_dataset_v2.csv | Testabilidad | 97 | Sintetico + PURE |
 | inconsistency_dataset.csv | Inconsistencias | 30 | Sintetico (pares anotados) |
+
+## Diseno experimental
+
+- **Factorial:** 5 tareas x 6 modelos x 5 estrategias x 5 iteraciones
+- **Seeds:** [42, 123, 456, 789, 1024]
+- **Temperatura:** 0.4
+- **Sample size:** 50 requisitos por iteracion (clasificacion), dataset completo (resto)
