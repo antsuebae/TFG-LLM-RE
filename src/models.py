@@ -120,14 +120,15 @@ class OpenAIModel:
             response = _retry_with_backoff(_call)
             elapsed = time.time() - start_time
 
-            tokens_used = response.usage.total_tokens if response.usage else 0
-            tokens_per_second = tokens_used / elapsed if elapsed > 0 else 0
+            # Use completion_tokens (output only) for fair comparison with Ollama eval_count
+            completion_tokens = response.usage.completion_tokens if response.usage else 0
+            tokens_per_second = completion_tokens / elapsed if elapsed > 0 else 0
 
             return {
                 "content": response.choices[0].message.content,
                 "model": self.model_name,
                 "time_seconds": elapsed,
-                "tokens_used": tokens_used,
+                "tokens_used": completion_tokens,
                 "tokens_per_second": round(tokens_per_second, 1),
                 "success": True,
                 "error": None
@@ -179,14 +180,15 @@ class NVIDIANIMModel:
             response = _retry_with_backoff(_call)
             elapsed = time.time() - start_time
 
-            tokens_used = response.usage.total_tokens if response.usage else 0
-            tokens_per_second = tokens_used / elapsed if elapsed > 0 else 0
+            # Use completion_tokens (output only) for fair comparison with Ollama eval_count
+            completion_tokens = response.usage.completion_tokens if response.usage else 0
+            tokens_per_second = completion_tokens / elapsed if elapsed > 0 else 0
 
             return {
                 "content": response.choices[0].message.content,
                 "model": self.model_name,
                 "time_seconds": elapsed,
-                "tokens_used": tokens_used,
+                "tokens_used": completion_tokens,
                 "tokens_per_second": round(tokens_per_second, 1),
                 "success": True,
                 "error": None

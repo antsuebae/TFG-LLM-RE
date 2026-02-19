@@ -164,19 +164,11 @@ _PAGES = ["Pipeline Documento", "Clasificar Requisito", "Analizar Calidad",
            "Validar Consistencia", "Resultados Experimentos", "Comparar Modelos",
            "Progreso Experimentos"]
 
-# Restaurar pagina desde query params (para que el auto-refresh no pierda la pagina)
-_qp_page = st.query_params.get("page", None)
-_default_idx = _PAGES.index(_qp_page) if _qp_page in _PAGES else 0
-
 page = st.sidebar.radio(
     "Navegacion",
     _PAGES,
-    index=_default_idx,
+    key="nav_page",
 )
-
-# Persistir pagina actual en query params
-if st.query_params.get("page") != page:
-    st.query_params["page"] = page
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Modelos locales:** Ollama")
@@ -471,10 +463,11 @@ if page == "Pipeline Documento":
                 summary_rows = []
                 for (model_key, strat), res in all_results.items():
                     df = res['results_df']
-                    n_amb = len(df[df['is_ambiguous'] == True])
-                    n_inc = len(df[df['is_complete'] == False])
-                    n_nt = len(df[df['is_testable'] == False])
-                    n_f = len(df[df['classification'] == 'F'])
+                    n_amb = len(df[df['is_ambiguous'] == True]) if 'is_ambiguous' in df.columns else 0
+                    n_inc = len(df[df['is_complete'] == False]) if 'is_complete' in df.columns else 0
+                    n_nt = len(df[df['is_testable'] == False]) if 'is_testable' in df.columns else 0
+                    n_f = len(df[df['classification'] == 'F']) if 'classification' in df.columns else 0
+                    avg_q = df['quality_score'].mean() if 'quality_score' in df.columns else 0
                     summary_rows.append({
                         'Modelo': MODEL_LABELS.get(model_key, model_key),
                         'Estrategia': STRATEGY_LABELS.get(strat, strat),
@@ -483,7 +476,7 @@ if page == "Pipeline Documento":
                         'Ambiguos': n_amb,
                         'Incompletos': n_inc,
                         'No Testables': n_nt,
-                        'Calidad Media': f"{df['quality_score'].mean():.0f}%",
+                        'Calidad Media': f"{avg_q:.0f}%",
                         'Inconsistencias': len(res['inconsistencies']),
                         'Tiempo (s)': f"{res['elapsed']:.1f}",
                     })
@@ -498,7 +491,8 @@ if page == "Pipeline Documento":
                         strat_label = STRATEGY_LABELS.get(strat, strat)
                         if model_label not in heatmap_data:
                             heatmap_data[model_label] = {}
-                        heatmap_data[model_label][strat_label] = round(res['results_df']['quality_score'].mean(), 1)
+                        q = res['results_df']['quality_score'].mean() if 'quality_score' in res['results_df'].columns else 0
+                        heatmap_data[model_label][strat_label] = round(q, 1)
                     heatmap_df = pd.DataFrame(heatmap_data).T
                     heatmap_df.index.name = "Modelo"
                     st.dataframe(heatmap_df.style.background_gradient(cmap='RdYlGn', vmin=0, vmax=100),
@@ -530,10 +524,10 @@ if page == "Pipeline Documento":
                             total = len(df)
                             col1, col2, col3, col4, col5 = st.columns(5)
                             col1.metric("Requisitos", total)
-                            col2.metric("Ambiguos", len(df[df['is_ambiguous'] == True]))
-                            col3.metric("Incompletos", len(df[df['is_complete'] == False]))
-                            col4.metric("No Testables", len(df[df['is_testable'] == False]))
-                            col5.metric("Calidad Media", f"{df['quality_score'].mean():.0f}%")
+                            col2.metric("Ambiguos", len(df[df['is_ambiguous'] == True]) if 'is_ambiguous' in df.columns else 0)
+                            col3.metric("Incompletos", len(df[df['is_complete'] == False]) if 'is_complete' in df.columns else 0)
+                            col4.metric("No Testables", len(df[df['is_testable'] == False]) if 'is_testable' in df.columns else 0)
+                            col5.metric("Calidad Media", f"{df['quality_score'].mean():.0f}%" if 'quality_score' in df.columns else "N/A")
 
                             # Tabla detallada
                             st.subheader("Detalle por Requisito")
@@ -562,7 +556,7 @@ if page == "Pipeline Documento":
                                         if row.get('is_ambiguous'):
                                             issues.append(f"Ambiguo ({row.get('ambiguity_type', '')})")
                                             if row.get('ambiguous_words'):
-                                                issues.append(f"Palabras: {row['ambiguous_words']}")
+                                                issues.append(f"Palabras: {row.get('ambiguous_words', '')}")
                                         if not row.get('is_complete'):
                                             issues.append(f"Incompleto - Falta: {row.get('missing_elements', '')}")
                                         if not row.get('is_testable'):
@@ -1009,7 +1003,7 @@ elif page == "Resultados Experimentos":
                 metrics_df = compute_metrics_per_config(df, task)
 
                 st.subheader("Resumen de Metricas")
-                summary = metrics_df.groupby(['model', 'strategy']).agg({
+                summary = metrics_df.groupby(['model', strategy_col]).agg({
                     'f1': ['mean', 'std'],
                     'accuracy': ['mean', 'std'],
                     'precision': 'mean',
@@ -1022,33 +1016,48 @@ elif page == "Resultados Experimentos":
 
                 import matplotlib.pyplot as plt
                 with chart_tabs[0]:
-                    from analysis import plot_grouped_bars
-                    fig = plot_grouped_bars(metrics_df, 'f1')
-                    st.pyplot(fig)
-                    plt.close(fig)
-                with chart_tabs[1]:
-                    from analysis import plot_boxplots
-                    fig = plot_boxplots(metrics_df, 'f1')
-                    st.pyplot(fig)
-                    plt.close(fig)
-                with chart_tabs[2]:
-                    from analysis import plot_heatmap
-                    fig = plot_heatmap(metrics_df, 'f1')
-                    st.pyplot(fig)
-                    plt.close(fig)
-                with chart_tabs[3]:
-                    from analysis import plot_radar
-                    fig = plot_radar(metrics_df)
-                    st.pyplot(fig)
-                    plt.close(fig)
-                with chart_tabs[4]:
-                    from analysis import plot_speed_comparison
-                    fig = plot_speed_comparison(metrics_df)
-                    if fig:
+                    try:
+                        from analysis import plot_grouped_bars
+                        fig = plot_grouped_bars(metrics_df, 'f1')
                         st.pyplot(fig)
                         plt.close(fig)
-                    else:
-                        st.info("No hay datos de velocidad disponibles.")
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+                with chart_tabs[1]:
+                    try:
+                        from analysis import plot_boxplots
+                        fig = plot_boxplots(metrics_df, 'f1')
+                        st.pyplot(fig)
+                        plt.close(fig)
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+                with chart_tabs[2]:
+                    try:
+                        from analysis import plot_heatmap
+                        fig = plot_heatmap(metrics_df, 'f1')
+                        st.pyplot(fig)
+                        plt.close(fig)
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+                with chart_tabs[3]:
+                    try:
+                        from analysis import plot_radar
+                        fig = plot_radar(metrics_df)
+                        st.pyplot(fig)
+                        plt.close(fig)
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+                with chart_tabs[4]:
+                    try:
+                        from analysis import plot_speed_comparison
+                        fig = plot_speed_comparison(metrics_df)
+                        if fig:
+                            st.pyplot(fig)
+                            plt.close(fig)
+                        else:
+                            st.info("No hay datos de velocidad disponibles.")
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
             else:
                 st.subheader("Datos")
                 st.dataframe(df, use_container_width=True)
@@ -1098,8 +1107,8 @@ elif page == "Comparar Modelos":
                      use_container_width=True)
 
         st.subheader("Local vs API")
-        local_models = ['qwen7b', 'llama8b', 'gemma9b']
-        api_models = ['nim_llama70b', 'nim_llama8b', 'nim_mistral']
+        local_models = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'ollama']
+        api_models = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'nvidia_nim']
 
         local_metrics = metrics_df[metrics_df['model'].isin(local_models)]
         api_metrics = metrics_df[metrics_df['model'].isin(api_models)]
@@ -1147,9 +1156,10 @@ elif page == "Progreso Experimentos":
 
     # ── Configuracion esperada ────────────────────────────────
     EXPECTED_TASKS = ['classification', 'ambiguity', 'completeness', 'inconsistency', 'testability']
-    EXPECTED_MODELS = ['qwen7b', 'llama8b', 'gemma9b', 'nim_llama70b', 'nim_llama8b', 'nim_mistral']
-    EXPECTED_STRATEGIES = ['question_refinement', 'cognitive_verifier', 'persona_context', 'few_shot', 'chain_of_thought']
+    EXPECTED_MODELS = list(MODEL_CONFIGS.keys())
+    EXPECTED_STRATEGIES = list(STRATEGY_LABELS.keys())
     EXPECTED_ITERATIONS = 5
+    EXPECTED_SEEDS = [42, 123, 456, 789, 1024]
     CONFIGS_PER_TASK = len(EXPECTED_MODELS) * len(EXPECTED_STRATEGIES) * EXPECTED_ITERATIONS  # 150
     TOTAL_CONFIGS = len(EXPECTED_TASKS) * CONFIGS_PER_TASK  # 750
     STALE_SECONDS = 600  # 10 min
@@ -1167,26 +1177,28 @@ elif page == "Progreso Experimentos":
         """Escanea checkpoints y resultados, clasifica por frescura."""
         now = time.time()
         files = []
-        for f in sorted(CHECKPOINTS_DIR.glob("checkpoint_*.json")):
-            task_name = f.stem.replace("checkpoint_", "").rsplit("_", 2)[0]
-            if task_name not in EXPECTED_TASKS:
-                continue
-            mtime = f.stat().st_mtime
-            files.append({
-                'path': f, 'name': f.name, 'task': task_name,
-                'type': 'checkpoint', 'mtime': mtime,
-                'active': (now - mtime) <= STALE_SECONDS,
-            })
-        for f in sorted(EXPERIMENTS_DIR.glob("results_*.csv")):
-            task_name = f.stem.replace("results_", "").rsplit("_", 2)[0]
-            if task_name not in EXPECTED_TASKS:
-                continue
-            mtime = f.stat().st_mtime
-            files.append({
-                'path': f, 'name': f.name, 'task': task_name,
-                'type': 'result', 'mtime': mtime,
-                'active': (now - mtime) <= STALE_SECONDS,
-            })
+        if CHECKPOINTS_DIR.exists():
+            for f in sorted(CHECKPOINTS_DIR.glob("checkpoint_*.json")):
+                task_name = f.stem.replace("checkpoint_", "").rsplit("_", 2)[0]
+                if task_name not in EXPECTED_TASKS:
+                    continue
+                mtime = f.stat().st_mtime
+                files.append({
+                    'path': f, 'name': f.name, 'task': task_name,
+                    'type': 'checkpoint', 'mtime': mtime,
+                    'active': (now - mtime) <= STALE_SECONDS,
+                })
+        if EXPERIMENTS_DIR.exists():
+            for f in sorted(EXPERIMENTS_DIR.glob("results_*.csv")):
+                task_name = f.stem.replace("results_", "").rsplit("_", 2)[0]
+                if task_name not in EXPECTED_TASKS:
+                    continue
+                mtime = f.stat().st_mtime
+                files.append({
+                    'path': f, 'name': f.name, 'task': task_name,
+                    'type': 'result', 'mtime': mtime,
+                    'active': (now - mtime) <= STALE_SECONDS,
+                })
         return files
 
     def _load_file_records(file_info):
@@ -1276,8 +1288,8 @@ elif page == "Progreso Experimentos":
                 configs.add(key)
             # Detectar si es local, API o mixto
             models_in = set(k[0] for k in configs)
-            local_models = {'qwen7b', 'llama8b', 'gemma9b'}
-            nim_models = {'nim_llama70b', 'nim_llama8b', 'nim_mistral'}
+            local_models = {k for k, v in MODEL_CONFIGS.items() if v['type'] == 'ollama'}
+            nim_models = {k for k, v in MODEL_CONFIGS.items() if v['type'] == 'nvidia_nim'}
             has_local = bool(models_in & local_models)
             has_nim = bool(models_in & nim_models)
             if has_local and has_nim:
@@ -1422,14 +1434,12 @@ elif page == "Progreso Experimentos":
                 title=dict(text='Progreso por modelo', font=dict(size=13)),
                 xaxis_title='Configuraciones completadas',
                 height=250, margin=dict(l=10, r=10, t=35, b=30),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e0e0e0', size=10),
+                font=dict(size=10),
                 showlegend=False,
             )
-            fig1.update_xaxes(gridcolor='rgba(136,136,136,0.12)',
+            fig1.update_xaxes(gridcolor='rgba(136,136,136,0.2)',
                               zeroline=False, showline=False)
-            fig1.update_yaxes(gridcolor='rgba(136,136,136,0.12)',
+            fig1.update_yaxes(gridcolor='rgba(136,136,136,0.2)',
                               zeroline=False, showline=False)
             st.plotly_chart(fig1, use_container_width=True,
                            config={'displayModeBar': False},
@@ -1459,14 +1469,12 @@ elif page == "Progreso Experimentos":
                 title=dict(text='Velocidad media', font=dict(size=13)),
                 xaxis_title='Tokens/segundo',
                 height=250, margin=dict(l=10, r=10, t=35, b=30),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e0e0e0', size=10),
+                font=dict(size=10),
                 showlegend=False,
             )
-            fig2.update_xaxes(gridcolor='rgba(136,136,136,0.12)',
+            fig2.update_xaxes(gridcolor='rgba(136,136,136,0.2)',
                               zeroline=False, showline=False)
-            fig2.update_yaxes(gridcolor='rgba(136,136,136,0.12)',
+            fig2.update_yaxes(gridcolor='rgba(136,136,136,0.2)',
                               zeroline=False, showline=False)
             if not tps_models:
                 fig2.add_annotation(text='Sin datos de velocidad',
@@ -1483,16 +1491,27 @@ elif page == "Progreso Experimentos":
 
         with st.expander("Detalle modelo x estrategia", expanded=td['active']):
             matrix = {}
+            time_matrix = {}
             for model in proc_models:
                 matrix[model] = {}
+                time_matrix[model] = {}
                 for strat in EXPECTED_STRATEGIES:
                     count = sum(
                         1 for it in range(1, EXPECTED_ITERATIONS + 1)
-                        for seed in [42, 123, 456, 789, 1024]
+                        for seed in EXPECTED_SEEDS
                         if (model, strat, it, seed) in td['configs']
                     )
                     matrix[model][strat] = count
+                    # Tiempo total acumulado para esta celda
+                    total_t = sum(
+                        r.get('time_seconds', 0) or 0
+                        for r in td['records']
+                        if r.get('model') == model
+                        and r.get('strategy', r.get('pattern', '')) == strat
+                    )
+                    time_matrix[model][strat] = total_t
 
+            st.caption("Iteraciones completadas")
             matrix_df = pd.DataFrame(matrix).T
             matrix_df.columns = [STRATEGY_LABELS.get(s, s) for s in EXPECTED_STRATEGIES]
             matrix_df.index = [MODEL_LABELS.get(m, m) for m in proc_models]
@@ -1502,6 +1521,29 @@ elif page == "Progreso Experimentos":
                 matrix_df.style.background_gradient(
                     cmap='RdYlGn', vmin=0, vmax=EXPECTED_ITERATIONS
                 ).format("{:.0f}/" + str(EXPECTED_ITERATIONS)),
+                use_container_width=True
+            )
+
+            st.caption("Tiempo acumulado por modelo x estrategia")
+            time_df = pd.DataFrame(time_matrix).T
+            time_df.columns = [STRATEGY_LABELS.get(s, s) for s in EXPECTED_STRATEGIES]
+            time_df.index = [MODEL_LABELS.get(m, m) for m in proc_models]
+            time_df.index.name = "Modelo"
+
+            def _fmt_time(v):
+                if v < 60:
+                    return f"{v:.0f}s"
+                elif v < 3600:
+                    return f"{v/60:.1f}m"
+                else:
+                    return f"{v/3600:.1f}h"
+
+            # vmax = mayor tiempo observado o al menos 1s para evitar todo-rojo con un solo modelo
+            _t_max = max(time_df.values.max(), 1)
+            st.dataframe(
+                time_df.style.background_gradient(
+                    cmap='YlOrRd', vmin=0, vmax=_t_max
+                ).format(_fmt_time),
                 use_container_width=True
             )
 
