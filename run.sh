@@ -56,23 +56,20 @@ api() {
 
 experiment() {
     activate
-    cd "$SRC_DIR"
     echo -e "${CYAN}Ejecutando experimento...${NC}"
-    python experiment.py "$@"
+    PYTHONPATH="$SRC_DIR" python "$SRC_DIR/experiment.py" "$@"
 }
 
 analysis() {
     activate
-    cd "$SRC_DIR"
     echo -e "${CYAN}Generando analisis...${NC}"
-    python analysis.py "$@"
+    PYTHONPATH="$SRC_DIR" python "$SRC_DIR/analysis.py" "$@"
 }
 
 pipeline() {
     activate
-    cd "$SRC_DIR"
     echo -e "${CYAN}Ejecutando pipeline completo sobre documento...${NC}"
-    python pipeline.py "$@"
+    PYTHONPATH="$SRC_DIR" python "$SRC_DIR/pipeline.py" "$@"
 }
 
 check_ollama() {

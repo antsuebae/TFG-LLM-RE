@@ -23,6 +23,8 @@ tqdm>=4.66
 matplotlib>=3.8
 seaborn>=0.13
 scipy>=1.11
+plotly>=5.18
+tabulate>=0.9
 
 # PDF parsing
 pypdf>=4.0

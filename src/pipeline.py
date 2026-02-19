@@ -12,6 +12,7 @@ Genera un informe completo en HTML, CSV y Markdown.
 """
 
 import argparse
+import re
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -34,8 +35,9 @@ logger = logging.getLogger(__name__)
 
 # Modelos disponibles
 MODEL_CONFIGS = {
-    "qwen7b": {"name": "qwen2.5-coder:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
+    "qwen7b": {"name": "qwen2.5:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
     "llama8b": {"name": "llama3.1:8b-instruct-q4_K_M", "type": "ollama", "short_name": "llama8b"},
+    "gemma9b": {"name": "gemma2:9b-instruct-q4_K_M", "type": "ollama", "short_name": "gemma9b"},
     "nim_llama70b": {"name": "meta/llama-3.1-70b-instruct", "type": "nvidia_nim", "short_name": "nim_llama70b"},
     "nim_llama8b": {"name": "meta/llama-3.1-8b-instruct", "type": "nvidia_nim", "short_name": "nim_llama8b"},
     "nim_mistral": {"name": "mistralai/mistral-7b-instruct-v0.3", "type": "nvidia_nim", "short_name": "nim_mistral"},
@@ -66,7 +68,6 @@ def load_requirements(filepath: str) -> list[str]:
 
 def _parse_text_lines(text: str) -> list[str]:
     """Extrae requisitos de texto plano (un requisito por linea)."""
-    import re
     lines = []
     for line in text.split('\n'):
         line = line.strip()
@@ -82,9 +83,21 @@ def _parse_text_lines(text: str) -> list[str]:
     return lines
 
 
+def _clean_pdf_artifacts(text: str) -> str:
+    """Elimina artefactos tipicos de extraccion PDF."""
+    # Eliminar "Page X of Y..." y variantes
+    text = re.sub(r'Page\s+\d+\s+of\s+\d+\S*', '', text)
+    # Eliminar rutas file:/// hasta el final de la linea o siguiente espacio
+    text = re.sub(r'file:///\S+', '', text)
+    # Eliminar referencias a proyecto/fecha de exportacion tipo "Proyecto REM-CMS... DD/MM/YYYY"
+    text = re.sub(r'Proyecto\s+REM-CMS[^\n]*?\d{2}/\d{2}/\d{4}\S*', '', text)
+    # Limpiar espacios multiples resultantes
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
+
+
 def _load_requirements_from_pdf(path: Path) -> list[str]:
     """Extrae requisitos de un PDF con formato REM-CMS o texto libre."""
-    import re
     try:
         from pypdf import PdfReader
     except ImportError:
@@ -94,6 +107,9 @@ def _load_requirements_from_pdf(path: Path) -> list[str]:
     full_text = ""
     for page in reader.pages:
         full_text += page.extract_text() + "\n"
+
+    # Limpiar artefactos de PDF antes de procesar
+    full_text = _clean_pdf_artifacts(full_text)
 
     # Intentar extraer campos "Descripcion" de tablas REM-CMS
     # Patron: "Descripcion" seguido del texto del requisito
@@ -431,12 +447,18 @@ def rewrite_requirement(model, original: str, analysis: dict) -> dict:
         # Clean up: remove quotes if the model wraps the response
         if corrected.startswith('"') and corrected.endswith('"'):
             corrected = corrected[1:-1]
-        # If multiline, take just the first substantial line
+        # Join all non-empty lines into a single coherent requirement
         lines = [l.strip() for l in corrected.split('\n') if l.strip()]
-        corrected = lines[0] if lines else corrected
+        corrected = ' '.join(lines) if lines else corrected
+        # Validate: if truncated (ends with ':') or too short, flag it
+        if corrected.rstrip().endswith(':') or len(corrected) < 20:
+            changes.append("AVISO: la correccion puede estar truncada")
     else:
         corrected = original
         changes.append("ERROR: no se pudo reescribir")
+
+    # Clean markdown artifacts from changes descriptions
+    changes = [re.sub(r'\*{1,2}\s*', '', c).strip() for c in changes]
 
     return {
         'original': original,
@@ -500,6 +522,253 @@ def generate_corrected_document(results_df: pd.DataFrame, model,
     logger.info(f"Documento corregido guardado: {output_path}")
 
     return corrections
+
+
+def generate_srs_document(results_df: pd.DataFrame, corrections: list[dict],
+                          inconsistencies: list[dict], metadata: dict) -> str:
+    """Genera documento corregido con formato SRS profesional (estilo IEEE 830).
+
+    Args:
+        results_df: DataFrame con resultados del analisis.
+        corrections: Lista de dicts con original, corrected, changes_made.
+        inconsistencies: Lista de inconsistencias detectadas.
+        metadata: Dict con doc_name, model, strategy, date.
+
+    Returns:
+        String con el documento SRS en formato Markdown.
+    """
+    total = len(results_df)
+    n_corrected = sum(1 for c in corrections if c.get('changes_made'))
+    n_functional = len(results_df[results_df['classification'] == 'F'])
+    n_nonfunctional = total - n_functional
+    n_ambiguous = len(results_df[results_df['is_ambiguous'] == True])
+    n_incomplete = len(results_df[results_df['is_complete'] == False])
+    n_not_testable = len(results_df[results_df['is_testable'] == False])
+    avg_quality = results_df['quality_score'].mean()
+
+    model_label = metadata.get('model', 'N/A')
+    strategy_label = metadata.get('strategy', 'N/A')
+    doc_name = metadata.get('doc_name', 'documento')
+    date = metadata.get('date', datetime.now().strftime('%Y-%m-%d %H:%M'))
+
+    lines = []
+
+    # ── Cabecera ──────────────────────────────────────────
+    lines.append("# Especificacion de Requisitos de Software (SRS)")
+    lines.append("")
+    lines.append("## Informacion del documento")
+    lines.append(f"- **Documento origen:** {doc_name}")
+    lines.append(f"- **Fecha de analisis:** {date}")
+    lines.append(f"- **Modelo:** {model_label} | **Estrategia:** {strategy_label}")
+    lines.append(f"- **Requisitos analizados:** {total} | **Corregidos:** {n_corrected}")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # ── Separar requisitos F y NF ─────────────────────────
+    functional_indices = []
+    nonfunctional_indices = []
+    for i, (_, row) in enumerate(results_df.iterrows()):
+        if row['classification'] == 'F':
+            functional_indices.append(i)
+        else:
+            nonfunctional_indices.append(i)
+
+    def _format_requirement_section(indices, prefix, section_title):
+        """Genera seccion de requisitos con IDs y estado."""
+        section = []
+        section.append(f"## {section_title}")
+        section.append("")
+        if not indices:
+            section.append("*No se identificaron requisitos en esta categoria.*")
+            section.append("")
+            return section
+
+        for counter, idx in enumerate(indices, 1):
+            row = results_df.iloc[idx]
+            correction = corrections[idx] if idx < len(corrections) else None
+            req_id = f"{prefix}-{counter:03d}"
+
+            # Titulo corto: primeras palabras del requisito
+            text = correction['corrected'] if correction and correction.get('changes_made') else row['text']
+            short_title = text[:80].rstrip('.')
+            if len(text) > 80:
+                short_title += "..."
+
+            has_changes = correction and correction.get('changes_made')
+            status = "Corregido" if has_changes else "Sin cambios"
+
+            section.append(f"### {req_id}: {short_title}")
+            section.append(f"- **Descripcion:** {text}")
+            section.append(f"- **Estado:** {status}")
+
+            if has_changes:
+                section.append("- **Cambios realizados:**")
+                for change in correction['changes_made']:
+                    section.append(f"  - {change}")
+                section.append(f"- **Original:** ~~{correction['original']}~~")
+
+            section.append("")
+
+        return section
+
+    lines.extend(_format_requirement_section(
+        functional_indices, "REQ-F", "1. Requisitos Funcionales"))
+    lines.extend(_format_requirement_section(
+        nonfunctional_indices, "REQ-NF", "2. Requisitos No Funcionales"))
+
+    # ── Resumen de calidad ────────────────────────────────
+    lines.append("## 3. Resumen de Calidad")
+    lines.append("")
+    lines.append("| Metrica | Valor |")
+    lines.append("|---------|-------|")
+    lines.append(f"| Calidad media | {avg_quality:.0f}% |")
+    lines.append(f"| Requisitos funcionales | {n_functional} |")
+    lines.append(f"| Requisitos no funcionales | {n_nonfunctional} |")
+    lines.append(f"| Requisitos ambiguos | {n_ambiguous} |")
+    lines.append(f"| Requisitos incompletos | {n_incomplete} |")
+    lines.append(f"| Requisitos no testables | {n_not_testable} |")
+    lines.append(f"| Requisitos corregidos | {n_corrected} |")
+    lines.append("")
+
+    # ── Inconsistencias ───────────────────────────────────
+    lines.append("## 4. Inconsistencias Detectadas")
+    lines.append("")
+    if inconsistencies:
+        for inc in inconsistencies:
+            lines.append(f"- **Req #{inc['req_a_idx']}** vs **Req #{inc['req_b_idx']}**: {inc['description']}")
+        lines.append("")
+    else:
+        lines.append("*No se detectaron inconsistencias.*")
+        lines.append("")
+
+    # ── Trazabilidad de cambios ───────────────────────────
+    lines.append("## 5. Trazabilidad de Cambios")
+    lines.append("")
+    changes_exist = any(c.get('changes_made') for c in corrections)
+    if changes_exist:
+        lines.append("| REQ ID | Original | Corregido | Cambios |")
+        lines.append("|--------|----------|-----------|---------|")
+
+        f_counter = 0
+        nf_counter = 0
+        for i, (_, row) in enumerate(results_df.iterrows()):
+            if row['classification'] == 'F':
+                f_counter += 1
+                req_id = f"REQ-F-{f_counter:03d}"
+            else:
+                nf_counter += 1
+                req_id = f"REQ-NF-{nf_counter:03d}"
+
+            correction = corrections[i] if i < len(corrections) else None
+            if correction and correction.get('changes_made'):
+                original_short = correction['original'][:60].replace('|', '\\|')
+                corrected_short = correction['corrected'][:60].replace('|', '\\|')
+                changes_str = '; '.join(correction['changes_made']).replace('|', '\\|')
+                lines.append(f"| {req_id} | {original_short} | {corrected_short} | {changes_str} |")
+
+        lines.append("")
+    else:
+        lines.append("*No se realizaron cambios.*")
+        lines.append("")
+
+    # ── Pie ────────────────────────────────────────────────
+    lines.append("---")
+    lines.append(f"*Documento generado automaticamente por RE-LLM el {date}*")
+
+    return '\n'.join(lines)
+
+
+def generate_srs_html(srs_markdown: str, metadata: dict) -> str:
+    """Genera version HTML profesional del documento SRS.
+
+    Args:
+        srs_markdown: Contenido SRS en Markdown.
+        metadata: Dict con doc_name, model, strategy, date.
+
+    Returns:
+        String HTML con estilos profesionales.
+    """
+    import re as re_mod
+
+    doc_name = metadata.get('doc_name', 'documento')
+    date = metadata.get('date', datetime.now().strftime('%Y-%m-%d %H:%M'))
+
+    # Convertir markdown a HTML basico
+    content = srs_markdown
+
+    # Headers
+    content = re_mod.sub(r'^### (.+)$', r'<h3>\1</h3>', content, flags=re_mod.MULTILINE)
+    content = re_mod.sub(r'^## (.+)$', r'<h2>\1</h2>', content, flags=re_mod.MULTILINE)
+    content = re_mod.sub(r'^# (.+)$', r'<h1>\1</h1>', content, flags=re_mod.MULTILINE)
+
+    # Bold
+    content = re_mod.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+    # Italic
+    content = re_mod.sub(r'\*(.+?)\*', r'<em>\1</em>', content)
+    # Strikethrough
+    content = re_mod.sub(r'~~(.+?)~~', r'<del>\1</del>', content)
+
+    # Tables
+    def convert_table(match):
+        lines = match.group(0).strip().split('\n')
+        html_table = '<table>\n'
+        for i, line in enumerate(lines):
+            if '---' in line and '|' in line:
+                continue  # skip separator
+            cells = [c.strip() for c in line.strip('|').split('|')]
+            tag = 'th' if i == 0 else 'td'
+            html_table += '<tr>' + ''.join(f'<{tag}>{c}</{tag}>' for c in cells) + '</tr>\n'
+        html_table += '</table>\n'
+        return html_table
+
+    content = re_mod.sub(r'(\|.+\|(?:\n\|.+\|)+)', convert_table, content)
+
+    # List items
+    content = re_mod.sub(r'^  - (.+)$', r'<li class="sub">\1</li>', content, flags=re_mod.MULTILINE)
+    content = re_mod.sub(r'^- (.+)$', r'<li>\1</li>', content, flags=re_mod.MULTILINE)
+
+    # Horizontal rules
+    content = re_mod.sub(r'^---$', r'<hr>', content, flags=re_mod.MULTILINE)
+
+    # Paragraphs for remaining lines
+    lines_out = []
+    for line in content.split('\n'):
+        stripped = line.strip()
+        if stripped and not stripped.startswith('<'):
+            lines_out.append(f'<p>{stripped}</p>')
+        else:
+            lines_out.append(line)
+    content = '\n'.join(lines_out)
+
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>SRS - {doc_name}</title>
+<style>
+    body {{ font-family: 'Segoe UI', sans-serif; margin: 40px auto; max-width: 900px; background: #f5f5f5; color: #333; line-height: 1.6; }}
+    h1 {{ color: #1a365d; border-bottom: 3px solid #2b6cb0; padding-bottom: 10px; font-size: 1.8em; }}
+    h2 {{ color: #2c5282; margin-top: 30px; border-bottom: 1px solid #bee3f8; padding-bottom: 5px; }}
+    h3 {{ color: #2d3748; margin-top: 20px; font-size: 1.05em; }}
+    table {{ width: 100%; border-collapse: collapse; margin: 15px 0; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+    th {{ background: #2b6cb0; color: white; padding: 10px 12px; text-align: left; font-size: 0.9em; }}
+    td {{ padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.9em; }}
+    tr:hover {{ background: #ebf8ff; }}
+    li {{ margin: 4px 0; }}
+    li.sub {{ margin-left: 20px; font-size: 0.95em; }}
+    del {{ color: #e53e3e; background: #fed7d7; padding: 1px 3px; border-radius: 2px; }}
+    strong {{ color: #2d3748; }}
+    hr {{ border: none; border-top: 2px solid #e2e8f0; margin: 30px 0; }}
+    em {{ color: #718096; }}
+    p {{ margin: 5px 0; }}
+</style>
+</head>
+<body>
+{content}
+</body>
+</html>"""
+    return html
 
 
 def save_pipeline_results(results_df: pd.DataFrame, inconsistencies: list[dict],
@@ -575,7 +844,7 @@ def load_pipeline_runs(base_dir: Path) -> list[dict]:
     return runs
 
 
-def run_pipeline(filepath: str, model_key: str = "qwen7b", strategy: str = "few_shot",
+def run_pipeline(filepath: str, model_key: str = "llama8b", strategy: str = "few_shot",
                  output_dir: str = None, skip_inconsistency: bool = False,
                  max_pairs: int = 50):
     """Ejecuta el pipeline completo sobre un documento de requisitos."""
@@ -638,6 +907,65 @@ def run_pipeline(filepath: str, model_key: str = "qwen7b", strategy: str = "few_
     return results_df, inconsistencies
 
 
+def run_pipeline_dag(filepath: str, model_key: str = "llama8b",
+                     strategy: str = "few_shot", output_dir: str = None,
+                     use_llm_extraction: bool = True,
+                     skip_inconsistency: bool = False,
+                     enable_rewriting: bool = False,
+                     max_pairs: int = 50):
+    """Ejecuta el pipeline DAG (prompt combinado + concurrencia).
+
+    Wrapper que delega a dag.run_dag_pipeline() y muestra resumen en consola.
+    """
+    from dag import run_dag_pipeline, NODE_LABELS
+
+    if output_dir is None:
+        output_dir = str(Path(__file__).parent.parent / "results" / "pipeline")
+
+    def progress_cb(node_name, current, total, skipped=False):
+        label = NODE_LABELS.get(node_name, node_name)
+        status = "saltado" if skipped else "ejecutando"
+        logger.info(f"[{current}/{total}] {label} ({status})")
+
+    ctx = run_dag_pipeline(
+        filepath=filepath,
+        model_key=model_key,
+        strategy=strategy,
+        output_dir=output_dir,
+        use_llm_extraction=use_llm_extraction,
+        skip_inconsistency=skip_inconsistency,
+        enable_rewriting=enable_rewriting,
+        max_pairs=max_pairs,
+        progress_callback=progress_cb,
+    )
+
+    results_df = ctx.get('results_df', pd.DataFrame())
+    inconsistencies = ctx.get('inconsistencies', [])
+
+    if results_df.empty:
+        logger.error("No se obtuvieron resultados.")
+        return results_df, inconsistencies
+
+    # Resumen en consola
+    total = len(results_df)
+    print(f"\n{'='*60}")
+    print(f"INFORME DE ANALISIS (DAG) - {total} requisitos")
+    print(f"{'='*60}")
+    print(f"  Funcionales:     {len(results_df[results_df['classification'] == 'F']):>3}")
+    print(f"  No Funcionales:  {len(results_df[results_df['classification'] == 'NF']):>3}")
+    print(f"  Ambiguos:        {len(results_df[results_df['is_ambiguous'] == True]):>3}")
+    print(f"  Incompletos:     {len(results_df[results_df['is_complete'] == False]):>3}")
+    print(f"  No testables:    {len(results_df[results_df['is_testable'] == False]):>3}")
+    print(f"  Inconsistencias: {len(inconsistencies):>3}")
+    print(f"  Calidad media:   {results_df['quality_score'].mean():>5.0f}%")
+    print(f"{'='*60}")
+    if ctx.get('run_dir'):
+        print(f"  Resultados: {ctx['run_dir']}")
+    print(f"{'='*60}\n")
+
+    return results_df, inconsistencies
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Pipeline completo de analisis de requisitos',
@@ -645,15 +973,17 @@ if __name__ == "__main__":
         epilog="""
 Ejemplos:
   python pipeline.py requisitos.txt
+  python pipeline.py requisitos.txt --dag
+  python pipeline.py requisitos.txt --dag --llm-extract
   python pipeline.py requisitos.csv --model nim_llama70b
   python pipeline.py requisitos.md --strategy chain_of_thought
   python pipeline.py requisitos.txt --skip-inconsistency
         """
     )
-    parser.add_argument('file', help='Documento de requisitos (.txt, .md, .csv)')
-    parser.add_argument('--model', default='qwen7b',
+    parser.add_argument('file', help='Documento de requisitos (.txt, .md, .csv, .pdf)')
+    parser.add_argument('--model', default='llama8b',
                         choices=list(MODEL_CONFIGS.keys()),
-                        help='Modelo a usar (default: qwen7b)')
+                        help='Modelo a usar (default: llama8b)')
     parser.add_argument('--strategy', default='few_shot',
                         choices=['question_refinement', 'cognitive_verifier',
                                  'persona_context', 'few_shot', 'chain_of_thought'],
@@ -663,14 +993,32 @@ Ejemplos:
                         help='Saltar analisis de inconsistencias (mas rapido)')
     parser.add_argument('--max-pairs', type=int, default=50,
                         help='Maximo de pares a analizar para inconsistencias')
+    parser.add_argument('--dag', action='store_true',
+                        help='Usar pipeline DAG (prompt combinado + concurrencia)')
+    parser.add_argument('--llm-extract', action='store_true',
+                        help='Usar LLM para extraer requisitos (solo con --dag)')
+    parser.add_argument('--rewrite', action='store_true',
+                        help='Reescribir requisitos con problemas (solo con --dag)')
 
     args = parser.parse_args()
 
-    run_pipeline(
-        filepath=args.file,
-        model_key=args.model,
-        strategy=args.strategy,
-        output_dir=args.output,
-        skip_inconsistency=args.skip_inconsistency,
-        max_pairs=args.max_pairs,
-    )
+    if args.dag:
+        run_pipeline_dag(
+            filepath=args.file,
+            model_key=args.model,
+            strategy=args.strategy,
+            output_dir=args.output,
+            use_llm_extraction=args.llm_extract,
+            skip_inconsistency=args.skip_inconsistency,
+            enable_rewriting=args.rewrite,
+            max_pairs=args.max_pairs,
+        )
+    else:
+        run_pipeline(
+            filepath=args.file,
+            model_key=args.model,
+            strategy=args.strategy,
+            output_dir=args.output,
+            skip_inconsistency=args.skip_inconsistency,
+            max_pairs=args.max_pairs,
+        )

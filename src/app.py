@@ -15,7 +15,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 import os
 import json
@@ -31,6 +30,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 from models import get_model
 from prompts import build_prompt, parse_response, TASK_NAMES, STRATEGY_NAMES
+from warnings_analysis import generate_all_warnings, check_input_warnings
 
 # ── Page config ──────────────────────────────────────────────
 st.set_page_config(
@@ -40,18 +40,79 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ── Custom CSS ───────────────────────────────────────────────
+st.markdown("""
+<style>
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        border-right: 1px solid #D5DBDB;
+    }
+    section[data-testid="stSidebar"] .stMarkdown h1 {
+        color: #1B4F72;
+    }
+
+    /* Metric cards */
+    div[data-testid="stMetric"] {
+        background: #FFFFFF;
+        border: 1px solid #D5DBDB;
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    div[data-testid="stMetric"] label {
+        color: #566573;
+        font-size: 0.85rem;
+    }
+
+    /* Tables */
+    .stDataFrame {
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    /* Primary buttons */
+    .stButton > button[kind="primary"] {
+        background-color: #1B4F72;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #154360;
+    }
+
+    /* Status containers */
+    details[data-testid="stExpander"] {
+        border-radius: 6px;
+        border: 1px solid #D5DBDB;
+    }
+
+    /* Download buttons */
+    .stDownloadButton > button {
+        border-radius: 6px;
+    }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab"] {
+        font-weight: 500;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # ── Model configs ────────────────────────────────────────────
 MODEL_CONFIGS = {
-    "qwen7b": {"name": "qwen2.5-coder:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
+    "qwen7b": {"name": "qwen2.5:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
     "llama8b": {"name": "llama3.1:8b-instruct-q4_K_M", "type": "ollama", "short_name": "llama8b"},
+    "gemma9b": {"name": "gemma2:9b-instruct-q4_K_M", "type": "ollama", "short_name": "gemma9b"},
     "nim_llama70b": {"name": "meta/llama-3.1-70b-instruct", "type": "nvidia_nim", "short_name": "nim_llama70b"},
     "nim_llama8b": {"name": "meta/llama-3.1-8b-instruct", "type": "nvidia_nim", "short_name": "nim_llama8b"},
     "nim_mistral": {"name": "mistralai/mistral-7b-instruct-v0.3", "type": "nvidia_nim", "short_name": "nim_mistral"},
 }
 
 MODEL_LABELS = {
-    "qwen7b": "Qwen 7B (local)",
+    "qwen7b": "Qwen 2.5 7B (local)",
     "llama8b": "Llama 8B (local)",
+    "gemma9b": "Gemma 2 9B (local)",
     "nim_llama70b": "Llama 70B (NIM)",
     "nim_llama8b": "Llama 8B (NIM)",
     "nim_mistral": "Mistral 7B (NIM)",
@@ -66,6 +127,28 @@ STRATEGY_LABELS = {
 }
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
+EXPERIMENTS_DIR = RESULTS_DIR / "experiments"
+CHECKPOINTS_DIR = RESULTS_DIR / "checkpoints"
+
+
+def _render_warnings(warnings: list[dict], title: str = "Advertencias de calidad"):
+    """Muestra advertencias en un expander de Streamlit."""
+    if not warnings:
+        return
+    n = len(warnings)
+    with st.expander(f"{title} ({n})", expanded=False):
+        for w in warnings:
+            level = w.get('level', 'warning')
+            msg = w.get('message', '')
+            details = w.get('details', [])
+            detail_text = "\n".join(f"  {d}" for d in details) if details else ""
+            full_msg = f"{msg}\n{detail_text}" if detail_text else msg
+            if level == 'error':
+                st.error(full_msg)
+            elif level == 'warning':
+                st.warning(full_msg)
+            else:
+                st.info(full_msg)
 
 
 def get_model_instance(model_key: str, temperature: float = 0.4):
@@ -77,11 +160,23 @@ def get_model_instance(model_key: str, temperature: float = 0.4):
 st.sidebar.title("RE-LLM")
 st.sidebar.markdown("Analisis de Requisitos con LLMs")
 
+_PAGES = ["Pipeline Documento", "Clasificar Requisito", "Analizar Calidad",
+           "Validar Consistencia", "Resultados Experimentos", "Comparar Modelos",
+           "Progreso Experimentos"]
+
+# Restaurar pagina desde query params (para que el auto-refresh no pierda la pagina)
+_qp_page = st.query_params.get("page", None)
+_default_idx = _PAGES.index(_qp_page) if _qp_page in _PAGES else 0
+
 page = st.sidebar.radio(
     "Navegacion",
-    ["Pipeline Documento", "Clasificar Requisito", "Analizar Calidad",
-     "Validar Consistencia", "Resultados Experimentos", "Comparar Modelos"],
+    _PAGES,
+    index=_default_idx,
 )
+
+# Persistir pagina actual en query params
+if st.query_params.get("page") != page:
+    st.query_params["page"] = page
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Modelos locales:** Ollama")
@@ -91,30 +186,45 @@ st.sidebar.markdown(f"NVIDIA NIM: {'Configurado' if nim_configured else 'No conf
 
 
 # ============================================================
-# HELPER: Run pipeline for one model
+# HELPER: Run pipeline for one model (uses DAG)
 # ============================================================
 def run_pipeline_for_model(requirements: list[str], model_key: str,
-                           strategy: str, skip_inconsistency: bool) -> dict:
-    """Ejecuta el pipeline completo para un modelo. Returns dict with results."""
-    from pipeline import analyze_requirement, analyze_inconsistencies, compute_quality_score
+                           strategy: str, skip_inconsistency: bool,
+                           filepath: str = None,
+                           use_llm_extraction: bool = False,
+                           doc_name: str = 'documento',
+                           progress_callback=None) -> dict:
+    """Ejecuta el pipeline DAG para un modelo. Returns dict with results."""
+    from dag import run_dag_pipeline, run_dag_pipeline_from_requirements
 
-    model = get_model(MODEL_CONFIGS[model_key])
     start_time = time.time()
 
-    rows = []
-    for req in requirements:
-        row = analyze_requirement(model, req, strategy)
-        row['quality_score'] = compute_quality_score(row)
-        rows.append(row)
-
-    inconsistencies = []
-    if not skip_inconsistency and len(requirements) > 1:
-        inconsistencies = analyze_inconsistencies(
-            model, requirements, strategy, max_pairs=30
+    if filepath and use_llm_extraction:
+        # Full DAG: load + LLM extraction + analysis
+        ctx = run_dag_pipeline(
+            filepath=filepath,
+            model_key=model_key,
+            strategy=strategy,
+            use_llm_extraction=True,
+            skip_inconsistency=skip_inconsistency,
+            max_pairs=30,
+            progress_callback=progress_callback,
+        )
+    else:
+        # DAG from requirements (skip Nodes 1-2)
+        ctx = run_dag_pipeline_from_requirements(
+            requirements=requirements,
+            model_key=model_key,
+            strategy=strategy,
+            skip_inconsistency=skip_inconsistency,
+            max_pairs=30,
+            doc_name=doc_name,
+            progress_callback=progress_callback,
         )
 
     elapsed = time.time() - start_time
-    results_df = pd.DataFrame(rows)
+    results_df = ctx.get('results_df', pd.DataFrame())
+    inconsistencies = ctx.get('inconsistencies', [])
 
     return {
         'model': model_key,
@@ -138,25 +248,31 @@ if page == "Pipeline Documento":
 
     requirements = []
 
+    # Track filepath for LLM extraction
+    doc_filepath = None
+    doc_suffix = ''
+
     if input_mode == "Subir archivo":
         uploaded = st.file_uploader("Documento de requisitos",
                                      type=['txt', 'md', 'csv', 'pdf'])
         if uploaded:
-            # Save to temp file for pipeline to load
+            # Save to temp file (keep it for potential LLM extraction)
             suffix = Path(uploaded.name).suffix
             tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
             tmp.write(uploaded.read())
             tmp.close()
+            doc_filepath = tmp.name
+            doc_suffix = suffix.lower()
 
             from pipeline import load_requirements
             try:
                 requirements = load_requirements(tmp.name)
                 st.session_state['pipeline_doc_name'] = uploaded.name
+                st.session_state['pipeline_doc_filepath'] = tmp.name
+                st.session_state['pipeline_doc_suffix'] = doc_suffix
                 st.success(f"**{len(requirements)}** requisitos cargados desde {uploaded.name}")
             except Exception as e:
                 st.error(f"Error al cargar: {e}")
-            finally:
-                os.unlink(tmp.name)
     else:
         data_dir = Path(__file__).parent.parent / "data"
         files = sorted(data_dir.glob("*"))
@@ -164,10 +280,15 @@ if page == "Pipeline Documento":
         if doc_files:
             selected = st.selectbox("Archivo", doc_files,
                                      format_func=lambda x: x.name)
+            doc_filepath = str(selected)
+            doc_suffix = selected.suffix.lower()
+
             from pipeline import load_requirements
             try:
                 requirements = load_requirements(str(selected))
                 st.session_state['pipeline_doc_name'] = selected.name
+                st.session_state['pipeline_doc_filepath'] = str(selected)
+                st.session_state['pipeline_doc_suffix'] = doc_suffix
                 st.success(f"**{len(requirements)}** requisitos cargados desde {selected.name}")
             except Exception as e:
                 st.error(f"Error al cargar: {e}")
@@ -187,7 +308,7 @@ if page == "Pipeline Documento":
             selected_models = st.multiselect(
                 "Modelos a usar",
                 list(MODEL_CONFIGS.keys()),
-                default=["qwen7b"],
+                default=["llama8b"],
                 format_func=lambda x: MODEL_LABELS.get(x, x)
             )
 
@@ -206,9 +327,15 @@ if page == "Pipeline Documento":
                 )
 
         with col_cfg3:
-            execution_mode = st.radio("Ejecucion", ["Secuencial", "Paralela"],
-                                       horizontal=True)
             skip_inconsistency = st.checkbox("Saltar inconsistencias (mas rapido)", value=False)
+            # LLM extraction: default True for PDF/TXT/MD, False for CSV
+            current_suffix = st.session_state.get('pipeline_doc_suffix', '')
+            default_llm_extract = current_suffix in ('.pdf', '.txt', '.md')
+            use_llm_extraction = st.checkbox(
+                "Usar LLM para extraer requisitos",
+                value=default_llm_extract,
+                help="Usa el LLM para limpiar y extraer requisitos del texto bruto. Recomendado para PDF/TXT."
+            )
 
         if not selected_models:
             st.warning("Selecciona al menos un modelo.")
@@ -218,51 +345,94 @@ if page == "Pipeline Documento":
         # ── Ejecutar ─────────────────────────────────────────
         elif st.button("Ejecutar Pipeline", type="primary"):
 
+            from dag import NODE_LABELS as DAG_NODE_LABELS
+
             # all_results: dict[(model_key, strategy)] -> result
             all_results = {}
             combos = [(m, s) for m in selected_models for s in selected_strategies]
             total_combos = len(combos)
             progress = st.progress(0, text="Iniciando...")
-            status_container = st.container()
 
-            if execution_mode == "Paralela" and total_combos > 1:
-                # ── PARALELO ─────────────────────────────────
-                status_container.info(
-                    f"Ejecutando {total_combos} combinaciones (modelo x estrategia) en paralelo..."
-                )
-                with ThreadPoolExecutor(max_workers=min(total_combos, 4)) as executor:
-                    futures = {}
-                    for model_key, strat in combos:
-                        f = executor.submit(
-                            run_pipeline_for_model,
-                            requirements, model_key, strat, skip_inconsistency
-                        )
-                        futures[f] = (model_key, strat)
+            current_filepath = st.session_state.get('pipeline_doc_filepath')
+            current_doc_name = st.session_state.get('pipeline_doc_name', 'documento')
 
-                    done_count = 0
-                    for future in as_completed(futures):
-                        combo_key = futures[future]
-                        done_count += 1
-                        progress.progress(
-                            done_count / total_combos,
-                            text=f"Completado: {combo_key[0]} + {STRATEGY_LABELS.get(combo_key[1], combo_key[1])} ({done_count}/{total_combos})"
-                        )
-                        try:
-                            all_results[combo_key] = future.result()
-                        except Exception as e:
-                            st.error(f"Error con {combo_key[0]} + {combo_key[1]}: {e}")
-            else:
-                # ── SECUENCIAL ───────────────────────────────
-                for i, (model_key, strat) in enumerate(combos):
-                    progress.progress(
-                        i / total_combos,
-                        text=f"Ejecutando {MODEL_LABELS.get(model_key, model_key)} + {STRATEGY_LABELS.get(strat, strat)}... ({i+1}/{total_combos})"
-                    )
+            # ── Extraccion unica de requisitos ────────────────
+            extracted_requirements = None
+            if use_llm_extraction and current_filepath:
+                first_model_key = combos[0][0]
+                first_strat = combos[0][1]
+                combo_label = f"{MODEL_LABELS.get(first_model_key, first_model_key)} + {STRATEGY_LABELS.get(first_strat, first_strat)}"
+                progress.progress(0, text=f"Combo 1/{total_combos}: {combo_label}")
+
+                with st.status(f"Combo 1/{total_combos}: {combo_label}", expanded=True) as status_container:
+                    def _extraction_cb(node_name, current, total, skipped=False):
+                        label = DAG_NODE_LABELS.get(node_name, node_name)
+                        if skipped:
+                            status_container.write(f"~~{label}~~ (omitido)")
+                        else:
+                            status_container.write(f"**Paso {current}/{total}:** {label}...")
+
                     try:
-                        all_results[(model_key, strat)] = run_pipeline_for_model(
-                            requirements, model_key, strat, skip_inconsistency
+                        from dag import run_dag_pipeline
+                        ctx = run_dag_pipeline(
+                            filepath=current_filepath,
+                            model_key=first_model_key,
+                            strategy=first_strat,
+                            use_llm_extraction=True,
+                            skip_inconsistency=skip_inconsistency,
+                            max_pairs=30,
+                            progress_callback=_extraction_cb,
                         )
+                        extracted_requirements = ctx.get('requirements', [])
+                        results_df = ctx.get('results_df', pd.DataFrame())
+                        inconsistencies = ctx.get('inconsistencies', [])
+                        all_results[(first_model_key, first_strat)] = {
+                            'model': first_model_key,
+                            'strategy': first_strat,
+                            'results_df': results_df,
+                            'inconsistencies': inconsistencies,
+                            'elapsed': 0,
+                        }
+                        status_container.update(label=f"Combo 1/{total_combos}: {combo_label} - Completada", state="complete", expanded=False)
+                        st.info(f"Requisitos extraidos por LLM: {len(extracted_requirements)} (se reutilizaran)")
                     except Exception as e:
+                        status_container.update(label=f"Combo 1/{total_combos}: {combo_label} - Error", state="error", expanded=False)
+                        st.error(f"Error en extraccion LLM: {e}")
+                        extracted_requirements = requirements
+
+            for i, (model_key, strat) in enumerate(combos):
+                if use_llm_extraction and extracted_requirements and i == 0:
+                    progress.progress(1 / total_combos, text=f"Combo 1/{total_combos} completada")
+                    continue
+
+                combo_label = f"{MODEL_LABELS.get(model_key, model_key)} + {STRATEGY_LABELS.get(strat, strat)}"
+                progress.progress(
+                    i / total_combos,
+                    text=f"Combo {i+1}/{total_combos}: {combo_label}"
+                )
+
+                with st.status(f"Combo {i+1}/{total_combos}: {combo_label}", expanded=True) as status_container:
+                    def _make_dag_cb(sc):
+                        def _cb(node_name, current, total, skipped=False):
+                            label = DAG_NODE_LABELS.get(node_name, node_name)
+                            if skipped:
+                                sc.write(f"~~{label}~~ (omitido)")
+                            else:
+                                sc.write(f"**Paso {current}/{total}:** {label}...")
+                        return _cb
+
+                    try:
+                        reqs_to_use = extracted_requirements if extracted_requirements else requirements
+                        all_results[(model_key, strat)] = run_pipeline_for_model(
+                            reqs_to_use, model_key, strat, skip_inconsistency,
+                            filepath=None,
+                            use_llm_extraction=False,
+                            doc_name=current_doc_name,
+                            progress_callback=_make_dag_cb(status_container),
+                        )
+                        status_container.update(label=f"Combo {i+1}/{total_combos}: {combo_label} - Completada", state="complete", expanded=False)
+                    except Exception as e:
+                        status_container.update(label=f"Combo {i+1}/{total_combos}: {combo_label} - Error", state="error", expanded=False)
                         st.error(f"Error con {model_key} + {strat}: {e}")
 
             progress.progress(1.0, text="Completado")
@@ -279,6 +449,13 @@ if page == "Pipeline Documento":
         if 'pipeline_results' in st.session_state:
             all_results = st.session_state['pipeline_results']
             requirements = st.session_state['pipeline_reqs']
+
+            # Filter out results with empty DataFrames
+            all_results = {k: v for k, v in all_results.items()
+                          if not v['results_df'].empty}
+            if not all_results:
+                st.error("Todas las ejecuciones fallaron. Revisa los logs del modelo.")
+                st.stop()
 
             st.markdown("---")
             st.header("Resultados")
@@ -368,6 +545,10 @@ if page == "Pipeline Documento":
                             display_df.index = range(1, len(display_df) + 1)
                             st.dataframe(display_df, use_container_width=True, height=400)
 
+                            # Advertencias de calidad automaticas
+                            pipeline_warnings = generate_all_warnings(df)
+                            _render_warnings(pipeline_warnings, "Advertencias de calidad")
+
                             # Requisitos con problemas
                             problems = df[
                                 (df['is_ambiguous'] == True) |
@@ -449,10 +630,16 @@ if page == "Pipeline Documento":
                         model_key, strat = rewrite_combo
                         model = get_model_instance(model_key)
 
-                        with st.spinner("Reescribiendo requisitos con problemas..."):
+                        df = res['results_df']
+                        n_problems = sum(1 for _, row in df.iterrows() if (
+                            row.get('is_ambiguous') is True or
+                            row.get('is_complete') is False or
+                            row.get('is_testable') is False
+                        ))
+
+                        with st.status(f"Reescribiendo {n_problems} requisitos con problemas...", expanded=True) as rewrite_status:
                             corrections = []
                             progress_rewrite = st.progress(0)
-                            df = res['results_df']
                             for i, (_, row) in enumerate(df.iterrows()):
                                 has_problems = (
                                     row.get('is_ambiguous') is True or
@@ -460,11 +647,14 @@ if page == "Pipeline Documento":
                                     row.get('is_testable') is False
                                 )
                                 if has_problems:
+                                    short_text = row['text'][:80] + ('...' if len(row['text']) > 80 else '')
+                                    rewrite_status.write(f"**Requisito {i+1}/{len(df)}:** {short_text}")
                                     result = rewrite_requirement(model, row['text'], row.to_dict())
                                 else:
                                     result = {'original': row['text'], 'corrected': row['text'], 'changes_made': []}
                                 corrections.append(result)
                                 progress_rewrite.progress((i + 1) / len(df))
+                            rewrite_status.update(label=f"Reescritura completada ({n_problems} requisitos corregidos)", state="complete", expanded=False)
 
                         st.session_state['corrections'] = corrections
 
@@ -473,6 +663,12 @@ if page == "Pipeline Documento":
                     corrections = st.session_state['corrections']
                     n_corrected = sum(1 for c in corrections if c['changes_made'])
                     st.subheader(f"Documento Corregido ({n_corrected} requisitos modificados)")
+
+                    # Advertencias de reescritura
+                    rewrite_key = st.session_state.get('rewrite_combo', list(all_results.keys())[0])
+                    rewrite_df = all_results[rewrite_key]['results_df']
+                    rewrite_warnings = generate_all_warnings(rewrite_df, corrections)
+                    _render_warnings(rewrite_warnings, "Advertencias de reescritura")
 
                     for i, c in enumerate(corrections, 1):
                         if c['changes_made']:
@@ -483,37 +679,44 @@ if page == "Pipeline Documento":
                                 for change in c['changes_made']:
                                     st.markdown(f"- {change}")
 
-                    # Generar fichero descargable
-                    doc_lines = ["# Documento de Requisitos Corregido\n"]
-                    doc_lines.append(f"{n_corrected} de {len(corrections)} requisitos corregidos.\n---\n")
-                    for i, c in enumerate(corrections, 1):
-                        if c['changes_made']:
-                            doc_lines.append(f"### Requisito {i} (corregido)\n")
-                            doc_lines.append(f"**Original:** ~~{c['original']}~~\n")
-                            doc_lines.append(f"**Corregido:** {c['corrected']}\n")
-                            doc_lines.append("**Cambios:**")
-                            for change in c['changes_made']:
-                                doc_lines.append(f"- {change}")
-                            doc_lines.append("")
-                        else:
-                            doc_lines.append(f"### Requisito {i}\n")
-                            doc_lines.append(f"{c['corrected']}\n")
-                    doc_md = '\n'.join(doc_lines)
+                    # Generar documento SRS profesional
+                    from pipeline import generate_srs_document, generate_srs_html
+                    rewrite_key = st.session_state.get('rewrite_combo', list(all_results.keys())[0])
+                    res = all_results[rewrite_key]
+                    srs_metadata = {
+                        'doc_name': st.session_state.get('pipeline_doc_name', 'documento'),
+                        'model': MODEL_LABELS.get(rewrite_key[0], rewrite_key[0]),
+                        'strategy': STRATEGY_LABELS.get(rewrite_key[1], rewrite_key[1]),
+                        'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    }
+                    srs_md = generate_srs_document(
+                        res['results_df'], corrections,
+                        res['inconsistencies'], srs_metadata
+                    )
+                    srs_html = generate_srs_html(srs_md, srs_metadata)
 
-                    col_dl1, col_dl2 = st.columns(2)
+                    col_dl1, col_dl2, col_dl3 = st.columns(3)
                     with col_dl1:
                         st.download_button(
-                            "Descargar documento corregido (MD)",
-                            doc_md,
-                            f"requisitos_corregidos_{datetime.now():%Y%m%d_%H%M}.md",
+                            "Descargar SRS (Markdown)",
+                            srs_md,
+                            f"SRS_{datetime.now():%Y%m%d_%H%M}.md",
                             "text/markdown",
                             key="dl_corrected_md"
                         )
                     with col_dl2:
+                        st.download_button(
+                            "Descargar SRS (HTML)",
+                            srs_html,
+                            f"SRS_{datetime.now():%Y%m%d_%H%M}.html",
+                            "text/html",
+                            key="dl_corrected_html"
+                        )
+                    with col_dl3:
                         # Plain text: just the corrected requirements
                         txt_lines = [c['corrected'] for c in corrections]
                         st.download_button(
-                            "Descargar requisitos corregidos (TXT)",
+                            "Descargar requisitos (TXT)",
                             '\n'.join(txt_lines),
                             f"requisitos_corregidos_{datetime.now():%Y%m%d_%H%M}.txt",
                             "text/plain",
@@ -543,6 +746,10 @@ elif page == "Clasificar Requisito":
         strategy = st.selectbox("Estrategia", STRATEGY_NAMES,
                                 format_func=lambda x: STRATEGY_LABELS.get(x, x))
         temperature = st.slider("Temperatura", 0.0, 1.0, 0.4, 0.1)
+
+    # Advertencias de entrada
+    for w in check_input_warnings(req_text):
+        st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
 
     if st.button("Clasificar", type="primary"):
         with st.spinner("Clasificando..."):
@@ -595,6 +802,10 @@ elif page == "Analizar Calidad":
                                   format_func=lambda x: MODEL_LABELS.get(x, x))
         strategy = st.selectbox("Estrategia", STRATEGY_NAMES, key="quality_strategy",
                                 format_func=lambda x: STRATEGY_LABELS.get(x, x))
+
+    # Advertencias de entrada
+    for w in check_input_warnings(req_text):
+        st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
 
     if st.button("Analizar", type="primary"):
         with st.spinner("Analizando..."):
@@ -659,6 +870,10 @@ elif page == "Validar Consistencia":
                               format_func=lambda x: MODEL_LABELS.get(x, x))
     strategy = st.selectbox("Estrategia", STRATEGY_NAMES, key="consist_strategy",
                             format_func=lambda x: STRATEGY_LABELS.get(x, x))
+
+    # Advertencias de entrada
+    for w in check_input_warnings(req_a) + check_input_warnings(req_b):
+        st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
 
     if st.button("Validar Consistencia", type="primary"):
         with st.spinner("Validando..."):
@@ -770,7 +985,7 @@ elif page == "Resultados Experimentos":
 
     else:
         # ── Resultados de experimentos (benchmark) ────────
-        result_files = sorted(RESULTS_DIR.glob("results_*.csv"))
+        result_files = sorted(EXPERIMENTS_DIR.glob("results_*.csv"))
 
         if not result_files:
             st.warning("No hay resultados de experimentos. Ejecuta el pipeline experimental primero.")
@@ -845,7 +1060,7 @@ elif page == "Resultados Experimentos":
 elif page == "Comparar Modelos":
     st.title("Comparacion de Modelos")
 
-    result_files = sorted(RESULTS_DIR.glob("results_*.csv"))
+    result_files = sorted(EXPERIMENTS_DIR.glob("results_*.csv"))
 
     if not result_files:
         st.warning("No hay resultados disponibles. Ejecuta experimentos primero.")
@@ -883,7 +1098,7 @@ elif page == "Comparar Modelos":
                      use_container_width=True)
 
         st.subheader("Local vs API")
-        local_models = ['qwen7b', 'llama8b']
+        local_models = ['qwen7b', 'llama8b', 'gemma9b']
         api_models = ['nim_llama70b', 'nim_llama8b', 'nim_mistral']
 
         local_metrics = metrics_df[metrics_df['model'].isin(local_models)]
@@ -918,3 +1133,396 @@ elif page == "Comparar Modelos":
         | **Escalabilidad** | Limitada por hardware | Alta |
         | **Disponibilidad** | Siempre (offline) | Requiere conexion |
         """)
+
+
+# ============================================================
+# PAGE 7: Progreso Experimentos
+# ============================================================
+elif page == "Progreso Experimentos":
+    st.title("Progreso de Experimentos")
+    st.markdown("Monitoriza el avance de los experimentos en tiempo real.")
+
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    # ── Configuracion esperada ────────────────────────────────
+    EXPECTED_TASKS = ['classification', 'ambiguity', 'completeness', 'inconsistency', 'testability']
+    EXPECTED_MODELS = ['qwen7b', 'llama8b', 'gemma9b', 'nim_llama70b', 'nim_llama8b', 'nim_mistral']
+    EXPECTED_STRATEGIES = ['question_refinement', 'cognitive_verifier', 'persona_context', 'few_shot', 'chain_of_thought']
+    EXPECTED_ITERATIONS = 5
+    CONFIGS_PER_TASK = len(EXPECTED_MODELS) * len(EXPECTED_STRATEGIES) * EXPECTED_ITERATIONS  # 150
+    TOTAL_CONFIGS = len(EXPECTED_TASKS) * CONFIGS_PER_TASK  # 750
+    STALE_SECONDS = 600  # 10 min
+
+    task_labels = {
+        'classification': 'Clasificacion F/NF',
+        'ambiguity': 'Deteccion Ambiguedad',
+        'completeness': 'Eval. Completitud',
+        'inconsistency': 'Deteccion Inconsistencias',
+        'testability': 'Eval. Testabilidad',
+    }
+
+    # ── Funciones de carga ────────────────────────────────────
+    def _scan_all_files():
+        """Escanea checkpoints y resultados, clasifica por frescura."""
+        now = time.time()
+        files = []
+        for f in sorted(CHECKPOINTS_DIR.glob("checkpoint_*.json")):
+            task_name = f.stem.replace("checkpoint_", "").rsplit("_", 2)[0]
+            if task_name not in EXPECTED_TASKS:
+                continue
+            mtime = f.stat().st_mtime
+            files.append({
+                'path': f, 'name': f.name, 'task': task_name,
+                'type': 'checkpoint', 'mtime': mtime,
+                'active': (now - mtime) <= STALE_SECONDS,
+            })
+        for f in sorted(EXPERIMENTS_DIR.glob("results_*.csv")):
+            task_name = f.stem.replace("results_", "").rsplit("_", 2)[0]
+            if task_name not in EXPECTED_TASKS:
+                continue
+            mtime = f.stat().st_mtime
+            files.append({
+                'path': f, 'name': f.name, 'task': task_name,
+                'type': 'result', 'mtime': mtime,
+                'active': (now - mtime) <= STALE_SECONDS,
+            })
+        return files
+
+    def _load_file_records(file_info):
+        """Carga registros de un checkpoint o resultado."""
+        if file_info['type'] == 'checkpoint':
+            try:
+                with open(file_info['path'], 'r') as fh:
+                    return json.load(fh)
+            except (json.JSONDecodeError, OSError):
+                return []
+        else:
+            try:
+                return pd.read_csv(file_info['path']).to_dict('records')
+            except (pd.errors.EmptyDataError, OSError):
+                return []
+
+    def _build_all_progress(files):
+        """Carga TODOS los archivos y devuelve configs por tarea + tiempos."""
+        task_configs = {task: set() for task in EXPECTED_TASKS}
+        # Tiempos: model -> [time_seconds, ...]
+        time_by_model = {m: [] for m in EXPECTED_MODELS}
+        all_records_flat = []
+        for f in files:
+            for r in _load_file_records(f):
+                strategy = r.get('strategy', r.get('pattern', ''))
+                key = (r.get('model', ''), strategy, r.get('iteration', 0), r.get('seed', 0))
+                task_configs[f['task']].add(key)
+                t = r.get('time_seconds', 0)
+                m = r.get('model', '')
+                if t and m in time_by_model:
+                    time_by_model[m].append(t)
+                all_records_flat.append(r)
+        return task_configs, time_by_model, all_records_flat
+
+    def _select_display_files(files):
+        """Un archivo por tarea: el mas relevante.
+
+        Prioridad por tarea:
+        1. Checkpoint activo mas reciente (indica proceso en curso)
+        2. Resultado CSV mas reciente (experimento terminado)
+        3. Checkpoint inactivo mas reciente (experimento interrumpido)
+        """
+        best_per_task = {}
+        for f in files:
+            t = f['task']
+            prev = best_per_task.get(t)
+            if prev is None:
+                best_per_task[t] = f
+                continue
+            # Prioridad: checkpoint activo > resultado > checkpoint inactivo
+            def _priority(fi):
+                if fi['type'] == 'checkpoint' and fi['active']:
+                    return (2, fi['mtime'])
+                elif fi['type'] == 'result':
+                    return (1, fi['mtime'])
+                else:
+                    return (0, fi['mtime'])
+            if _priority(f) > _priority(prev):
+                best_per_task[t] = f
+        return list(best_per_task.values())
+
+    all_files_raw = _scan_all_files()
+
+    if not all_files_raw:
+        st.warning("No hay checkpoints ni resultados en el directorio de resultados.")
+        st.info("Ejecuta experimentos con `python experiment.py` para generar checkpoints.")
+        st.stop()
+
+    # ── Bloque auto-actualizable ──────────────────────────────
+    @st.fragment(run_every=30)
+    def _render_progress():
+        # Rescanear archivos para detectar activos en tiempo real
+        fresh_files = _select_display_files(_scan_all_files())
+        # (el resumen se muestra tras construir proc_list)
+        t_palette_map = dict(zip(EXPECTED_TASKS,
+                                 ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6']))
+
+        # ── Preparar datos POR ARCHIVO (= proceso) ─────────────
+        proc_list = []
+        for f in fresh_files:
+            records = _load_file_records(f)
+            configs = set()
+            for r in records:
+                strategy = r.get('strategy', r.get('pattern', ''))
+                key = (r.get('model', ''), strategy,
+                       r.get('iteration', 0), r.get('seed', 0))
+                configs.add(key)
+            # Detectar si es local, API o mixto
+            models_in = set(k[0] for k in configs)
+            local_models = {'qwen7b', 'llama8b', 'gemma9b'}
+            nim_models = {'nim_llama70b', 'nim_llama8b', 'nim_mistral'}
+            has_local = bool(models_in & local_models)
+            has_nim = bool(models_in & nim_models)
+            if has_local and has_nim:
+                origin = "Local+API"
+            elif has_nim:
+                origin = "API"
+            elif has_local:
+                origin = "Local"
+            else:
+                origin = ""
+            # Configs esperadas segun modelos presentes en este proceso
+            n_models_in = len(models_in) if models_in else len(EXPECTED_MODELS)
+            expected_configs = n_models_in * len(EXPECTED_STRATEGIES) * EXPECTED_ITERATIONS
+            # Activo = checkpoint reciente que no ha completado todas las configs
+            # Un resultado CSV (type=result) nunca es "en curso"
+            is_active = (f['type'] == 'checkpoint' and f['active']
+                         and len(configs) < expected_configs)
+            # ETA estimado por proceso
+            cfg_times = {}
+            for r in records:
+                s = r.get('strategy', r.get('pattern', ''))
+                k = (r.get('model', ''), s, r.get('iteration', 0), r.get('seed', 0))
+                cfg_times[k] = cfg_times.get(k, 0) + (r.get('time_seconds', 0) or 0)
+            avg_t = (sum(cfg_times.values()) / len(cfg_times)) if cfg_times else 0
+            eta = (expected_configs - len(configs)) * avg_t
+            proc_list.append({
+                'file': f, 'configs': configs, 'records': records,
+                'active': is_active, 'task': f['task'], 'origin': origin,
+                'eta_sec': eta, 'avg_time': avg_t,
+                'expected_configs': expected_configs,
+            })
+
+        # Ordenar: activos primero, luego por tarea
+        proc_list.sort(key=lambda p: (not p['active'],
+                                       EXPECTED_TASKS.index(p['task'])
+                                       if p['task'] in EXPECTED_TASKS else 99))
+
+        if not proc_list:
+            st.info("No hay datos de experimentos todavia.")
+            return
+
+        # ── Resumen rapido ─────────────────────────────────────
+        n_active = sum(1 for p in proc_list if p['active'])
+        if n_active:
+            st.success(f"{n_active} proceso(s) activo(s) de {len(proc_list)} total(es)")
+        else:
+            st.info(f"{len(proc_list)} proceso(s) encontrado(s) — ninguno activo")
+
+        # ── Selector de proceso ───────────────────────────────
+        def _fmt_eta(secs):
+            if secs < 60:
+                return f'{secs:.0f}s'
+            elif secs < 3600:
+                return f'{secs/60:.0f}min'
+            else:
+                return f'{secs/3600:.1f}h'
+
+        options = []
+        for i, p in enumerate(proc_list):
+            lbl = task_labels.get(p['task'], p['task'])
+            n_done = len(p['configs'])
+            pct = n_done / p['expected_configs'] * 100
+            tag = p['origin']
+            if p['active']:
+                eta_txt = f" | ETA ~{_fmt_eta(p['eta_sec'])}" if p['eta_sec'] > 0 else ""
+                options.append(f"🟢 {lbl} [{tag}] — {pct:.0f}% en curso{eta_txt}")
+            elif p['file']['type'] == 'result':
+                options.append(f"✅ {lbl} [{tag}] — {pct:.0f}% completada")
+            else:
+                options.append(f"⚪ {lbl} [{tag}] — {pct:.0f}% interrumpida")
+
+        selected_idx = st.selectbox(
+            "Proceso", range(len(options)),
+            format_func=lambda i: options[i],
+            key='_progress_proc_select',
+        )
+
+        td = proc_list[selected_idx]
+        task_name = td['task']
+        proc_id = f"{task_name}_{selected_idx}"
+        color = t_palette_map.get(task_name, '#3498db')
+        n_done = len(td['configs'])
+        expected = td['expected_configs']
+        pct_done = n_done / expected
+
+        # ── Calcular datos del proceso seleccionado ─────────
+        model_counts = {m: 0 for m in EXPECTED_MODELS}
+        for cfg in td['configs']:
+            if cfg[0] in model_counts:
+                model_counts[cfg[0]] += 1
+        max_per_model_task = len(EXPECTED_STRATEGIES) * EXPECTED_ITERATIONS  # 25
+
+        # Tokens/s por modelo (solo este proceso)
+        tps_by_model = {}
+        for r in td['records']:
+            m = r.get('model', '')
+            tps = r.get('tokens_per_second', 0)
+            if m in EXPECTED_MODELS and tps:
+                tps_by_model.setdefault(m, []).append(tps)
+
+        # ETA ya precalculado en proc_list
+        avg_time = td['avg_time']
+        eta_sec = td['eta_sec']
+        eta_str = _fmt_eta(eta_sec)
+
+        models_seen = set(k[0] for k in td['configs'])
+        strats_seen = set(k[1] for k in td['configs'])
+        status_parts = [
+            f"**{n_done}/{expected}** configs",
+            f"{len(models_seen)} modelos",
+            f"{len(strats_seen)}/{len(EXPECTED_STRATEGIES)} estrategias",
+        ]
+        if td['active']:
+            status_parts.append(f"ETA: **~{eta_str}** (~{avg_time:.1f}s/config)")
+        st.caption(" | ".join(status_parts))
+
+        # ── Graficas (2 columnas) ─────────────────────────
+        col_left, col_right = st.columns(2)
+
+        # Izquierda: Progreso por modelo
+        with col_left:
+            m_active = [m for m in EXPECTED_MODELS if model_counts[m] > 0]
+            m_all = m_active if m_active else EXPECTED_MODELS
+            m_labels = [MODEL_LABELS.get(m, m) for m in m_all]
+            m_values = [model_counts[m] for m in m_all]
+            m_colors = ['#2ecc71' if m.startswith('nim_') else '#3498db' for m in m_all]
+            m_pcts = [v / max_per_model_task * 100 for v in m_values]
+
+            fig1 = go.Figure()
+            fig1.add_trace(go.Bar(
+                y=m_labels, x=m_values, orientation='h',
+                marker_color=m_colors,
+                text=[f'{p:.0f}%' for p in m_pcts],
+                textposition='outside', textfont=dict(size=10),
+                hovertemplate='%{y}<br>Configs: %{x}/' +
+                              str(max_per_model_task) +
+                              '<br>Progreso: %{text}<extra></extra>',
+            ))
+            fig1.add_vline(x=max_per_model_task, line_dash="dot",
+                          line_color="#555", opacity=0.5)
+            fig1.update_layout(
+                title=dict(text='Progreso por modelo', font=dict(size=13)),
+                xaxis_title='Configuraciones completadas',
+                height=250, margin=dict(l=10, r=10, t=35, b=30),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e0e0e0', size=10),
+                showlegend=False,
+            )
+            fig1.update_xaxes(gridcolor='rgba(136,136,136,0.12)',
+                              zeroline=False, showline=False)
+            fig1.update_yaxes(gridcolor='rgba(136,136,136,0.12)',
+                              zeroline=False, showline=False)
+            st.plotly_chart(fig1, use_container_width=True,
+                           config={'displayModeBar': False},
+                           key=f'prog_model_{proc_id}')
+
+        # Derecha: Velocidad (tokens/s)
+        with col_right:
+            tps_models = [m for m in EXPECTED_MODELS if m in tps_by_model]
+            fig2 = go.Figure()
+            if tps_models:
+                tps_labels = [MODEL_LABELS.get(m, m) for m in tps_models]
+                tps_vals = [sum(tps_by_model[m]) / len(tps_by_model[m])
+                            for m in tps_models]
+                tps_colors = ['#2ecc71' if m.startswith('nim_') else '#3498db'
+                              for m in tps_models]
+                tps_counts = [len(tps_by_model[m]) for m in tps_models]
+                fig2.add_trace(go.Bar(
+                    y=tps_labels, x=tps_vals, orientation='h',
+                    marker_color=tps_colors,
+                    text=[f'{v:.0f}' for v in tps_vals],
+                    textposition='outside', textfont=dict(size=10),
+                    hovertemplate='%{y}<br>Media: %{x:.1f} tok/s<br>'
+                                  'Muestras: %{customdata}<extra></extra>',
+                    customdata=tps_counts,
+                ))
+            fig2.update_layout(
+                title=dict(text='Velocidad media', font=dict(size=13)),
+                xaxis_title='Tokens/segundo',
+                height=250, margin=dict(l=10, r=10, t=35, b=30),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e0e0e0', size=10),
+                showlegend=False,
+            )
+            fig2.update_xaxes(gridcolor='rgba(136,136,136,0.12)',
+                              zeroline=False, showline=False)
+            fig2.update_yaxes(gridcolor='rgba(136,136,136,0.12)',
+                              zeroline=False, showline=False)
+            if not tps_models:
+                fig2.add_annotation(text='Sin datos de velocidad',
+                                    x=0.5, y=0.5, xref='paper', yref='paper',
+                                    showarrow=False, font=dict(size=12, color='#888'))
+            st.plotly_chart(fig2, use_container_width=True,
+                           config={'displayModeBar': False},
+                           key=f'prog_tps_{proc_id}')
+
+        # ── Tabla detalle modelo x estrategia ─────────────
+        proc_models = [m for m in EXPECTED_MODELS if model_counts[m] > 0]
+        if not proc_models:
+            proc_models = list(models_seen) if models_seen else EXPECTED_MODELS
+
+        with st.expander("Detalle modelo x estrategia", expanded=td['active']):
+            matrix = {}
+            for model in proc_models:
+                matrix[model] = {}
+                for strat in EXPECTED_STRATEGIES:
+                    count = sum(
+                        1 for it in range(1, EXPECTED_ITERATIONS + 1)
+                        for seed in [42, 123, 456, 789, 1024]
+                        if (model, strat, it, seed) in td['configs']
+                    )
+                    matrix[model][strat] = count
+
+            matrix_df = pd.DataFrame(matrix).T
+            matrix_df.columns = [STRATEGY_LABELS.get(s, s) for s in EXPECTED_STRATEGIES]
+            matrix_df.index = [MODEL_LABELS.get(m, m) for m in proc_models]
+            matrix_df.index.name = "Modelo"
+
+            st.dataframe(
+                matrix_df.style.background_gradient(
+                    cmap='RdYlGn', vmin=0, vmax=EXPECTED_ITERATIONS
+                ).format("{:.0f}/" + str(EXPECTED_ITERATIONS)),
+                use_container_width=True
+            )
+
+        # ── Detalle de archivos ───────────────────────────────
+        with st.expander("Detalle de archivos monitorizados"):
+            file_rows = []
+            for p in proc_list:
+                f = p['file']
+                file_rows.append({
+                    'Tarea': task_labels.get(f['task'], f['task']),
+                    'Tipo': 'Checkpoint' if f['type'] == 'checkpoint' else 'Resultado final',
+                    'Archivo': f['name'],
+                    'Registros': len(p['records']),
+                    'Configs': len(p['configs']),
+                    'Origen': p['origin'],
+                    'Estado': 'En curso' if p['active'] else ('Completado' if f['type'] == 'result' else 'Interrumpido'),
+                    'Ultima modificacion': datetime.fromtimestamp(f['mtime']).strftime('%Y-%m-%d %H:%M:%S'),
+                })
+            st.dataframe(pd.DataFrame(file_rows), use_container_width=True)
+
+        st.caption(f"Ultima actualizacion: {datetime.now().strftime('%H:%M:%S')}")
+
+    st.markdown("---")
+    _render_progress()

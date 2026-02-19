@@ -19,12 +19,15 @@ NIM_MODELS = {
     "mixtral-8x7b": "mistralai/mixtral-8x7b-instruct-v0.1",
 }
 
-MAX_RETRIES = 3
+MAX_RETRIES = 5
 RETRY_BASE_DELAY = 2  # seconds
 
 
 def _retry_with_backoff(func, max_retries=MAX_RETRIES):
-    """Execute func with exponential backoff on failure."""
+    """Execute func with exponential backoff on failure.
+
+    Uses longer delays for 429 (rate limit) errors.
+    """
     last_error = None
     for attempt in range(max_retries):
         try:
@@ -32,7 +35,10 @@ def _retry_with_backoff(func, max_retries=MAX_RETRIES):
         except Exception as e:
             last_error = e
             if attempt < max_retries - 1:
+                is_rate_limit = '429' in str(e)
                 delay = RETRY_BASE_DELAY * (2 ** attempt)
+                if is_rate_limit:
+                    delay = max(delay, 3 * (attempt + 1))
                 logger.warning(f"Attempt {attempt + 1}/{max_retries} failed: {e}. Retrying in {delay}s...")
                 time.sleep(delay)
             else:
