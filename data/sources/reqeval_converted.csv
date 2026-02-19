@@ -1,0 +1,213 @@
+id,text,is_ambiguous,ambiguity_type,ambiguous_words,source
+library#01,All material that is stored in the repository will enter it via the Ingest function.,True,referential,,ReqEval_NLP4RE_2020
+library#02-1,The Library may want to accept important digital materials in non-standard formats in case we are able to migrate them to a more usable format in the future.,True,referential,,ReqEval_NLP4RE_2020
+library#02-2,The Library may want to accept important digital materials in non-standard formats in case we are able to migrate them to a more usable format in the future.,False,none,,ReqEval_NLP4RE_2020
+library#03,"Once material has arrived, it must undergo several reviews, including virus checking, format compliance and anticipated content and file type.",False,none,,ReqEval_NLP4RE_2020
+library#04,Allows resources to be reviewed before a decision is made whether they should be retained.,False,none,,ReqEval_NLP4RE_2020
+library#05,Allows metadata to be stored in a database in a manner that conforms to repository reformatting and linked to their corresponding objects via an identifier.,False,none,,ReqEval_NLP4RE_2020
+library#06,The Coordinate Updates function also incorporates the storage identification information into the Descriptive Information for the AIP and transfers it to the Data Management entity along with a database update request.,True,referential,,ReqEval_NLP4RE_2020
+library#07,"Archival Storage functions include receiving AIPs from Ingest and adding them to permanent storage, managing the storage hierarchy, refreshing the media on which archive holdings are stored, performing routine and special error checking, providing disaster recovery capabilities, and providing AIPs to Access to fulfill orders.",False,none,,ReqEval_NLP4RE_2020
+library#08,"It will also conform to any special levels of service required for the AIP, or any special security measures that are required, and ensures the appropriate level of protection for the AIP.",True,referential,,ReqEval_NLP4RE_2020
+library#09,It monitors error logs to ensure AIPs are not corrupted during transfers.,True,referential,,ReqEval_NLP4RE_2020
+library#10,"However, the data constituting the Packaging Information may be changed as long as it continues to perform the same function and there is a straightforward implementation that does not cause information loss.",True,referential,,ReqEval_NLP4RE_2020
+library#11,"The migration strategy must select a storage medium, taking into consideration the expected and actual rates of errors encountered in various media types, their performance, and their costs of ownership.",False,none,,ReqEval_NLP4RE_2020
+library#12,This function receives an AIP request that identifies the requested AIP(s) and provides them on the requested media type or transfers them to a staging area.,False,none,,ReqEval_NLP4RE_2020
+library#13,"The Generate Report function receives a report request from Ingest, Access or Administration and executes any queries or other processes necessary to generate the report that it supplies to the requester.",True,referential,,ReqEval_NLP4RE_2020
+library#14,It may also receive a report request from Access and provides descriptive information for a specific AIP.,True,referential,,ReqEval_NLP4RE_2020
+library#15,"Administration functions include soliciting and negotiating submission agreements with producers, auditing submissions to ensure that they meet archive standards, and maintaining configuration management of system hardware and software.",True,referential,,ReqEval_NLP4RE_2020
+library#16,Audits data in SIPs or AIPs to ensure that they meet specified requirements.,True,referential,,ReqEval_NLP4RE_2020
+library#17,The Activate Requests function maintains a record of event-driven requests and periodically compares it to the contents of the archive to determine if all needed data is available.,True,referential,,ReqEval_NLP4RE_2020
+library#18,Maintains a record of event-driven events and compares it to the contents of the repository.,False,none,,ReqEval_NLP4RE_2020
+library#19,The Monitor Designated Community function interacts with archive Consumers and Producers to track changes in their service requirements and available product technologies.,False,none,,ReqEval_NLP4RE_2020
+library#20,Interacts with repository users and content providers to track changes in their service requirements and available product technologies.,True,referential,,ReqEval_NLP4RE_2020
+library#21,"This function receives reports from the Monitor Designated Communities and Monitor Technology functions, and it receives performance information, inventory reports and summarized consumer comments from Administration.",False,none,,ReqEval_NLP4RE_2020
+library#22,This function also receives external data standards from Monitor Technology and produces profiles of those standards that are sent to Administration as proposals on their potential usage.,True,referential,,ReqEval_NLP4RE_2020
+library#23,Produces profiles of those standards that are sent to Administration as proposals on their potential usage.,True,referential,,ReqEval_NLP4RE_2020
+library#24,The NLM will test preservation actions in order to determine their effectiveness across a range of digital objects.,True,referential,,ReqEval_NLP4RE_2020
+library#25,"The NLM System Administration/Programming Access, ultimate rights to the system, required for its management, development, and for assigning appropriate rights to users.",True,referential,,ReqEval_NLP4RE_2020
+weather#01,The Clarus system shall process data as they are received.,False,none,,ReqEval_NLP4RE_2020
+weather#02,The Clarus system shall be able to base its quality control process on values from multiple observations.,False,none,,ReqEval_NLP4RE_2020
+weather#03,The Clarus system shall be able to communicate with RWIS databases through their native interfaces.,False,none,,ReqEval_NLP4RE_2020
+weather#04,The Clarus system shall be able to collect data from sources within 5 minutes of them becoming available.,True,referential,,ReqEval_NLP4RE_2020
+weather#05,The CAS shall be configurable to allow new observation types to be implemented as they become available.,False,none,,ReqEval_NLP4RE_2020
+weather#06,The CS shall collect environmental data based on its configured schedule.,True,referential,,ReqEval_NLP4RE_2020
+weather#07,The CS shall be able to dynamically adjust its retrieval schedules when environmental data is expected to be ready but is temporarily delayed.,False,none,,ReqEval_NLP4RE_2020
+weather#08,The CS shall process environmental data as they are received.,False,none,,ReqEval_NLP4RE_2020
+weather#09,The Clarus system shall be able to communicate with environmental sensor stations through its collector using the NTCIP ESS 1204.,True,referential,,ReqEval_NLP4RE_2020
+weather#10,The CS shall be able to accept data from an RWIS database in its native output format.,True,referential,,ReqEval_NLP4RE_2020
+weather#11,The Clarus system shall be able to communicate with an individual ESS through its native interface.,True,referential,,ReqEval_NLP4RE_2020
+weather#12,The DOG shall be able to monitor new environmental data services as they are added.,False,none,,ReqEval_NLP4RE_2020
+weather#13,The DOG shall be able to record its activities.,False,none,,ReqEval_NLP4RE_2020
+weather#14,The QEDC shall maintain observations and their associated quality flags for seven days.,False,none,,ReqEval_NLP4RE_2020
+weather#15,The QEDC shall support queries for its observations.,False,none,,ReqEval_NLP4RE_2020
+weather#16,The QEDS shall log their activities.,True,referential,,ReqEval_NLP4RE_2020
+weather#17,The QChS shall be able to base its quality checking process on values distributed in time.,False,none,,ReqEval_NLP4RE_2020
+weather#18,The contributors shall define the units of measurements of their shared data and information.,False,none,,ReqEval_NLP4RE_2020
+weather#19,The Clarus program shall determine how it will provide data and information to contributors.,False,none,,ReqEval_NLP4RE_2020
+weather#20,"The Clarus program shall inform contributors of the acceptance and use"" of their data and information.""",False,none,,ReqEval_NLP4RE_2020
+railway#01,The logon screen shall activate command control for the user if the user requests it and has authorization.,False,none,,ReqEval_NLP4RE_2020
+railway#02,"When a device status has been overridden, on the screen it shall appear with different color from the normal and alarm status colors.",False,none,,ReqEval_NLP4RE_2020
+railway#03,It shall display and allow modification of all database tables with the exception of log tables.,True,referential,,ReqEval_NLP4RE_2020
+railway#04,"The user should not be able to update log entries other than for their own login, for the current day and current shift.",True,referential,,ReqEval_NLP4RE_2020
+railway#05,Any change in device state shall be reported on the screen not later than 2 seconds from the time it occurs.,False,none,,ReqEval_NLP4RE_2020
+railway#06-1,"When each workstation and control unit (workstation or intelligent controller at the FCU or DCU) comes online, the system shall identify it and all its associated device sensors.",True,referential,,ReqEval_NLP4RE_2020
+railway#06-2,"When each workstation and control unit (workstation or intelligent controller at the FCU or DCU) comes online, the system shall identify it and all its associated device sensors.",True,referential,,ReqEval_NLP4RE_2020
+railway#07,The RLCS software shall initialize each control unit and device sensor as it is identified.,True,referential,,ReqEval_NLP4RE_2020
+railway#08,The devices can be manually controlled/operated from their cabinets (e.g.: Gates).,False,none,,ReqEval_NLP4RE_2020
+railway#09,"The normal operating mode is Monday through Friday, between 5:00am and 8:00pm, but the system must be functional in order to stay in its closed state after hours.",False,none,,ReqEval_NLP4RE_2020
+railway#10,The ETCS shall provide the driver with information to allow him to drive the train safely.,False,none,,ReqEval_NLP4RE_2020
+railway#11-1,If the supervision is performed by a RBC it shall be possible to prevent movements of a traction unit in its area if not authorised by the RBC.,True,referential,,ReqEval_NLP4RE_2020
+railway#11-2,If the supervision is performed by a RBC it shall be possible to prevent movements of a traction unit in its area if not authorised by the RBC.,True,referential,,ReqEval_NLP4RE_2020
+railway#12,It shall be possible to implement one or more of the ETCS application levels on a line.,False,none,,ReqEval_NLP4RE_2020
+railway#13,The ETCS shall be compatible with existing national systems listed in the CCS TSI such that it does not interfere with the national systems and is not interfered with by the national systems.,False,none,,ReqEval_NLP4RE_2020
+railway#14,"If an ETCS equipped train passes a level transition to a line fitted with more than one level, the onboard shall switch to the highest level, according to the priority given by trackside, for which it is equipped.",False,none,,ReqEval_NLP4RE_2020
+railway#15,"On request of the RBC, the driver shall have the possibility to confirm that the track ahead of him until the end of the on sight section is clear .",False,none,,ReqEval_NLP4RE_2020
+railway#16,The braking curves shall ensure that the train complies with its speed requirements.,False,none,,ReqEval_NLP4RE_2020
+railway#17,If the release speed is calculated on board it shall ensure that the train will stop before reaching the danger point .,True,referential,,ReqEval_NLP4RE_2020
+railway#18,A train shall be supervised to its static and dynamic train speed profiles.,False,none,,ReqEval_NLP4RE_2020
+railway#19,"Within the braking curve area, a warning shall be given to the driver to enable him to react and avoid intervention from ETCS equipment at least 5 sec. before the intervention.",False,none,,ReqEval_NLP4RE_2020
+railway#20,The ETCS trainborne equipment shall transmit its own train identification to the RBC.,False,none,,ReqEval_NLP4RE_2020
+railway#21,If a train cannot stop at the proposed new target location it shall reject the request and keep the old target location.,True,referential,,ReqEval_NLP4RE_2020
+railway#22,The train may proceed unrestricted to the end of its movement authority.,False,none,,ReqEval_NLP4RE_2020
+railway#23,It is acceptable that only one mobile user involved in the group call may talk at any time.,False,none,,ReqEval_NLP4RE_2020
+railway#24,"If the text message facility is implemented, it shall not interfere with the ability of users to make or receive high priority voice or data calls.",False,none,,ReqEval_NLP4RE_2020
+railway#25,"Where fax functionality is provided, it shall be possible to interrupt the fax to make or receive a high priority voice or data call.",True,referential,,ReqEval_NLP4RE_2020
+railway#26,"The network shall provide the ability to inform a user, who is involved in an existing call, of attempts by other users to contact them.",True,referential,,ReqEval_NLP4RE_2020
+railway#27,"Where network services are chargeable, it should be possible for the network to provide information about call rates and on-going call charges.",False,none,,ReqEval_NLP4RE_2020
+railway#28,Picking up the handset shall transfer the communication to the handset and reduce the loudspeaker volume to its minimum level.,True,referential,,ReqEval_NLP4RE_2020
+railway#29,An indication shall be provided to the driver as a reminder of the need to use the Push-To-Talk button on the handset if he wants to talk.,False,none,,ReqEval_NLP4RE_2020
+railway#30,It shall be possible for a driver to initiate Railway emergency calls (see section 13).,False,none,,ReqEval_NLP4RE_2020
+railway#31,"If the train moves out of the call area whilst the call is in progress, it will leave the call and an audible and visual indication of the loss of call shall be provided to the driver.",True,referential,,ReqEval_NLP4RE_2020
+railway#32,"Once the driver has accepted the standard point-to-point call, it shall be connected appropriately, eg if the driver has accepted the call by lifting the handset, then the call shall be routed to the handset.",False,none,,ReqEval_NLP4RE_2020
+railway#33,"In this case, the security device alerts the driver if the link has failed or if it is cancelled.",True,referential,,ReqEval_NLP4RE_2020
+railway#34-1,"It should be possible for the Cab radio to be used without the network service (if it should fail or if there is no authorised network coverage), such that local open channel communications are still possible.",True,referential,,ReqEval_NLP4RE_2020
+railway#34-2,"It should be possible for the Cab radio to be used without the network service (if it should fail or if there is no authorised network coverage), such that local open channel communications are still possible.",True,referential,,ReqEval_NLP4RE_2020
+railway#35,"Where the Cab radio is required by a national railway to support a handheld portable, the Cab radio shall: - provide a clear indication as to whether the handheld portable is activated or not; - provide an interface to allow the handheld portable to be recharged when not in use; - forward calls automatically to the handheld portable when the handheld portable is activated; - cancel any call forwarding to the handheld portable when it is deactivated; - allow the driver to override the call forwarding to the handheld portable.",False,none,,ReqEval_NLP4RE_2020
+railway#36,"When the MMI is switched on, the configuration shall be determined by the time elapsed since the MMI was last switched off: - less than t minutes – the MMI shall power up with the same configuration as when it was last powered down; - greater than t minutes – the MMI shall power up with default settings.",False,none,,ReqEval_NLP4RE_2020
+railway#37,"If directed network selection is implemented, input from the external device(s) shall initiate the network change regardless of the identity of the current network and how it was selected.",True,referential,,ReqEval_NLP4RE_2020
+railway#38,"Non leading drivers shall be able to indicate to the system their location in the train during the registration procedure (2nd driver, 3rd driver etc).",False,none,,ReqEval_NLP4RE_2020
+railway#39,Each type of equipment has slightly different requirements placed upon it in terms of EMC and climate.,False,none,,ReqEval_NLP4RE_2020
+railway#40,The design of the equipment shall make it possible to install it within a cab complying with the requirements of UIC fiche 651 concerning the layout of cab equipment5.,True,referential,,ReqEval_NLP4RE_2020
+railway#41,"If the call is a broadcast call, the user shall be informed that he cannot speak as part of the broadcast call.",False,none,,ReqEval_NLP4RE_2020
+railway#42,"Where a change of functional number is required, it shall be possible for the user to initiate the change.",True,referential,,ReqEval_NLP4RE_2020
+railway#43-1,It shall be possible for the user to find and display stored numbers and their information.,True,referential,,ReqEval_NLP4RE_2020
+railway#43-2,It shall be possible for the user to find and display stored numbers and their information.,True,referential,,ReqEval_NLP4RE_2020
+railway#44,The Operational radio is specified to allow its use in the operating environment experienced on the operational railway (eg shunting and maintenance).,False,none,,ReqEval_NLP4RE_2020
+railway#45,Controls shall be designed such that they are suitable for use by people wearing gloves.,False,none,,ReqEval_NLP4RE_2020
+railway#46-1,"It should be possible for the system to prevent certain types of users from registering functional numbers that they are not authorised to use, for example: - train number; - driver of train; - shunting team leader.",True,referential,,ReqEval_NLP4RE_2020
+railway#46-2,"It should be possible for the system to prevent certain types of users from registering functional numbers that they are not authorised to use, for example: - train number; - driver of train; - shunting team leader.",True,referential,,ReqEval_NLP4RE_2020
+railway#47,"As a minimum, the location information used by the EIRENE system shall be derived from that available from the network itself (eg current cell or base station serving the mobile).",True,referential,,ReqEval_NLP4RE_2020
+railway#48,"After the 30 second period, if the connection was unsuccessful, the system shall provide another audible and visual indication that it was unable to connect the call.",False,none,,ReqEval_NLP4RE_2020
+railway#49,"For post-incident analysis, it is important that the origination and reception of Railway emergency calls by mobiles is confirmed by a message sent to a ground-based central location (and also recorded in the on-train recording device).",True,referential,,ReqEval_NLP4RE_2020
+railway#50,"Throughout the duration of the shunting group call, it shall be possible for any member of the shunting group to speak to all other members of the group, using the PTT function (as described in sections 5.2.2.53, 6.2.2.12 and 7.2.2.20), except during transmission of the link assurance signal.",True,referential,,ReqEval_NLP4RE_2020
+railway#51,The shunting leader can then choose the moment when he takes or rejects the call.,False,none,,ReqEval_NLP4RE_2020
+railway#52,"In this case, the safety device will alert the driver only if the link assurance signal has failed or if it is cancelled.",False,none,,ReqEval_NLP4RE_2020
+railway#53,"The 300ms represents our current best estimate of the QoS figure, although this will need to be confirmed through user trials.",True,referential,,ReqEval_NLP4RE_2020
+railway#54,Each authority can decide whether it wishes to use synchronised BTSs.,False,none,,ReqEval_NLP4RE_2020
+railway#55,The network shall terminate the ongoing VGCS/VBS call if it receives the 3-digit sequence “***” transmitted via DTMF signals.,True,referential,,ReqEval_NLP4RE_2020
+railway#56,"The network shall send the SET-PARAMETER message with the attribute “D-ATT = T”1 [EN 301 515, Index [6]] to the mobile station of the talking subscriber if it receives the 3- digit sequence “###” transmitted via DTMF or the group call SETUP message2 from a controller terminal.",True,referential,,ReqEval_NLP4RE_2020
+railway#57-1,When the network has detected the 3-digit DTMF sequence “###” transmitted via DTMF from a controller terminal and if the controller was not previously talking it should indicate its recognition by playing a single DTMF grant tone “#” of duration of 100ms  5ms to be sent to that controller terminal only.,True,referential,,ReqEval_NLP4RE_2020
+railway#57-2,When the network has detected the 3-digit DTMF sequence “###” transmitted via DTMF from a controller terminal and if the controller was not previously talking it should indicate its recognition by playing a single DTMF grant tone “#” of duration of 100ms  5ms to be sent to that controller terminal only.,True,referential,,ReqEval_NLP4RE_2020
+railway#58,"The network shall send the SET-PARAMETER message with the attribute “D-ATT = F”3 [EN 301 515, Index [6]] to the mobile of the talking subscriber only if it has received the 3-digit sequence “#**” transmitted via DTMF from all the talking controllers4.",True,referential,,ReqEval_NLP4RE_2020
+railway#59,"Many of the railway specific standards referenced are Pre-standards (eg [prEN 50155, ENV 50121, prEN 50125]) and should be re-examined for their applicability to the EIRENE system if any modifications are made to these standards in the future.",False,none,,ReqEval_NLP4RE_2020
+railway#60,Each of the other cabs on the train will be contacted using its functional number (registered by the other drivers prior to the establishment of the call).,True,referential,,ReqEval_NLP4RE_2020
+railway#61,"Upon registration, the mobile shall be accessible by calling the MSISDN or the Engine or Coach number with which it is associated.",False,none,,ReqEval_NLP4RE_2020
+railway#62,The Cab radio system shall provide a means for the driver to terminate established calls which he is authorised to terminate.,False,none,,ReqEval_NLP4RE_2020
+home#01,"The DigitalHome programmable Appliance Manager shall provide for management of a home’s small appliances, including lighting units, by allowing a user to turn them on or off as desired.",True,referential,,ReqEval_NLP4RE_2020
+home#02,"Although the product produced under this document will be a “prototype” version, all modules and components of this prototype version shall be designed and implemented in such a manner that it may be incorporated in a fully specified commercial version of the DigitalHome System.",True,referential,,ReqEval_NLP4RE_2020
+home#03,The DigitalHome System shall provide users with online documentation about the DigitalHome system installed in their home.,False,none,,ReqEval_NLP4RE_2020
+space#01,"The FCP shall, if the NEFU ICP fails to send its ICP Ready signal, mask out that ICP, but continue to use the NE.16.",False,none,,ReqEval_NLP4RE_2020
+space#02,"Each rate group has some number of tasks associated with it, and it also has a rate for those tasks.",False,none,,ReqEval_NLP4RE_2020
+space#03,The enabled tasks are then unblocked at the rate given in its associated rate group.,True,referential,,ReqEval_NLP4RE_2020
+space#04-1,An API call is available for the task to call to block itself when it is finished with its cyclic processing.,True,referential,,ReqEval_NLP4RE_2020
+space#04-2,An API call is available for the task to call to block itself when it is finished with its cyclic processing.,True,referential,,ReqEval_NLP4RE_2020
+space#04-3,An API call is available for the task to call to block itself when it is finished with its cyclic processing.,True,referential,,ReqEval_NLP4RE_2020
+space#05,There is up to a full major frame from notification of an impending mode change to acting on it in minor frame 0 of the next major frame plus the time it takes during the next minor frame 0 to switch tasking.,True,referential,,ReqEval_NLP4RE_2020
+space#06,"The scheduler shall execute cyclic tasks, providing an API call to allow the application to block until its next iteration.",True,referential,,ReqEval_NLP4RE_2020
+space#07,"The scheduler shall give tasks priority values according to their rate - the higher the rate, the higher the priority.",True,referential,,ReqEval_NLP4RE_2020
+space#08,The scheduler shall provide a mechanism to inform a task when it did not complete during the previous frame and restart it at the beginning of the task.,True,referential,,ReqEval_NLP4RE_2020
+space#09,All tasks in rate groups and their corresponding schedules for all vehicle modes will be setup at system initialization.,True,referential,,ReqEval_NLP4RE_2020
+space#10,Tasks in a rate group must suspend on a scheduler API call at the top of their execution loop.,False,none,,ReqEval_NLP4RE_2020
+space#11,"For hardware exceptions and reserved exceptions, the FTSS shall make the error type and its context data available to the application, then return from the exception handler to the task that was running when the exception occurred.",True,referential,,ReqEval_NLP4RE_2020
+space#12,Messages are addressed with a global unique communication identifier that routes them to the appropriate virtual group (VG) and socket.,False,none,,ReqEval_NLP4RE_2020
+space#13,This restriction does NOT apply to the ICPs since they are running as simplex VGs.,False,none,,ReqEval_NLP4RE_2020
+space#14,The FTSS shall mask out a babbling NE or ICP within 40 milliseconds after it is detected.,True,referential,,ReqEval_NLP4RE_2020
+space#15,Synchronous message passing sockets shall queue outgoing messages until they are transmitted at frame boundaries.,True,referential,,ReqEval_NLP4RE_2020
+space#16,"Pipes may be opened by multiple receiving tasks if they are created with the broadcast"" capability; otherwise they may only be opened by one receiving task.""",True,referential,,ReqEval_NLP4RE_2020
+space#17,"Communication services shall provide the capability to create pipe""s which ""broadcast"" their messages to all virtual groups.""",True,referential,,ReqEval_NLP4RE_2020
+space#18,"If the broadcast option is used, each virtual group should open the pipe and read from it to avoid flow control problems.",True,referential,,ReqEval_NLP4RE_2020
+space#19,The application software shall have the capability to reset a permanently failed channel to its initial recovery state.,True,referential,,ReqEval_NLP4RE_2020
+space#20,Redundancy Management picks up where it left off in these attempts.,False,none,,ReqEval_NLP4RE_2020
+diagnostic#01,"The absolute time of input will be associated with each sensed data item for its complete lifecycle, including permanent storage.",True,referential,,ReqEval_NLP4RE_2020
+diagnostic#02,Each sensed data item will be qualified as to its certitude during the acquisition process.,False,none,,ReqEval_NLP4RE_2020
+diagnostic#03,Sensed data input to the tool shall be validated with respect to its expected range of values.,False,none,,ReqEval_NLP4RE_2020
+diagnostic#04,"The faults identified and their causes and sources, shall be saved to permanent storage for subsequent analysis.",False,none,,ReqEval_NLP4RE_2020
+diagnostic#05,"The tool shall monitor the unit under diagnosis, either in real time or batch mode, for an indefinite period of time or until input data are no longer available, and log diagnostic results as they are determined.",True,referential,,ReqEval_NLP4RE_2020
+diagnostic#06,"Selecting the “Configure Diagnostics” menu item of the main menu entitled “File” shall display the configuration window, making it the current window, modal to the main window.",True,referential,,ReqEval_NLP4RE_2020
+diagnostic#07,Entering a file name shall cause the permanent storage of the modified parameters and their immediate use by the diagnostic operations after confirmatory responses by the user.,False,none,,ReqEval_NLP4RE_2020
+diagnostic#08,"If the user does not confirm the request to save, it will not be performed.",False,none,,ReqEval_NLP4RE_2020
+diagnostic#09,"If the user does not confirm the request to relay the modified parameters to the diagnostic processing immediately, it will not be performed.",True,referential,,ReqEval_NLP4RE_2020
+diagnostic#10,"The subsystems window, condition window, and diagnostic information window shall display a title that indicates its specific location or absolute path in the navigation hierarchy of windows.",True,referential,,ReqEval_NLP4RE_2020
+diagnostic#11,This set(s) of indicators shall summarize diagnostic indicators not currently appearing on the list above (below) it.,True,referential,,ReqEval_NLP4RE_2020
+diagnostic#12,An indicator in the summary set shall be active if any similar indicator not appearing above (or below) it is active.,True,referential,,ReqEval_NLP4RE_2020
+diagnostic#13,The third window in the hierarchy is the subsystems window and it can only be displayed by a user selection on the main window.,False,none,,ReqEval_NLP4RE_2020
+diagnostic#14,The fourth window in the hierarchy is the condition window and it can only be displayed by a user selection on the subsystems window.,False,none,,ReqEval_NLP4RE_2020
+diagnostic#15,This window can only be displayed by a user selection on the condition window or by a user selection on the diagnostic history window if it is displayed.,True,referential,,ReqEval_NLP4RE_2020
+library#26-0,"In addition, some publishers may only allow their material to be served up through NLM’s system at a certain interval after its publication.",False,none,,ReqEval_NLP4RE_2020
+library#26-1,"In addition, some publishers may only allow their material to be served up through NLM’s system at a certain interval after its publication.",True,referential,,ReqEval_NLP4RE_2020
+library#27,The Archival Information Update function in Administration also submits dissemination requests to obtain DIPs needed to perform its update functions.,True,referential,,ReqEval_NLP4RE_2020
+library#28,"During the development of the functional requirements for the NLM Digital Repository, it has become apparent that NLM will have several repositories – LocatorPlus, PubMed Central (covering journals), and the digital repository currently under investigation.",True,referential,,ReqEval_NLP4RE_2020
+library#29,"It is possible that the initial NLM Repository may be composed of more than one electronic storage facility, especially in the early development of the repository.",True,referential,,ReqEval_NLP4RE_2020
+library#30,"The NLM System Administration/Programming Access: Provides an NLM Administrative/Programming Level, ultimate rights to the system, required for its management, development, and for assigning appropriate rights to users.",True,referential,,ReqEval_NLP4RE_2020
+library#31,"Access rights and conditions to materials and the directories/folders in which they are kept must provide for one or more of the following basic privileges, either alone or in combination:• Create/Write access• Edit access• Read access• Delete access.",True,referential,,ReqEval_NLP4RE_2020
+library#32,Both an object and its related metadata may be embargoed in terms of public access.,False,none,,ReqEval_NLP4RE_2020
+library#33,Access rights and conditions of use will be held for each digital object and its related metadata.,False,none,,ReqEval_NLP4RE_2020
+library#34,"System must have the ability to search and display metadata, preferably in a user-conformable, human readable display as well as in its native format for machine harvesting and manipulation.",True,referential,,ReqEval_NLP4RE_2020
+weather#21,The Clarus program shall maintain information about requestors and their access to data and information.,False,none,,ReqEval_NLP4RE_2020
+weather#22,The Clarus program shall operate the Clarus system according to its published IT Security Plan.,True,referential,,ReqEval_NLP4RE_2020
+weather#23,The QChS shall be able to use historical environmental data in their quality checking algorithms.,True,referential,,ReqEval_NLP4RE_2020
+weather#24,The QChS shall be implemented to quality check new observation types as they become available.,True,referential,,ReqEval_NLP4RE_2020
+weather#25,The Clarus system shall process data as they are received.,False,none,,ReqEval_NLP4RE_2020
+weather#26,The QChS shall apply quality flags to data as they are received.,True,referential,,ReqEval_NLP4RE_2020
+weather#27,The SS shall record when it initiates actions.,False,none,,ReqEval_NLP4RE_2020
+weather#28,The Clarus system shall be able to publish environmental data at three times the volume rate that it collects it.,True,referential,,ReqEval_NLP4RE_2020
+archive#01,"It shall be possible to request that automatically generated migration metadata be stored in the converted iles (e.g., OS/Kernel type, original ARC name, ARC size, ARC digests, conversion timestamp, ARC record offset, ...).",False,none,,ReqEval_NLP4RE_2020
+archive#02-0,The IIPC members should provide us with the default METADATA they want to be included for migration.,True,referential,,ReqEval_NLP4RE_2020
+archive#02-1,The IIPC members should provide us with the default METADATA they want to be included for migration.,False,none,,ReqEval_NLP4RE_2020
+archive#03,"Software checkpoints (such as start-trans, end-trans) may be added during processing for managing atomic transactions (e.g., operations on a ile, these must start and complete to be accepted in the migration), except where operating system limitations would prohibit it.",True,referential,,ReqEval_NLP4RE_2020
+archive#04,It shall be possible to perform a “dry-run migration”.,False,none,,ReqEval_NLP4RE_2020
+archive#05,"To validate that the migration succeeded, arc_warc_verify will use the METADATA included in the newly generated WARC iles to match records with their corresponding ARC iles (see FR4, and FR5).",True,referential,,ReqEval_NLP4RE_2020
+archive#06,Enhance the WARC browser to display aggregated WARCs summaries in its UI.,False,none,,ReqEval_NLP4RE_2020
+archive#07,Enhance the WARC browser to display a manifest of WARC iles and their locations.,False,none,,ReqEval_NLP4RE_2020
+railway#63,"As a train approaches the limits of the coverage of the PLMN it is registered with, it will be necessary for it to register with the next PLMN providing coverage.",True,referential,,ReqEval_NLP4RE_2020
+railway#64,Each type of equipment has slightly different requirements placed upon it in terms of EMC and climate.,False,none,,ReqEval_NLP4RE_2020
+railway#65,"Where other data interfaces are implemented, they should be of the RS422 standard.",False,none,,ReqEval_NLP4RE_2020
+railway#66,"Upon switch on, once the radio is connected to a mobile network, it shall be able to receive all calls made using the MSISDN or appropriate group call number.",True,referential,,ReqEval_NLP4RE_2020
+railway#67,"In addition, the Operational radio is specified to allow its use in the operating environment experienced on the operational railway (eg shunting and maintenance), with the specifications in this section taking priority over those in section 4 where any discrepancy is identified.",False,none,,ReqEval_NLP4RE_2020
+railway#68,The SIM cards shall be fixed into the radio such that they can only be removed by the use of a tool.,False,none,,ReqEval_NLP4RE_2020
+railway#69,"A group call controller who wishes to start talking (except in the case of an originator, a joiner or a re-joiner speaking for the first time5) shall indicate his wish, for example by pressing the PTT button, whereupon the 3-digit DTMF sequence “###” shall be transferred.",True,referential,,ReqEval_NLP4RE_2020
+railway#70,The terminal of the controller should receive a single DTMF grant tone “#” of duration 100ms  5ms sent by the network if it has detected the 3-digit DTMF sequence “###” and if the controller was not previously talking.,True,referential,,ReqEval_NLP4RE_2020
+railway#71,"Any group call controller who wishes to stop talking shall indicate his wish, for example by releasing the PTT button, whereupon the 3-digit DTMF sequence “#**” shall be transferred.",False,none,,ReqEval_NLP4RE_2020
+railway#72,"All Train Function Numbers and their associated MSISDN numbers shall be stored in the same routing database, which is the database of the GSM-R network in which the train is currently operating.",False,none,,ReqEval_NLP4RE_2020
+railway#73,"If functional numbers are to be used outside the EIRENE network, they will require either a public number allocation or, alternatively, an EIRENE Network Access Number (ENAN) may be used as described in 9.11 9.3.3 Each national railway should obtain a public numbering allocation for MSISDN numbers from the relevant regulatory bodies.",False,none,,ReqEval_NLP4RE_2020
+railway#74-0,It is the responsibility of each individual GSM-R operator to acquire a public domain NDC from their national telecommunications regulator.,True,referential,,ReqEval_NLP4RE_2020
+railway#74-1,It is the responsibility of each individual GSM-R operator to acquire a public domain NDC from their national telecommunications regulator.,False,none,,ReqEval_NLP4RE_2020
+railway#75,Mobiles shall be capable of operation using algorithms for all countries in which they need to roam.,True,referential,,ReqEval_NLP4RE_2020
+railway#76,"Functional numbering provides the mechanism by which a mobile terminal, or an item of equipment connected to a mobile terminal, can be addressed by a number identifying the function for which it is being used.",True,referential,,ReqEval_NLP4RE_2020
+railway#77,"For international Railway emergency calls, in order to minimise call set-up times, it is recommended that the anchor MSC always directly controls the cell where the Railway emergency call was originated.",True,referential,,ReqEval_NLP4RE_2020
+railway#78,Each mobile shall store a list of emergency Group IDs in the SIM appropriate to its function (the Cab radio will store Group ID 299 and 599 - see table 9-8).,True,referential,,ReqEval_NLP4RE_2020
+railway#79,"For post-incident analysis it is important that the initiation and receipt of Railway emergency calls by mobiles is confirmed by a message sent to a ground-based location (and also registered in the train borne recorder, in cases where a train borne recorder is connected to the Cab radio).",True,referential,,ReqEval_NLP4RE_2020
+railway#80,The common shunting group provides a point of contact for leaders and team members to set up a dedicated shunting group call for their shunting operation.,True,referential,,ReqEval_NLP4RE_2020
+railway#81,The terminal application shall prevent members of a dedicated shunting team from initiating a new call (unless they are registered as shunting team leader and have left shunting mode using the “maintain group call” function described in 14.2.4).,False,none,,ReqEval_NLP4RE_2020
+railway#82,Users shall be prevented from joining a dedicated shunting group by the EIRENE terminal application unless a valid functional number for the group has been successfully registered to the GSM-R network by their terminal.,False,none,,ReqEval_NLP4RE_2020
+railway#83,"If an ETCS equipped train passes a level transition to one or more levels for which it is not equipped, ETCS shall initiate a brake application.",False,none,,ReqEval_NLP4RE_2020
+space#21,"When memory alignment is permitted, Redundancy Management attempts to reintegrate a processor with the other members of its original FCP virtual group by commanding the affected FCP virtual group to perform re-synchronization operations.",True,referential,,ReqEval_NLP4RE_2020
+space#22,Network Element FTSS CSCIIBNF time-out Indicates that the members of the destination virtual group corresponding to the set bits did not free enough space in their input buffers to hold the incoming packet within the allowable time skew.,True,referential,,ReqEval_NLP4RE_2020
+space#23,The FTSS shall provide an API call to allow the ICP application to determine on which channel it resides.,True,referential,,ReqEval_NLP4RE_2020
+space#24,The FTPP shall recover from a babbling NE or ICP within 40 milliseconds after it is detected.,True,referential,,ReqEval_NLP4RE_2020
+space#25,It shall be possible to modify the CT whenever any of this information is changed by using a CT update primitive in a synchronous and atomic manner.,False,none,,ReqEval_NLP4RE_2020
+space#26,"When a majority, but not a unanimity, of FCP members are observed with packets in their output buffers, a time-out shall (3.2.2.6.7) be initiated.",True,referential,,ReqEval_NLP4RE_2020
+space#27,"When the timestamp counter reaches the maximum value (Hex FFFFFFFF or approximately 5500 seconds), it shall (3.2.2.7.6) wrap around to zero.",False,none,,ReqEval_NLP4RE_2020
+space#28,The Start-Up shall synchronize its FCP with other operational FCPs.,False,none,,ReqEval_NLP4RE_2020
+space#29,"The Scheduler shall detect 50 Hz, 10 Hz, and 1 Hz frame overruns at the next frame following the end of their respective rate boundaries.",True,referential,,ReqEval_NLP4RE_2020
+space#30,The FTSS shall wait for the ICP to signal that it has completed initialization before suspending the application for memory re-alignment.,True,referential,,ReqEval_NLP4RE_2020

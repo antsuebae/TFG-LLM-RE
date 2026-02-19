@@ -17,6 +17,8 @@ import logging
 import sys
 
 from tqdm import tqdm
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 from prompts import build_prompt, parse_response, TASK_NAMES, STRATEGY_NAMES
 from models import get_model
@@ -40,10 +42,14 @@ class ExperimentRunner:
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
 
-        self.results_dir = Path(self.config['output']['results_dir'])
+        config_base = self.config_path.parent  # proyecto/config/
+        self.results_dir = (config_base / self.config['output']['results_dir']).resolve()
         self.results_dir.mkdir(parents=True, exist_ok=True)
 
-        logs_dir = Path(self.config['output'].get('logs_dir', self.results_dir / 'logs'))
+        self.checkpoints_dir = (config_base / self.config['output'].get('checkpoints_dir', '../results/checkpoints')).resolve()
+        self.checkpoints_dir.mkdir(parents=True, exist_ok=True)
+
+        logs_dir = (config_base / self.config['output'].get('logs_dir', '../results/logs')).resolve()
         logs_dir.mkdir(parents=True, exist_ok=True)
 
         # Add file handler for logging
@@ -243,7 +249,7 @@ class ExperimentRunner:
             DataFrame con todos los resultados
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        checkpoint_path = self.results_dir / f"checkpoint_{task}_{timestamp}.json"
+        checkpoint_path = self.checkpoints_dir / f"checkpoint_{task}_{timestamp}.json"
 
         # Load checkpoint if resuming
         all_results = []
@@ -333,6 +339,11 @@ class ExperimentRunner:
         results_df.to_csv(output_path, index=False)
         logger.info(f"Resultados guardados en: {output_path}")
 
+        # Remove checkpoint now that final results are saved
+        if checkpoint_path.exists():
+            checkpoint_path.unlink()
+            logger.info(f"Checkpoint eliminado: {checkpoint_path}")
+
         return results_df
 
     def _save_checkpoint(self, results: List[Dict], checkpoint_path: Path):
@@ -379,7 +390,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Pipeline de experimentacion LLM-RE')
-    parser.add_argument('--config', default='../config/experiment_config.yaml',
+    parser.add_argument('--config', default=str(Path(__file__).parent.parent / 'config/experiment_config.yaml'),
                         help='Ruta al archivo de configuracion')
     parser.add_argument('--task', default='classification',
                         choices=TASK_NAMES,

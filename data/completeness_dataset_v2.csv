@@ -1,0 +1,151 @@
+id,text,is_complete,missing_elements
+1,The system shall allow users to login with username and password. Invalid credentials shall display an error message. After 3 failed attempts the account shall be locked for 15 minutes.,True,
+2,The system shall process payments.,False,"error_handling, boundary_conditions, acceptance_criteria"
+3,Users shall be able to upload files up to 10MB in PDF or DOCX format. Files exceeding the size limit shall display an error. The upload requires the user to be authenticated.,True,
+4,The system should send notifications.,False,"boundary_conditions, acceptance_criteria, preconditions"
+5,"The system shall generate a monthly sales report in PDF format containing total revenue, number of orders, and top 10 products. Reports are available to users with the manager role.",True,
+6,The system shall delete user accounts.,False,"error_handling, acceptance_criteria, preconditions"
+7,"The search function shall return results within 500ms for queries up to 100 characters, displaying 20 results per page with title, date, and relevance score. Empty results shall show a suggestion message.",True,
+8,The system shall export data to CSV.,False,"boundary_conditions, error_handling"
+9,"The system shall allow admins to create user accounts by providing email, name, and role. Duplicate emails shall return an error. The admin must be authenticated and have the admin role.",True,
+10,Users can update their profile.,False,"error_handling, boundary_conditions, acceptance_criteria"
+11,The password reset flow shall send a token via email valid for 60 minutes. Expired tokens shall display an error with a link to request a new one. The user must have a verified email.,True,
+12,The system shall handle user registrations.,False,"error_handling, boundary_conditions, acceptance_criteria"
+13,The shopping cart shall support up to 50 items. Adding beyond the limit shall show a warning. Cart contents shall persist for 7 days. Guest users must create an account to checkout.,True,
+14,The system shall integrate with an external API.,False,"error_handling, boundary_conditions, preconditions"
+15,The system shall resize uploaded images to a maximum of 1920x1080 pixels while maintaining aspect ratio. Unsupported formats shall return HTTP 415. Only authenticated users can upload.,True,
+16,The system shall validate input data.,False,"boundary_conditions, acceptance_criteria"
+17,"The audit log shall record all admin actions including timestamp, user ID, action type, and affected resource. Logs shall be retained for 365 days and be exportable in JSON format.",True,
+18,The system shall manage user sessions.,False,"boundary_conditions, acceptance_criteria, error_handling"
+19,The notification system shall deliver push notifications within 5 seconds. Failed deliveries shall retry up to 3 times with exponential backoff. Users must have notifications enabled in settings.,True,
+20,The dashboard should display analytics.,False,"acceptance_criteria, boundary_conditions"
+21,The system shall compress images to JPEG quality 80 for files over 2MB. Original files shall be preserved. Compression errors shall log the error and serve the original. Requires storage quota available.,True,
+22,The system shall perform data backups.,False,"boundary_conditions, acceptance_criteria, error_handling"
+23,Rate limiting shall allow 100 API requests per minute per authenticated user. Exceeding the limit shall return HTTP 429 with a Retry-After header in seconds.,True,
+24,The system shall synchronize data across devices.,False,"error_handling, boundary_conditions, preconditions"
+25,The two-factor authentication shall support TOTP with 30-second validity. Invalid codes shall allow up to 5 retries before temporary lockout of 10 minutes. Requires user to have 2FA enabled.,True,
+26,The system shall manage inventory.,False,"error_handling, boundary_conditions, acceptance_criteria"
+27,Email notifications shall be sent using SMTP over TLS. Failed sends shall retry 3 times at 5-minute intervals then alert the admin. Requires valid SMTP configuration in system settings.,True,
+28,The system should allow file sharing.,False,"boundary_conditions, acceptance_criteria, preconditions"
+29,"The autocomplete search shall suggest up to 10 results after 3 characters are typed, within 200ms. Suggestions are based on the user's search history and popular queries.",True,
+30,The system shall support multiple languages.,False,"boundary_conditions, acceptance_criteria"
+31,CSV export shall include all columns from the current view with headers. Files over 10000 rows shall be split into multiple files. Export requires the data-export permission.,True,
+32,The system shall calculate discounts.,False,"boundary_conditions, error_handling, preconditions"
+33,User avatar upload shall accept JPEG and PNG files between 10KB and 5MB at minimum 200x200 pixels. Invalid files shall display specific error messages. Requires authenticated session.,True,
+34,The system shall log errors.,False,"boundary_conditions, acceptance_criteria"
+35,"The system shall allow scheduling of reports for daily, weekly, or monthly delivery via email. Schedules can be modified or cancelled. Invalid cron expressions shall show a validation error.",True,
+36,Users should be able to leave comments.,False,"boundary_conditions, error_handling, acceptance_criteria"
+37,The SSO integration shall support SAML 2.0 with configurable identity providers. Failed authentication shall redirect to an error page with code. Requires admin to configure the IdP metadata.,True,
+38,The system shall archive old records.,False,"boundary_conditions, acceptance_criteria, preconditions"
+39,"The checkout shall validate credit card numbers using Luhn algorithm, support Visa/Mastercard/Amex, and display specific error messages for invalid number, expired card, or insufficient funds.",True,
+40,The system should track user activity.,False,"boundary_conditions, acceptance_criteria, error_handling"
+41,Data import shall accept CSV files up to 50MB with UTF-8 encoding. Malformed rows shall be skipped and reported in a summary. Import requires the data-admin role.,True,
+42,The system shall generate invoices.,False,"boundary_conditions, error_handling, acceptance_criteria"
+43,The dashboard shall refresh data every 60 seconds via WebSocket. Connection loss shall show a warning banner and attempt reconnection every 10 seconds. Requires authenticated session.,True,
+44,The system shall manage permissions.,False,"boundary_conditions, error_handling, acceptance_criteria"
+45,"The API versioning shall use URL path prefix (v1, v2). Deprecated versions shall return a Sunset header with deprecation date. Minimum 6-month support after deprecation announcement.",True,
+46,The system should provide search functionality.,False,"boundary_conditions, acceptance_criteria, error_handling"
+47,The GDPR data export shall compile all user data into a ZIP file within 48 hours of request. The download link shall be valid for 7 days. Requires identity verification via email confirmation.,True,
+48,The system shall support file versioning.,False,"boundary_conditions, acceptance_criteria, error_handling"
+49,"The health check endpoint shall return HTTP 200 with JSON status of database, cache, and external API connectivity. Response time over 5 seconds shall return HTTP 503.",True,
+50,The system shall process refunds.,False,"error_handling, boundary_conditions, preconditions"
+51,All SIM cards used in EIRENE mobiles shall comply with the requirements of the MORANE FFFIS for GSM-R SIM Cards [MORANE SIM]. (M),True,
+52,7.4.4.1     A visual and audible alarm shall be given when the remaining capacity of the battery is  such as to enable only 10 minutes of full duplex call time. (M),True,
+53,It shall be possible to configure Railway emergency group call areas to contain combinations of cells controlled by one or more MSC(s) within one or more network(s). (M),True,
+54,"6.2.2.9     If the call is a broadcast call, the user shall be informed that he cannot speak as part of  the broadcast call. (M)",True,
+55,Which entity will host the mapping facility? In dependence of the choice of infrastructures               (centralised – decentralized) and the organisation that governs the infrastructure and mapping               facility it has to be defined who will be responsible to host the mapping facility.,True,
+56,"For network planning, the coverage level is defined as the field strength at the antenna on the roof of a train (nominally a height of 4m above the track). An isotropic antenna with a gain of 0dBi is assumed. This criterion will be met with a certain probability in the coverage area. (The target coverage power level is dependent on the statistical fluctuations caused by the actual propagation conditions.) (I)",True,
+57,"Separate studies conducted by Damien C Holmes, William J Josephy, Alan Woosnam, Mustapha A Sherrif, and Irshad A Qabool on video distribution within the home. All studies based on private homes of the authors’ choosing, all studies created on Feb 2009.",True,
+58,12.3.1     The maximum length of a message segment shall be 96 characters. A message can  include several segments. (M),True,
+59,"The Gemini Control System development effort will obey and abide by both  the letter and the spirit of all applicable engineering practices, laws, regulations, and policies.  All necessary safety approvals will be obtained before devices will be accepted.  The safety precedents and requirements are detailed below.",True,
+60,5.2.2.59 Automatic confirmation of receipt of Railway emergency calls will be used to provide a     means  of  determining  which  trains  have  received  a  Railway  emergency  call  (see  section 13). (I)  Terminate calls,True,
+61,The aerial and any other equipment mounted external to the train shall be capable of withstanding extremes of temperature from -40C to +70C. (M),True,
+62,If the onboard fails to contact the RBC when awakening the driver shall be asked to enter the RBC contact details,True,
+63,This document outlines the software capabilities required for the XS  components for the DII COE. Section 2 lists the documents that are applicable to  this specification. Section 3 provides a list of functional capabilities. Section 4  identifies the qualification requirements. Section 5 outlines the requirements and  verification traceability matrix.  Section 6 contains the applicable notes associated with the XS component.,True,
+64,"The functionality for referencing to attestations within the VCD MUST be implemented, either VCD-specific or contracting authority-specific, in order to approve whether the contracting authority has sufficient rights for requesting the attestations.",True,
+65,5.2.3.15 The languages to be supported will be a matter for each national railway to decide. (I),True,
+66,The Development Team shall define coding standards for the application and follow those standards consistently.,True,
+67,"There must be software to support the ﬂexible scheduling, both  manually and via a scheduler, allowing for the interleaving of observing  programs in a manner that is transparent to the individual observing  programs. This includes managing the collection of science,  environmental, engineering, reference, and calibration data.",True,
+68,"5.2.4.13 If  run-time  diagnostics  are  implemented,  diagnostic  tests  shall  not  interfere  with     normal operation of the Cab radio. (M)",True,
+69,The system shall clear up data if the user chooses to click the Cancel button in the midst of creating/adding a new user.,True,
+70,A listing of the computer science offerings from Oregon university System campuses and other Oregon colleges. >Need to determine extent of community and private colleges in Oregon,True,
+71,"Mobile equipment shall comply with the generic standard for EMC in the industrial environment as defined in [ENV 50081 part 2], except for emissions at GSM frequencies as noted above. (M)",True,
+72,Railway Emergency call confirmation messages shall be of eMLPP priority 4 - “Railway information and all other calls” (see section 10.2). (M),True,
+73,"The user must associate at least one role, division, designator code, and lab location at the time of creating/adding a new user.",True,
+74,The THEMAS system shall determine wh en a reported temperature or a changed temperature setting exceeds the limits set by the overtemperature values. Temperatures that exceed the overtemperature limits shall be reported as such. Temperatures that do not exceed these limits shall be output for subsequent processing.,True,
+75,14.2.11 It  shall  be  possible  for  any  member  of  the  shunting  group  (including  a  driver)  to     transmit a shunting emergency call to all shunting groups in the area. (M),True,
+76,5.2.2.22 The call shall be connected to the loudspeaker until the driver picks up the handset.     (M),True,
+77,6.1.1     This section identifies the functional requirements for General purpose radio. It covers  the functionality to be provided by the General purpose radio and the man-machine  interface (MMI) is also defined. (I),True,
+78,"Emissions from the train mounted antenna associated with the Cab radio shall be limited to those specified by [EN 301 515, Index [35]]. (M)",True,
+79,A VCD system MUST provide functionality to merge the following data from several existing VCD packages of other economic operators:,True,
+80,3.5.7     Cab Radios configured for reception of a call to all drivers in the same area entering an  area where a call to all drivers in the same area is ongoing shall automatically join this  call unless involved in a higher priority call or involved in a call of the same priority.  (M),True,
+81,As per the MSIU Project Document named “Programme Design  Study” the following reports are required,True,
+82,2.2.9     The composition of call groups shall be able to be modified within the network. A  single user shall be able to be a member of one or more call groups. (M),True,
+83,"On entering shunting mode, the operational radio shall determine if any shunting group ID is already activated on the SIM. (M)",True,
+84,6.2.3.10 It shall be possible to register and deregister a functional number in the following way:,True,
+85,EIRENE mobiles will generate EM emissions in the GSM frequency band. It is the responsibility of national railways operating EIRENE networks to ensure that EIRENE equipment does not interfere with the normal operation of any on-train or ground based systems. (I),True,
+86,The TCS shall be able to access data storage devices. [SSS339] The TCS shall have the functionality to transfer digital data as well as digital imagery to and from data storage devices. [SSS340],True,
+87,"Mobile access to the functional numbering scheme for registration, deregistration and re-registration shall apply the USSD messages and protocols over the air interface as specified in the GSM Follow-me service. (M)",True,
+88,The contracting authority can check through the same mapping mechanism whether the submitted             attestations express fulfilment with the relevant criteria or requirements.,True,
+89,All mobiles are to support these services as defined in the relevant GSM specifications. The services will mainly be used to: (I),True,
+90,Claim No (The system will automatically generate the Claim number with Hospital  Code as Suffix + 8 digit),True,
+91,"7.2.2.7     The functional identity of the connected party, if available, shall be displayed to the  user. (M)",True,
+92,"6.2.2.6     Where available, the functional identity of the calling party shall be displayed. (M)  Receive incoming group or broadcast voice call",True,
+93,Each of the Gemini Controls work packages will be involved with some  aspect of EPICS development ranging from creation of new device drivers to database  creation and the design of new CA clients.The details of the EPICS work required can be  broken down into several broad categories which reﬂect the nature of the various work  packages. This breakdown is given in the following subsections:,True,
+94,"7.2.2.22 If the user moves out of the group or broadcast call area whilst the call is in progress,     an audible and visual indication of the loss of call shall be provided to the user. (M)  Receive incoming Railway emergency call",True,
+95,5.2.2.65 The functionality to enter and leave shunting mode shall not be available when there     are on-going calls involving the Cab radio. (M),True,
+96,"The System be scaleable and must not have any features which would preclude use in small or large police stations, with varying numbers of cases handled.",True,
+97,There must be a means to update the case diagnosis either manually or automatically if the case definition changes during an event.,True,
+98,"Besides above technical specifications, the evaluation of legal compliance of these technical         specifications is performed. The results of these evaluations will be fed into the specifications         of the components indicated above.",True,
+99,"5.2.3.23 Using a simple MMI action, it shall be possible for the driver to view a prioritised list     of all authorised mobile radio networks (see section 10.5). (M)",True,
+100,"1) International Code (IC) The International Code field shall consist of three digits and shall be based on the [ITU-T E.164] country code (XCC or CCC), allocated by the UIC on a networkby- network basis.",True,
+101,"Data should be accessible for use with commonly available analytical tools (e.g., SAS, SPSS, EPI-INFO, MS Access, MS Excel, Crystal Reports).",False,"specificity, obligation_keyword"
+102,"6.2.3.2     At this point, the radio will be able to receive all calls initiated using the telephone  number or appropriate group call number. (I)",False,"specificity, obligation_keyword"
+103,"Making text resizable by the user: Text should be able to be resized by the user, using functions provided by the user agent or other appropriate means i.e. see ISO 9241-171.",False,"specificity, obligation_keyword"
+104,PACKAGING REQUIREMENTS,False,"detail, obligation_keyword"
+105,Quick-look analysis will be through PV-Wave/IDL.,False,"detail, obligation_keyword"
+106,A method for the versioning of the development of this common standard schema SHOULD be found.,False,"specificity, obligation_keyword"
+107,"Providing text equivalents for non-text media objects: All non-text media objects, such as graphical images or video, should be provided with alternative equivalent textual descriptions and/or with equivalent text-based functionality.",False,"specificity, obligation_keyword"
+108,"Once an appropriate number has been obtained, the radio shall initiate a call to this number with ‘Railway operation’ priority (see section 10.2). Any functional number associated with the user shall be passed to the network using UUS1 (see section 11.5). (M)",False,specificity
+109,Requirements Cross Reference.,False,"detail, obligation_keyword"
+110,12.2.1     It should be possible to transfer text messages between ground and mobile(s) through  the EIRENE system. (O),False,"specificity, obligation_keyword"
+111,"In stage 3 contracting authorities are required to expand their trust into the national VCD service providers as they are responsible for the compilation of VCD packages containing context specific data which augment the evidence content. On the side of the VCD service providers, composing a VCD package is a more or less complex task depending on national country abilities, willingness, etc.",False,"specificity, obligation_keyword"
+112,Shunting radio requirements,False,"detail, obligation_keyword"
+113,6.4.3.4     An  audible  indication  should  be  provided  to  the  user  if  the  network  service  is  no  longer available. (O),False,"specificity, obligation_keyword"
+114,"11.4.3     The correspondence between the locations and the destination of the call shall be easily  re-configurable  to  support  dynamic  changes  in  controller  area  boundaries  (eg  controller  area  boundaries  will  change  from  peak  to  off-peak  periods  during  the  working day or over longer periods, areas may change to match changes in railway  organisation or traffic demand). (M)",False,specificity
+115,System requirements: Operational radio and Cab radio,False,"detail, obligation_keyword"
+116,5.2.4.3     The Cab radio may need to conserve battery power when the radio is powered up but  the MMI is switched off. (I)  Handling of call priorities,False,"specificity, obligation_keyword"
+117,User-level requirements,False,"detail, obligation_keyword"
+118,The system should be able to run test credit card transactions.,False,"specificity, obligation_keyword"
+119,5.2.3.14 It shall be possible for the user to display a list of available languages and select the     language in which radio related prompts and information are displayed both at turn  on and during a journey (eg where a change of drivers may occur). (M),False,specificity
+120,"5.2.4.4     The Cab radio may be required to set up calls from a number of different sources.  Therefore, the radio shall provide a priority function for calls from different sources in  order to handle contention for the radio. (M)",False,specificity
+121,The system should support secure virtual private network connections,False,"specificity, obligation_keyword"
+122,The DMI shall display or be compatible with information from national train control systems. This may mean displaying the information shown by the national system.,False,specificity
+123,"When the current temperature value exceeds the current temperature setting by a pre -defined amount, the THEMAS system shall activate the appropriate heating or cooling unit.s",False,specificity
+124,"Making navigation self-descriptive: Navigation should be designed to help users understand where they are, where they have been and where they can go next. General guidance on achieving self-descriptiveness is given in ISO 9241-110.",False,"specificity, obligation_keyword"
+125,"8.3.1     The functionality required by other types of controllers is essentially the same as for  primary controllers, but the control area will differ and the call set-up subsystem may  be integrated into their own function management system. (I)",False,"specificity, obligation_keyword"
+126,5.2.3.25vi The Cab radio should be capable of selecting the mobile radio network automatically  from a list of suitable networks (see section 10.5). (O),False,"specificity, obligation_keyword"
+127,Equipment should default to operation on the common access channel (direct mode channel 1) on entry into direct mode. (O),False,"specificity, obligation_keyword"
+128,"Contact information for key response partner organizations should be stored in a local instance of a public health directory for associating to a health event, as described in section 2.2.2 Health event Data of this document.",False,"specificity, obligation_keyword"
+129,Peer-to-peer connectivity should only be used to overcome a demonstrated  performance problem.,False,"specificity, obligation_keyword"
+130,"Upon an appropriate MMI action, the radio shall initiate a call to the appropriate controller with ‘Railway operation’ priority (see section 10.2). (M)",False,specificity
+131,"The communication software must support the standard ARPA services  (telnet, FTP, SMTP, etc) as well as NFS, RPC, IPC, and  the Unix socket interface library.",False,specificity
+132,The Operational radio should support direct mode communications as defined in section 15. (O),False,"specificity, obligation_keyword"
+133,This product is an update of the existing Get Real web site version 1. The new site will be version 2. A future version 3 may be needed to incorporate ideas learned from version 2.,False,"specificity, obligation_keyword"
+134,"All Gemini subsystem packages should include as part of the software  both a simulator module for inclusion in the virtual telescope (see Design constraints, below),  and user interface modules for the user interface environments that the subsystem will be  operating in. The interfaces required of these user interface modules are described in Section  3.3 on page 3-6.",False,"specificity, obligation_keyword"
+135,"This document defines the functional requirements for ERTMS/ETCS (EUROPEAN RAIL TRAFFIC MANAGEMENT SYSTEM / EUROPEAN TRAIN CONTROL SYSTEM). The document primarily defines the operational requirements and therefore contains only a few technical terms. For consistency reasons, all functional requirements not implemented in the SRS 2.3.0 have been removed from this version.",False,"specificity, obligation_keyword"
+136,The system should work even in an offline mode with the critical functionality,False,"specificity, obligation_keyword"
+137,"E.Testing. Test access allows full, direct control of any subsystem. All features of the subsystem are available in this mode. Under no circumstances should testing affect the performance of an ongoing observation.",False,"specificity, obligation_keyword"
+138,"“It shall be possible to monitor the quality (image quality, spectral resolution,  signal to noise, etc.) of the astronomical data as it comes in. Standard reduction procedures should be available for basic on-line calibrations of  the observed data. Ultimately, one would like to have fully reduced and calibrated data  at the end of the observations. Advanced pipeline procedures might make this feasible,  at least for observations of a standard nature.”",False,specificity
+139,"Systems supporting OM should be capable of using configurable, domain-specific vocabulary.",False,"specificity, obligation_keyword"
+140,"A listing with links to ACM, IEEE, and key sub groups such as SIGGRAPH, to show students the national and international strength of CS organizations. Pointers should lead to student sections of these organizations.",False,"specificity, obligation_keyword"
+141,"Host-based Development Tools (CAPFAST, EDD, etc.) Neither will Gemini plan on creating new development tools.",False,"specificity, obligation_keyword"
+142,"A  UIC  fiche  or  leaflet  is  a  document  adopted  by  UIC  members.  Statements within the fiche may comprise specifications which are binding on UIC members (�obligatory�  specifications)  or  optional  (�recommended�  specifications).  The existing track-to-train radio standard is contained within UIC fiche 751-3. It is envisaged that the EIRENE standard will be covered by a new UIC fiche, 751-4.",False,"specificity, obligation_keyword"
+143,All communication hardware must meet the data ﬂow requirements  and software protocols deﬁned in this document.  The following recommendations  are based on currently available technology.  It is entirely appropriate that changes  will be  made to take advantages of changes to that technology.,False,specificity
+144,Engineering Requirements,False,"detail, obligation_keyword"
+145,The system shall validate email address existence.,False,detail
+146,"Failure conditions should not cascade. That is, failure of one subsystem  should not affect other, working, subsystems, including communication links.",False,"specificity, obligation_keyword"
+147,Railway mobiles may support a direct communications mode whereby a mobile can communicate with all other railway mobiles in a local area without the use of GSM infrastructure. Such a mode is required for use where: (I),False,"specificity, obligation_keyword"
+148,System requirements: Cab radio,False,"detail, obligation_keyword"
+149,Each Individual User should have the following information,False,"specificity, obligation_keyword"
+150,Systems supporting OM should have the ability to record the case definition for a health event.,False,"specificity, obligation_keyword"

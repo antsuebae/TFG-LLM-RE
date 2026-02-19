@@ -28,3 +28,11 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Datasets raw/descargados (solo se commitean los CSV convertidos)
+data/sources/pure/
+data/sources/pure_xml.zip
+data/sources/fnfc_full.csv
+data/sources/promise_full.csv
+data/promise.zip
+__MACOSX/

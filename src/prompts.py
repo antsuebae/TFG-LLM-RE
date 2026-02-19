@@ -5,6 +5,10 @@ Patrones de prompt para tareas de ingenieria de requisitos.
           inconsistency (V1), testability (V2)
 5 estrategias: question_refinement, cognitive_verifier, persona_context,
                few_shot, chain_of_thought
+
+Incluye ademas:
+- EXTRACTION_PROMPT: extraccion de requisitos con LLM desde texto bruto
+- COMBINED_PROMPTS: analisis combinado (4 tareas en 1 llamada) x 5 estrategias
 """
 
 import re
@@ -311,6 +315,107 @@ REWRITE_PROMPT = (
 )
 
 
+# ── Prompt de extraccion de requisitos desde texto bruto ───
+EXTRACTION_PROMPT = (
+    'Eres un experto en ingenieria de requisitos. Extrae UNICAMENTE los requisitos '
+    'de software del siguiente texto. Descarta cabeceras, comentarios, numeros de pagina, '
+    'indices, nombres de autores, fechas, versiones y cualquier texto que no sea un requisito.\n\n'
+    'Un requisito de software es una declaracion que describe:\n'
+    '- QUE debe hacer el sistema (funcional): "The system shall allow...", "El sistema debera permitir..."\n'
+    '- COMO debe comportarse (no funcional): "The system shall respond within...", "El sistema debera soportar..."\n\n'
+    'Incluye requisitos en cualquier idioma (espanol, ingles, etc.).\n'
+    'Las lineas que empiezan con "El sistema debera", "The system shall/must/should" son requisitos.\n\n'
+    'Ejemplo:\n'
+    'Texto: "# Requisitos\\nEl sistema debera permitir login con email.\\n# Notas\\nVersion 1.0"\n'
+    'Requisitos:\n'
+    'REQ: El sistema debera permitir login con email.\n\n'
+    'Texto:\n"""\n{text}\n"""\n\n'
+    'Devuelve SOLO los requisitos extraidos, uno por linea, con prefijo "REQ: ".\n'
+    'Si no hay requisitos validos, responde "NO_REQUIREMENTS".\n\n'
+    'Requisitos:'
+)
+
+
+# ── Prompts combinados (4 tareas en 1 llamada) x 5 estrategias ──
+_COMBINED_OUTPUT_FORMAT = (
+    'Responde EXACTAMENTE en este formato (una linea por campo):\n'
+    'CLASSIFICATION: F o NF\n'
+    'AMBIGUOUS: YES o NO\n'
+    'AMBIGUITY_TYPE: vague_term / pronoun / quantifier / none\n'
+    'AMBIGUOUS_WORDS: lista separada por coma, o "none"\n'
+    'COMPLETE: YES o NO\n'
+    'MISSING: lista separada por coma (error_handling, boundary_conditions, acceptance_criteria, preconditions), o "none"\n'
+    'TESTABLE: YES o NO\n'
+    'TESTABILITY_REASON: measurable / vague / subjective'
+)
+
+COMBINED_PROMPTS = {
+    "question_refinement": (
+        'Analiza el siguiente requisito de software en 4 dimensiones: clasificacion (F/NF), '
+        'ambiguedad, completitud y testabilidad.\n\n'
+        'Si no estas seguro de alguna dimension, reformula mentalmente el requisito desde '
+        'distintas perspectivas antes de analizar.\n\n'
+        'Requisito: "{requirement}"\n\n'
+        + _COMBINED_OUTPUT_FORMAT
+    ),
+    "cognitive_verifier": (
+        'Analiza el siguiente requisito de software paso a paso en 4 dimensiones:\n\n'
+        'Requisito: "{requirement}"\n\n'
+        'Pasos de analisis:\n'
+        '1. Identifica el sujeto: describe una FUNCION (F) o una CUALIDAD (NF)?\n'
+        '2. Busca terminos vagos, pronombres sin referencia o cuantificadores imprecisos\n'
+        '3. Verifica si define manejo de errores, condiciones limite, criterios de aceptacion y precondiciones\n'
+        '4. Determina si un tester podria disenar un caso de prueba objetivo\n\n'
+        + _COMBINED_OUTPUT_FORMAT
+    ),
+    "persona_context": (
+        'Eres un ingeniero de requisitos senior con 10 anos de experiencia en IEEE 830 e ISO 29148.\n\n'
+        'Analiza el siguiente requisito en 4 dimensiones: clasificacion funcional/no funcional, '
+        'ambiguedad, completitud y testabilidad.\n\n'
+        'Requisito: "{requirement}"\n\n'
+        + _COMBINED_OUTPUT_FORMAT
+    ),
+    "few_shot": (
+        'Analiza el requisito en 4 dimensiones: clasificacion, ambiguedad, completitud y testabilidad.\n\n'
+        'Ejemplo 1 (requisito de alta calidad):\n'
+        'Requisito: "The system shall respond to user login requests within 2 seconds under normal load (up to 1000 concurrent users). If authentication fails, display error code AUTH-001."\n'
+        'CLASSIFICATION: NF\n'
+        'AMBIGUOUS: NO\n'
+        'AMBIGUITY_TYPE: none\n'
+        'AMBIGUOUS_WORDS: none\n'
+        'COMPLETE: YES\n'
+        'MISSING: none\n'
+        'TESTABLE: YES\n'
+        'TESTABILITY_REASON: measurable\n\n'
+        'Ejemplo 2 (requisito con problemas):\n'
+        'Requisito: "The system should handle data properly and be fast"\n'
+        'CLASSIFICATION: NF\n'
+        'AMBIGUOUS: YES\n'
+        'AMBIGUITY_TYPE: vague_term\n'
+        'AMBIGUOUS_WORDS: properly, fast\n'
+        'COMPLETE: NO\n'
+        'MISSING: error_handling, boundary_conditions, acceptance_criteria\n'
+        'TESTABLE: NO\n'
+        'TESTABILITY_REASON: vague\n\n'
+        'Ahora analiza:\n'
+        'Requisito: "{requirement}"\n\n'
+        + _COMBINED_OUTPUT_FORMAT
+    ),
+    "chain_of_thought": (
+        'Analiza el siguiente requisito en 4 dimensiones. Piensa paso a paso antes de dar '
+        'tu analisis final.\n\n'
+        'Requisito: "{requirement}"\n\n'
+        'Razonamiento:\n'
+        '1. Tipo: Es funcional (describe QUE hace el sistema) o no funcional (describe COMO se comporta)?\n'
+        '2. Ambiguedad: Hay terminos vagos, pronombres sin referencia o cuantificadores imprecisos?\n'
+        '3. Completitud: Define manejo de errores, condiciones limite, criterios de aceptacion, precondiciones?\n'
+        '4. Testabilidad: Se puede disenar un caso de prueba objetivo con resultado pass/fail?\n\n'
+        'Tras razonar, responde en este formato:\n'
+        + _COMBINED_OUTPUT_FORMAT
+    ),
+}
+
+
 # All valid task names
 TASK_NAMES = list(PROMPTS.keys())
 
@@ -496,6 +601,114 @@ def parse_testability(response: str) -> dict:
         result["reason"] = m.group(1).lower()
 
     return result
+
+
+def parse_combined_response(response: str) -> dict:
+    """Parse combined analysis response (4 tasks in 1 call).
+
+    Returns:
+        dict with keys: classification, is_ambiguous, ambiguity_type, ambiguous_words,
+                        is_complete, missing_elements, is_testable, testability_reason
+    """
+    result = {
+        'classification': 'INVALID',
+        'is_ambiguous': False,
+        'ambiguity_type': 'none',
+        'ambiguous_words': [],
+        'is_complete': False,
+        'missing_elements': [],
+        'is_testable': False,
+        'testability_reason': 'vague',
+    }
+
+    # Classification: extract from CLASSIFICATION field
+    upper = response.upper()
+    m = re.search(r'CLASSIFICATION\s*[:\-]\s*\*{0,2}(NF|F)\b', upper)
+    if m:
+        result['classification'] = m.group(1)
+    else:
+        # Fallback to generic classification parser
+        result['classification'] = parse_classification(response)
+
+    # Ambiguity: reuse existing parser logic
+    amb = parse_ambiguity(response)
+    result['is_ambiguous'] = amb['is_ambiguous']
+    result['ambiguity_type'] = amb['ambiguity_type']
+    result['ambiguous_words'] = amb['ambiguous_words']
+
+    # Completeness: reuse existing parser logic
+    comp = parse_completeness(response)
+    result['is_complete'] = comp['is_complete']
+    result['missing_elements'] = comp['missing_elements']
+
+    # Testability: reuse existing parser logic, but use TESTABILITY_REASON field
+    test = parse_testability(response)
+    result['is_testable'] = test['is_testable']
+    result['testability_reason'] = test['reason']
+
+    # Also check for TESTABILITY_REASON as alternative label
+    m = re.search(r'TESTABILITY_REASON\s*[:\-]\s*(MEASURABLE|VAGUE|SUBJECTIVE)', upper)
+    if m:
+        result['testability_reason'] = m.group(1).lower()
+
+    return result
+
+
+def parse_extraction_response(response: str) -> list[str]:
+    """Parse LLM extraction response into list of requirements.
+
+    Extracts lines prefixed with 'REQ:'. Falls back to non-empty lines >= 10 chars.
+    """
+    if 'NO_REQUIREMENTS' in response.upper():
+        return []
+
+    # Try extracting REQ: prefixed lines
+    requirements = []
+    for line in response.split('\n'):
+        line = line.strip()
+        m = re.match(r'^REQ\s*:\s*(.+)', line, re.IGNORECASE)
+        if m:
+            req = m.group(1).strip()
+            if req:
+                requirements.append(req)
+
+    if requirements:
+        return requirements
+
+    # Fallback: non-empty lines >= 10 chars that look like requirements
+    for line in response.split('\n'):
+        line = line.strip()
+        # Skip empty, very short, or meta lines
+        if len(line) < 10:
+            continue
+        if line.upper().startswith(('NO_REQ', 'NOTE:', 'NOTA:')):
+            continue
+        # Strip leading numbering/bullets
+        clean = re.sub(r'^[\d\.\)\-\*]+\s*', '', line).strip()
+        if len(clean) >= 10:
+            requirements.append(clean)
+
+    return requirements
+
+
+def build_combined_prompt(strategy: str, requirement: str) -> str:
+    """Build a combined analysis prompt for the given strategy.
+
+    Args:
+        strategy: One of the 5 strategy names.
+        requirement: The requirement text to analyze.
+
+    Returns:
+        Formatted combined prompt string.
+    """
+    if strategy not in COMBINED_PROMPTS:
+        raise ValueError(f"Estrategia desconocida: {strategy}. Opciones: {STRATEGY_NAMES}")
+    return COMBINED_PROMPTS[strategy].format(requirement=requirement)
+
+
+def build_extraction_prompt(text: str) -> str:
+    """Build an extraction prompt for the given text chunk."""
+    return EXTRACTION_PROMPT.format(text=text)
 
 
 # Map task names to their parsers

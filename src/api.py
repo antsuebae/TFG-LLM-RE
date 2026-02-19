@@ -37,8 +37,9 @@ app.add_middleware(
 # ============== MODELOS DE DATOS ==============
 
 class ModelType(str, Enum):
-    QWEN = "qwen2.5-coder:7b-instruct-q5_K_M"
+    QWEN = "qwen2.5:7b-instruct-q5_K_M"
     LLAMA = "llama3.1:8b-instruct-q4_K_M"
+    GEMMA = "gemma2:9b-instruct-q4_K_M"
     NIM_LLAMA_70B = "meta/llama-3.1-70b-instruct"
     NIM_LLAMA_8B = "meta/llama-3.1-8b-instruct"
     NIM_MISTRAL = "mistralai/mistral-7b-instruct-v0.3"
@@ -172,7 +173,7 @@ async def root():
             "/analyze-document": "Analizar documento completo de requisitos"
         },
         "models": {
-            "local_ollama": ["qwen2.5-coder:7b-instruct-q5_K_M", "llama3.1:8b-instruct-q4_K_M"],
+            "local_ollama": ["qwen2.5:7b-instruct-q5_K_M", "llama3.1:8b-instruct-q4_K_M", "gemma2:9b-instruct-q4_K_M"],
             "nvidia_nim": ["meta/llama-3.1-70b-instruct", "meta/llama-3.1-8b-instruct", "mistralai/mistral-7b-instruct-v0.3"]
         },
         "nvidia_nim_configured": bool(os.getenv("NVIDIA_API_KEY"))

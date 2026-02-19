@@ -4,11 +4,14 @@
 # Modelos a evaluar (5 total)
 models:
   local:
-    - name: "qwen2.5-coder:7b-instruct-q5_K_M"
+    - name: "qwen2.5:7b-instruct-q5_K_M"
       short_name: "qwen7b"
       type: "ollama"
     - name: "llama3.1:8b-instruct-q4_K_M"
       short_name: "llama8b"
+      type: "ollama"
+    - name: "gemma2:9b-instruct-q4_K_M"
+      short_name: "gemma9b"
       type: "ollama"
   nvidia_nim:
     - name: "meta/llama-3.1-70b-instruct"
@@ -86,5 +89,6 @@ dataset:
 
 # Rutas de salida
 output:
-  results_dir: "../results"
+  results_dir: "../results/experiments"
+  checkpoints_dir: "../results/checkpoints"
   logs_dir: "../results/logs"
