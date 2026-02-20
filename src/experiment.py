@@ -36,14 +36,17 @@ logger = logging.getLogger(__name__)
 class ExperimentRunner:
     """Ejecutor de experimentos de RE con soporte multi-tarea."""
 
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, output_dir: Optional[str] = None):
         """Inicializa el runner con la configuracion."""
         self.config_path = Path(config_path)
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
 
         config_base = self.config_path.parent  # proyecto/config/
-        self.results_dir = (config_base / self.config['output']['results_dir']).resolve()
+        if output_dir:
+            self.results_dir = Path(output_dir).resolve()
+        else:
+            self.results_dir = (config_base / self.config['output']['results_dir']).resolve()
         self.results_dir.mkdir(parents=True, exist_ok=True)
 
         self.checkpoints_dir = (config_base / self.config['output'].get('checkpoints_dir', '../results/checkpoints')).resolve()
@@ -403,10 +406,12 @@ def main():
                         help='Estrategias a usar (ej: few_shot chain_of_thought)')
     parser.add_argument('--resume', type=str, default=None,
                         help='Ruta a checkpoint JSON para reanudar')
+    parser.add_argument('--output-dir', type=str, default=None,
+                        help='Directorio de salida para los CSVs (sobreescribe el config)')
 
     args = parser.parse_args()
 
-    runner = ExperimentRunner(args.config)
+    runner = ExperimentRunner(args.config, output_dir=args.output_dir)
     results = runner.run_full_experiment(
         task=args.task,
         models=args.models,
