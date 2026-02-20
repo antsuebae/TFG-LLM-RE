@@ -51,19 +51,6 @@ st.markdown("""
         color: #1B4F72;
     }
 
-    /* Metric cards */
-    div[data-testid="stMetric"] {
-        background: #FFFFFF;
-        border: 1px solid #D5DBDB;
-        border-radius: 8px;
-        padding: 12px 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-    div[data-testid="stMetric"] label {
-        color: #566573;
-        font-size: 0.85rem;
-    }
-
     /* Tables */
     .stDataFrame {
         border-radius: 6px;
@@ -103,7 +90,7 @@ st.markdown("""
 MODEL_CONFIGS = {
     "qwen7b": {"name": "qwen2.5:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
     "llama8b": {"name": "llama3.1:8b-instruct-q4_K_M", "type": "ollama", "short_name": "llama8b"},
-    "gemma9b": {"name": "gemma2:9b-instruct-q4_K_M", "type": "ollama", "short_name": "gemma9b"},
+    "llama3b": {"name": "llama3.2:3b-instruct-q4_K_M", "type": "ollama", "short_name": "llama3b"},
     "nim_llama70b": {"name": "meta/llama-3.1-70b-instruct", "type": "nvidia_nim", "short_name": "nim_llama70b"},
     "nim_llama8b": {"name": "meta/llama-3.1-8b-instruct", "type": "nvidia_nim", "short_name": "nim_llama8b"},
     "nim_mistral": {"name": "mistralai/mistral-7b-instruct-v0.3", "type": "nvidia_nim", "short_name": "nim_mistral"},
@@ -112,7 +99,7 @@ MODEL_CONFIGS = {
 MODEL_LABELS = {
     "qwen7b": "Qwen 2.5 7B (local)",
     "llama8b": "Llama 8B (local)",
-    "gemma9b": "Gemma 2 9B (local)",
+    "llama3b": "Llama 3.2 3B (local)",
     "nim_llama70b": "Llama 70B (NIM)",
     "nim_llama8b": "Llama 8B (NIM)",
     "nim_mistral": "Mistral 7B (NIM)",
@@ -164,10 +151,19 @@ _PAGES = ["Pipeline Documento", "Clasificar Requisito", "Analizar Calidad",
            "Validar Consistencia", "Resultados Experimentos", "Comparar Modelos",
            "Progreso Experimentos"]
 
+# Restaurar página desde URL al hacer F5
+if "nav_page" not in st.session_state:
+    _qp = st.query_params.get("page", _PAGES[0])
+    st.session_state["nav_page"] = _qp if _qp in _PAGES else _PAGES[0]
+
+def _on_nav_change():
+    st.query_params["page"] = st.session_state["nav_page"]
+
 page = st.sidebar.radio(
     "Navegacion",
     _PAGES,
     key="nav_page",
+    on_change=_on_nav_change,
 )
 
 st.sidebar.markdown("---")
@@ -531,11 +527,15 @@ if page == "Pipeline Documento":
 
                             # Tabla detallada
                             st.subheader("Detalle por Requisito")
-                            display_df = df[['text', 'classification', 'is_ambiguous',
-                                             'is_complete', 'is_testable', 'quality_score']].copy()
-                            display_df.columns = ['Requisito', 'Tipo', 'Ambiguo',
-                                                  'Completo', 'Testable', 'Calidad']
-                            display_df['Requisito'] = display_df['Requisito'].str[:100]
+                            _pipe_col_map = {
+                                'text': 'Requisito', 'classification': 'Tipo',
+                                'is_ambiguous': 'Ambiguo', 'is_complete': 'Completo',
+                                'is_testable': 'Testable', 'quality_score': 'Calidad',
+                            }
+                            _avail = [c for c in _pipe_col_map if c in df.columns]
+                            display_df = df[_avail].rename(columns=_pipe_col_map).copy()
+                            if 'Requisito' in display_df.columns:
+                                display_df['Requisito'] = display_df['Requisito'].str[:100]
                             display_df.index = range(1, len(display_df) + 1)
                             st.dataframe(display_df, use_container_width=True, height=400)
 
@@ -544,11 +544,14 @@ if page == "Pipeline Documento":
                             _render_warnings(pipeline_warnings, "Advertencias de calidad")
 
                             # Requisitos con problemas
-                            problems = df[
-                                (df['is_ambiguous'] == True) |
-                                (df['is_complete'] == False) |
-                                (df['is_testable'] == False)
-                            ]
+                            _prob_mask = pd.Series(False, index=df.index)
+                            if 'is_ambiguous' in df.columns:
+                                _prob_mask = _prob_mask | (df['is_ambiguous'] == True)
+                            if 'is_complete' in df.columns:
+                                _prob_mask = _prob_mask | (df['is_complete'] == False)
+                            if 'is_testable' in df.columns:
+                                _prob_mask = _prob_mask | (df['is_testable'] == False)
+                            problems = df[_prob_mask]
                             if not problems.empty:
                                 with st.expander(f"Requisitos con problemas ({len(problems)})"):
                                     for _, row in problems.iterrows():
@@ -730,7 +733,7 @@ elif page == "Clasificar Requisito":
     with col1:
         req_text = st.text_area(
             "Requisito a clasificar",
-            value="The system shall allow users to reset their password via email.",
+            value="El sistema debera permitir a los usuarios restablecer su contrasena mediante correo electronico.",
             height=100
         )
 
@@ -790,7 +793,7 @@ elif page == "Analizar Calidad":
     col1, col2 = st.columns([2, 1])
     with col1:
         req_text = st.text_area("Requisito a analizar", height=100,
-                                value="The system should be fast and user-friendly.")
+                                value="El sistema debera responder a cualquier consulta en menos de 2 segundos.")
     with col2:
         model_key = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()), key="quality_model",
                                   format_func=lambda x: MODEL_LABELS.get(x, x))
@@ -812,28 +815,39 @@ elif page == "Analizar Calidad":
                     parsed = parse_response(task, response['content'])
 
                     if task == "ambiguity":
-                        status = "Ambiguo" if parsed['is_ambiguous'] else "No ambiguo"
-                        color = "red" if parsed['is_ambiguous'] else "green"
+                        is_amb = parsed.get('is_ambiguous', False)
+                        status = "Ambiguo" if is_amb else "No ambiguo"
+                        color = "red" if is_amb else "green"
                         st.markdown(f"### Resultado: :{color}[{status}]")
-                        if parsed['is_ambiguous']:
-                            st.markdown(f"**Tipo:** {parsed['ambiguity_type']}")
-                            if parsed['ambiguous_words']:
-                                st.markdown(f"**Palabras ambiguas:** {', '.join(parsed['ambiguous_words'])}")
+                        if is_amb:
+                            amb_type = parsed.get('ambiguity_type', '')
+                            if amb_type:
+                                st.markdown(f"**Tipo:** {amb_type}")
+                            words = parsed.get('ambiguous_words', [])
+                            if words:
+                                items = words if isinstance(words, list) else [words]
+                                st.markdown(f"**Palabras ambiguas:** {', '.join(str(w) for w in items)}")
 
                     elif task == "completeness":
-                        status = "Completo" if parsed['is_complete'] else "Incompleto"
-                        color = "green" if parsed['is_complete'] else "red"
+                        is_comp = parsed.get('is_complete', False)
+                        status = "Completo" if is_comp else "Incompleto"
+                        color = "green" if is_comp else "red"
                         st.markdown(f"### Resultado: :{color}[{status}]")
-                        if parsed['missing_elements']:
+                        missing = parsed.get('missing_elements', [])
+                        if missing:
                             st.markdown("**Elementos faltantes:**")
-                            for elem in parsed['missing_elements']:
+                            items = missing if isinstance(missing, list) else [missing]
+                            for elem in items:
                                 st.markdown(f"- {elem}")
 
                     elif task == "testability":
-                        status = "Testable" if parsed['is_testable'] else "No testable"
-                        color = "green" if parsed['is_testable'] else "red"
+                        is_test = parsed.get('is_testable', False)
+                        status = "Testable" if is_test else "No testable"
+                        color = "green" if is_test else "red"
                         st.markdown(f"### Resultado: :{color}[{status}]")
-                        st.markdown(f"**Razon:** {parsed['reason']}")
+                        reason = parsed.get('reason', '')
+                        if reason:
+                            st.markdown(f"**Razon:** {reason}")
 
                     st.metric("Tiempo", f"{response['time_seconds']:.2f}s")
 
@@ -855,10 +869,10 @@ elif page == "Validar Consistencia":
     col1, col2 = st.columns(2)
     with col1:
         req_a = st.text_area("Requisito A", height=100,
-                             value="The system shall store all data locally on the user's device.")
+                             value="El sistema almacenara todos los datos del usuario localmente en su dispositivo.")
     with col2:
         req_b = st.text_area("Requisito B", height=100,
-                             value="All user data must be stored in a cloud-based database.")
+                             value="Todos los datos de usuario deben almacenarse en una base de datos en la nube.")
 
     model_key = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()), key="consist_model",
                               format_func=lambda x: MODEL_LABELS.get(x, x))
@@ -880,9 +894,10 @@ elif page == "Validar Consistencia":
                 if response['success']:
                     parsed = parse_response("inconsistency", response['content'])
 
-                    if parsed['is_inconsistent']:
+                    if parsed.get('is_inconsistent'):
                         st.markdown("### :red[Inconsistencia detectada]")
-                        st.markdown(f"**Descripcion:** {parsed['description']}")
+                        desc = parsed.get('description', 'Sin descripcion disponible.')
+                        st.markdown(f"**Descripcion:** {desc}")
                     else:
                         st.markdown("### :green[Requisitos consistentes]")
 
@@ -958,11 +973,15 @@ elif page == "Resultados Experimentos":
                     if csv_path.exists():
                         with st.expander(f"Detalle: {run['Modelo']} + {run['Estrategia']} ({run['Fecha']})"):
                             run_df = pd.read_csv(csv_path)
-                            display_df = run_df[['text', 'classification', 'is_ambiguous',
-                                                 'is_complete', 'is_testable', 'quality_score']].copy()
-                            display_df.columns = ['Requisito', 'Tipo', 'Ambiguo',
-                                                  'Completo', 'Testable', 'Calidad']
-                            display_df['Requisito'] = display_df['Requisito'].str[:100]
+                            _col_map = {
+                                'text': 'Requisito', 'classification': 'Tipo',
+                                'is_ambiguous': 'Ambiguo', 'is_complete': 'Completo',
+                                'is_testable': 'Testable', 'quality_score': 'Calidad',
+                            }
+                            avail = [c for c in _col_map if c in run_df.columns]
+                            display_df = run_df[avail].rename(columns=_col_map).copy()
+                            if 'Requisito' in display_df.columns:
+                                display_df['Requisito'] = display_df['Requisito'].str[:100]
                             display_df.index = range(1, len(display_df) + 1)
                             st.dataframe(display_df, use_container_width=True)
 
@@ -979,43 +998,113 @@ elif page == "Resultados Experimentos":
 
     else:
         # ── Resultados de experimentos (benchmark) ────────
-        result_files = sorted(EXPERIMENTS_DIR.glob("results_*.csv"))
+        import matplotlib.pyplot as plt
+        from analysis import compute_metrics_per_config
 
-        if not result_files:
-            st.warning("No hay resultados de experimentos. Ejecuta el pipeline experimental primero.")
-            st.code("python experiment.py --dry-run --task classification --models qwen7b", language="bash")
-        else:
-            selected_file = st.selectbox(
-                "Archivo de resultados",
-                result_files,
-                format_func=lambda x: x.name
+        TASK_DISPLAY = {
+            'classification':  'Clasificacion F/NF',
+            'ambiguity':       'Deteccion de Ambiguedad',
+            'completeness':    'Evaluacion de Completitud',
+            'inconsistency':   'Deteccion de Inconsistencias',
+            'testability':     'Evaluacion de Testabilidad',
+        }
+
+        def _load_benchmark(task: str, version: str) -> pd.DataFrame:
+            """Carga y concatena todos los CSVs de una tarea+version."""
+            dirs = []
+            if version in ("v1", "Ambas"):
+                dirs.append(EXPERIMENTS_DIR / "v1")
+            if version in ("v2", "Ambas"):
+                dirs.append(EXPERIMENTS_DIR / "v2")
+            dfs = []
+            for d in dirs:
+                if d.exists():
+                    for f in sorted(d.glob(f"results_{task}_*.csv")):
+                        try:
+                            _df = pd.read_csv(f)
+                            _df['_version'] = d.name
+                            dfs.append(_df)
+                        except Exception:
+                            pass
+            return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+        # ── Controles ─────────────────────────────────────
+        ctrl_col1, ctrl_col2 = st.columns([1, 2])
+        with ctrl_col1:
+            version_sel = st.radio(
+                "Version",
+                ["v1", "v2", "Ambas"],
+                horizontal=True,
+                key="bench_version",
+            )
+        with ctrl_col2:
+            # Solo mostrar tareas que tienen datos en la version seleccionada
+            available_tasks = []
+            for t in TASK_DISPLAY:
+                dirs_to_check = []
+                if version_sel in ("v1", "Ambas"):
+                    dirs_to_check.append(EXPERIMENTS_DIR / "v1")
+                if version_sel in ("v2", "Ambas"):
+                    dirs_to_check.append(EXPERIMENTS_DIR / "v2")
+                has_data = any(
+                    list(d.glob(f"results_{t}_*.csv"))
+                    for d in dirs_to_check if d.exists()
+                )
+                if has_data:
+                    available_tasks.append(t)
+
+            if not available_tasks:
+                st.warning("No hay resultados para la version seleccionada.")
+                st.stop()
+
+            task_sel = st.selectbox(
+                "Tarea",
+                available_tasks,
+                format_func=lambda x: TASK_DISPLAY.get(x, x),
+                key="bench_task",
             )
 
-            df = pd.read_csv(selected_file)
-            strategy_col = 'strategy' if 'strategy' in df.columns else 'pattern'
-            task = df['task'].iloc[0] if 'task' in df.columns else 'classification'
+        df = _load_benchmark(task_sel, version_sel)
 
-            st.markdown(f"**Tarea:** {task} | **Registros:** {len(df)} | "
-                        f"**Modelos:** {df['model'].nunique() if 'model' in df.columns else 'N/A'}")
+        if df.empty:
+            st.info("No hay datos para esta seleccion. Ejecuta los experimentos primero.")
+        else:
+            strategy_col = 'strategy' if 'strategy' in df.columns else 'pattern'
 
             if 'model' in df.columns and strategy_col in df.columns and 'iteration' in df.columns:
-                from analysis import compute_metrics_per_config
-                metrics_df = compute_metrics_per_config(df, task)
+                metrics_df = compute_metrics_per_config(df, task_sel)
+                summary = metrics_df.groupby(['model', strategy_col]).agg(
+                    f1_mean=('f1', 'mean'), f1_std=('f1', 'std'),
+                    accuracy=('accuracy', 'mean'),
+                    precision=('precision', 'mean'),
+                    recall=('recall', 'mean'),
+                ).round(3).reset_index()
 
-                st.subheader("Resumen de Metricas")
-                summary = metrics_df.groupby(['model', strategy_col]).agg({
-                    'f1': ['mean', 'std'],
-                    'accuracy': ['mean', 'std'],
-                    'precision': 'mean',
-                    'recall': 'mean',
-                }).round(3)
-                st.dataframe(summary, use_container_width=True)
+                # ── KPI cards ─────────────────────────────
+                best_row = summary.loc[summary['f1_mean'].idxmax()]
+                k1, k2, k3, k4 = st.columns(4)
+                k1.metric("Mejor F1", f"{best_row['f1_mean']:.3f}",
+                          delta=f"±{best_row['f1_std']:.3f}")
+                k2.metric("Mejor modelo",
+                          MODEL_LABELS.get(best_row['model'], best_row['model']))
+                k3.metric("Mejor estrategia",
+                          STRATEGY_LABELS.get(best_row[strategy_col], best_row[strategy_col]))
+                k4.metric("Configuraciones", len(summary))
 
-                st.subheader("Visualizaciones")
-                chart_tabs = st.tabs(["Barras", "Boxplot", "Heatmap", "Radar", "Velocidad"])
+                st.divider()
 
-                import matplotlib.pyplot as plt
+                # ── Visualizaciones ───────────────────────
+                chart_tabs = st.tabs(["Heatmap F1", "Barras", "Boxplot", "Radar", "Velocidad",
+                                      "F1 vs Tiempo", "Ranking Estrategias", "Local vs API"])
                 with chart_tabs[0]:
+                    try:
+                        from analysis import plot_heatmap
+                        fig = plot_heatmap(metrics_df, 'f1')
+                        st.pyplot(fig)
+                        plt.close(fig)
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+                with chart_tabs[1]:
                     try:
                         from analysis import plot_grouped_bars
                         fig = plot_grouped_bars(metrics_df, 'f1')
@@ -1023,18 +1112,10 @@ elif page == "Resultados Experimentos":
                         plt.close(fig)
                     except Exception as e:
                         st.error(f"Error generando grafica: {e}")
-                with chart_tabs[1]:
+                with chart_tabs[2]:
                     try:
                         from analysis import plot_boxplots
                         fig = plot_boxplots(metrics_df, 'f1')
-                        st.pyplot(fig)
-                        plt.close(fig)
-                    except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
-                with chart_tabs[2]:
-                    try:
-                        from analysis import plot_heatmap
-                        fig = plot_heatmap(metrics_df, 'f1')
                         st.pyplot(fig)
                         plt.close(fig)
                     except Exception as e:
@@ -1058,8 +1139,213 @@ elif page == "Resultados Experimentos":
                             st.info("No hay datos de velocidad disponibles.")
                     except Exception as e:
                         st.error(f"Error generando grafica: {e}")
+
+                with chart_tabs[5]:
+                    try:
+                        import plotly.graph_objects as go
+                        # Agregar tiempo medio por modelo+estrategia
+                        _time_agg = metrics_df.groupby(['model', 'strategy']).agg(
+                            avg_time=('avg_time_seconds', 'mean'),
+                            avg_tps=('avg_tokens_per_second', 'mean'),
+                        ).reset_index()
+                        _scatter_df = summary.merge(_time_agg, left_on=['model', strategy_col],
+                                                    right_on=['model', 'strategy'], how='left')
+
+                        if _scatter_df['avg_time'].isna().all():
+                            st.info("No hay datos de tiempo disponibles.")
+                        else:
+                            _model_colors = {
+                                'qwen7b': '#2980b9', 'llama8b': '#1a5276', 'llama3b': '#5dade2',
+                                'nim_llama70b': '#c0392b', 'nim_llama8b': '#922b21', 'nim_mistral': '#f1948a',
+                            }
+                            _strat_symbols = {s: sym for sym, s in enumerate(
+                                ['circle', 'square', 'diamond', 'cross', 'x'],
+                            )}  # reutilizamos idx
+                            _strat_list = list(STRATEGY_LABELS.keys())
+                            _strat_sym_map = {s: i for i, s in enumerate(_strat_list)}
+
+                            fig_sc = go.Figure()
+                            for _, r in _scatter_df.iterrows():
+                                if pd.isna(r.get('avg_time')):
+                                    continue
+                                _mlabel = MODEL_LABELS.get(r['model'], r['model'])
+                                _slabel = STRATEGY_LABELS.get(r[strategy_col], r[strategy_col])
+                                fig_sc.add_trace(go.Scatter(
+                                    x=[r['avg_time']],
+                                    y=[r['f1_mean']],
+                                    mode='markers',
+                                    marker=dict(
+                                        size=14,
+                                        color=_model_colors.get(r['model'], '#888'),
+                                        symbol=_strat_sym_map.get(r[strategy_col], 0),
+                                        line=dict(width=1.5, color='white'),
+                                    ),
+                                    name=f"{_mlabel} · {_slabel}",
+                                    hovertemplate=(
+                                        f"<b>{_mlabel}</b><br>"
+                                        f"Estrategia: {_slabel}<br>"
+                                        f"F1: {r['f1_mean']:.3f} ± {r['f1_std']:.3f}<br>"
+                                        f"Tiempo medio: {r['avg_time']:.2f} s/req<br>"
+                                        + (f"Velocidad: {r['avg_tps']:.1f} tok/s" if r.get('avg_tps') else "")
+                                        + "<extra></extra>"
+                                    ),
+                                ))
+
+                            fig_sc.update_layout(
+                                title=dict(text="F1 vs Tiempo de inferencia por configuracion",
+                                           font=dict(size=14)),
+                                xaxis_title="Tiempo medio por requisito (s)",
+                                yaxis_title="F1-score",
+                                yaxis=dict(range=[0, 1.05]),
+                                height=480,
+                                legend=dict(orientation='v', yanchor='top', y=1,
+                                            xanchor='left', x=1.02, font=dict(size=10)),
+                                margin=dict(l=50, r=200, t=50, b=50),
+                            )
+                            fig_sc.update_xaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
+                            fig_sc.update_yaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
+                            st.plotly_chart(fig_sc, use_container_width=True,
+                                            config={'displayModeBar': False})
+                            st.caption("Cada punto = modelo + estrategia. "
+                                       "Esquina superior izquierda = mejor rendimiento en menos tiempo.")
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+
+                with chart_tabs[6]:
+                    # Ranking de estrategias por modelo
+                    try:
+                        import plotly.graph_objects as go
+                        _rank_df = metrics_df.groupby(['model', 'strategy'])['f1']\
+                            .mean().reset_index()
+                        _rank_df['rank'] = _rank_df.groupby('model')['f1']\
+                            .rank(ascending=False, method='min').astype(int)
+                        _rank_df['model_label'] = _rank_df['model'].map(
+                            lambda x: MODEL_LABELS.get(x, x))
+                        _strat_colors_r = {
+                            'question_refinement': '#3498db', 'cognitive_verifier': '#e74c3c',
+                            'persona_context': '#2ecc71', 'few_shot': '#f39c12',
+                            'chain_of_thought': '#9b59b6',
+                        }
+                        _model_order_r = [m for m in MODEL_CONFIGS
+                                          if m in _rank_df['model'].unique()]
+                        _model_pos = {m: i for i, m in enumerate(_model_order_r)}
+                        fig_rank = go.Figure()
+                        for _s in _rank_df['strategy'].unique():
+                            _sub = _rank_df[_rank_df['strategy'] == _s].copy()
+                            _sub['_pos'] = _sub['model'].map(_model_pos)
+                            _sub = _sub.sort_values('_pos')
+                            _sl = STRATEGY_LABELS.get(_s, _s)
+                            fig_rank.add_trace(go.Scatter(
+                                x=_sub['model_label'], y=_sub['rank'],
+                                mode='lines+markers', name=_sl,
+                                line=dict(color=_strat_colors_r.get(_s, '#888'), width=2.5),
+                                marker=dict(size=12, color=_strat_colors_r.get(_s, '#888'),
+                                            line=dict(width=1.5, color='white')),
+                                hovertemplate=(
+                                    f"<b>{_sl}</b><br>Modelo: %{{x}}<br>"
+                                    "Ranking: #%{y}<br>F1 medio: %{customdata:.3f}<extra></extra>"
+                                ),
+                                customdata=_sub['f1'],
+                            ))
+                        fig_rank.update_layout(
+                            title=dict(text="Ranking de estrategias por modelo (1 = mejor F1)",
+                                       font=dict(size=14)),
+                            xaxis_title="Modelo",
+                            yaxis=dict(title="Ranking", tickmode='linear', dtick=1,
+                                       autorange='reversed', range=[5.4, 0.6]),
+                            height=460,
+                            legend=dict(orientation='h', yanchor='bottom', y=1.02,
+                                        xanchor='right', x=1),
+                            margin=dict(l=50, r=30, t=80, b=50),
+                        )
+                        fig_rank.update_xaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
+                        fig_rank.update_yaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
+                        st.plotly_chart(fig_rank, use_container_width=True,
+                                        config={'displayModeBar': False})
+                        st.caption("Lineas horizontales = la estrategia funciona igual en todos los modelos. "
+                                   "Cruces entre lineas = el mejor prompt depende del modelo (RQ2).")
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+
+                with chart_tabs[7]:
+                    # Local vs API distribución de F1
+                    try:
+                        import plotly.graph_objects as go
+                        _cmp_df = metrics_df.copy()
+                        _cmp_df['tipo'] = _cmp_df['model'].map(
+                            lambda m: 'API (NIM)'
+                            if MODEL_CONFIGS.get(m, {}).get('type') == 'nvidia_nim'
+                            else 'Local (Ollama)'
+                        )
+                        _tipo_colors = {'Local (Ollama)': '#2980b9', 'API (NIM)': '#c0392b'}
+                        fig_viol = go.Figure()
+                        for _tipo in ['Local (Ollama)', 'API (NIM)']:
+                            _sub = _cmp_df[_cmp_df['tipo'] == _tipo]
+                            if _sub.empty:
+                                continue
+                            fig_viol.add_trace(go.Violin(
+                                x=_sub['tipo'], y=_sub['f1'],
+                                name=_tipo,
+                                box_visible=True, meanline_visible=True,
+                                fillcolor=_tipo_colors[_tipo], opacity=0.65,
+                                line_color=_tipo_colors[_tipo],
+                                points='all', pointpos=0, jitter=0.3,
+                                marker=dict(size=5, opacity=0.5),
+                                hovertemplate='F1: %{y:.3f}<extra>' + _tipo + '</extra>',
+                            ))
+                        fig_viol.update_layout(
+                            title=dict(text="Distribucion de F1: Modelos Locales vs API",
+                                       font=dict(size=14)),
+                            yaxis=dict(title="F1-score", range=[0, 1.05]),
+                            xaxis_title="",
+                            height=440,
+                            showlegend=False,
+                            violingap=0.3,
+                            margin=dict(l=50, r=30, t=50, b=50),
+                        )
+                        fig_viol.update_xaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
+                        fig_viol.update_yaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
+                        st.plotly_chart(fig_viol, use_container_width=True,
+                                        config={'displayModeBar': False})
+                        _sc1, _sc2 = st.columns(2)
+                        _local_f1 = _cmp_df[_cmp_df['tipo'] == 'Local (Ollama)']['f1']
+                        _api_f1   = _cmp_df[_cmp_df['tipo'] == 'API (NIM)']['f1']
+                        if not _local_f1.empty:
+                            _sc1.metric("Local — F1 medio", f"{_local_f1.mean():.3f}",
+                                        delta=f"σ={_local_f1.std():.3f}")
+                        if not _api_f1.empty:
+                            _sc2.metric("API — F1 medio", f"{_api_f1.mean():.3f}",
+                                        delta=f"σ={_api_f1.std():.3f}")
+                        st.caption("Responde RQ1: diferencia de rendimiento entre modelos locales y API. "
+                                   "La caja interior muestra el rango intercuartilico; "
+                                   "la linea central es la mediana.")
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+
+                st.divider()
+
+                # ── Tabla de metricas ─────────────────────
+                st.subheader("Tabla de metricas")
+                display_summary = summary.copy()
+                display_summary['modelo'] = display_summary['model'].map(
+                    lambda x: MODEL_LABELS.get(x, x))
+                display_summary['estrategia'] = display_summary[strategy_col].map(
+                    lambda x: STRATEGY_LABELS.get(x, x))
+                display_summary = display_summary[
+                    ['modelo', 'estrategia', 'f1_mean', 'f1_std', 'accuracy', 'precision', 'recall']
+                ].rename(columns={
+                    'f1_mean': 'F1', 'f1_std': 'F1 ±',
+                    'accuracy': 'Accuracy', 'precision': 'Precision', 'recall': 'Recall',
+                }).sort_values('F1', ascending=False).reset_index(drop=True)
+
+                st.dataframe(
+                    display_summary.style.background_gradient(
+                        subset=['F1', 'Accuracy'], cmap='RdYlGn', vmin=0.0, vmax=1.0
+                    ),
+                    use_container_width=True,
+                    hide_index=True,
+                )
             else:
-                st.subheader("Datos")
                 st.dataframe(df, use_container_width=True)
 
 
@@ -1067,81 +1353,172 @@ elif page == "Resultados Experimentos":
 # PAGE 6: Comparar Modelos
 # ============================================================
 elif page == "Comparar Modelos":
-    st.title("Comparacion de Modelos")
+    st.title("Comparacion Local vs API")
+    import matplotlib.pyplot as plt
+    from analysis import compute_metrics_per_config
 
-    result_files = sorted(EXPERIMENTS_DIR.glob("results_*.csv"))
+    TASK_DISPLAY_CMP = {
+        'classification':  'Clasificacion F/NF',
+        'ambiguity':       'Deteccion de Ambiguedad',
+        'completeness':    'Evaluacion de Completitud',
+        'inconsistency':   'Deteccion de Inconsistencias',
+        'testability':     'Evaluacion de Testabilidad',
+    }
 
-    if not result_files:
-        st.warning("No hay resultados disponibles. Ejecuta experimentos primero.")
-    else:
-        selected_file = st.selectbox(
-            "Archivo de resultados",
-            result_files,
-            format_func=lambda x: x.name,
-            key="compare_file"
+    def _load_cmp(task, version):
+        dirs = []
+        if version in ("v1", "Ambas"):
+            dirs.append(EXPERIMENTS_DIR / "v1")
+        if version in ("v2", "Ambas"):
+            dirs.append(EXPERIMENTS_DIR / "v2")
+        dfs = []
+        for d in dirs:
+            if d.exists():
+                for f in sorted(d.glob(f"results_{task}_*.csv")):
+                    try:
+                        _df = pd.read_csv(f)
+                        _df['_version'] = d.name
+                        dfs.append(_df)
+                    except Exception:
+                        pass
+        return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+    # ── Controles ─────────────────────────────────────────────
+    ctrl1, ctrl2 = st.columns([1, 2])
+    with ctrl1:
+        version_cmp = st.radio("Version", ["v1", "v2", "Ambas"], horizontal=True, key="cmp_version")
+    with ctrl2:
+        dirs_cmp = [v for v in ["v1", "v2"] if version_cmp in (v, "Ambas")]
+        avail_tasks_cmp = [
+            t for t in TASK_DISPLAY_CMP
+            if any(list((EXPERIMENTS_DIR / v).glob(f"results_{t}_*.csv"))
+                   for v in dirs_cmp if (EXPERIMENTS_DIR / v).exists())
+        ]
+        if not avail_tasks_cmp:
+            st.warning("No hay resultados para la version seleccionada.")
+            st.stop()
+        task_cmp = st.selectbox(
+            "Tarea", avail_tasks_cmp,
+            format_func=lambda x: TASK_DISPLAY_CMP.get(x, x),
+            key="cmp_task",
         )
 
-        df = pd.read_csv(selected_file)
-        task = df['task'].iloc[0] if 'task' in df.columns else 'classification'
+    df = _load_cmp(task_cmp, version_cmp)
 
-        from analysis import compute_metrics_per_config
-        metrics_df = compute_metrics_per_config(df, task)
-
-        st.subheader("Rendimiento por Modelo")
-        model_summary = metrics_df.groupby('model').agg({
-            'f1': ['mean', 'std'],
-            'accuracy': ['mean', 'std'],
-            'precision': 'mean',
-            'recall': 'mean',
-            'avg_time_seconds': 'mean',
-            'avg_tokens_per_second': 'mean',
-        }).round(3)
-        model_summary.columns = ['F1 Mean', 'F1 Std', 'Acc Mean', 'Acc Std',
-                                  'Prec Mean', 'Rec Mean', 'Avg Time (s)', 'Tokens/s']
-        st.dataframe(model_summary, use_container_width=True)
-
-        st.subheader("Mejor Estrategia por Modelo")
-        best_strategy = metrics_df.groupby(['model', 'strategy'])['f1'].mean().reset_index()
-        best_per_model = best_strategy.loc[best_strategy.groupby('model')['f1'].idxmax()]
-        st.dataframe(best_per_model.rename(columns={'f1': 'F1 Mean'}).set_index('model'),
-                     use_container_width=True)
-
-        st.subheader("Local vs API")
+    if df.empty:
+        st.info("No hay datos para esta seleccion. Ejecuta los experimentos primero.")
+    else:
+        strategy_col = 'strategy' if 'strategy' in df.columns else 'pattern'
         local_models = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'ollama']
-        api_models = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'nvidia_nim']
+        api_models   = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'nvidia_nim']
 
-        local_metrics = metrics_df[metrics_df['model'].isin(local_models)]
-        api_metrics = metrics_df[metrics_df['model'].isin(api_models)]
+        if 'model' not in df.columns or strategy_col not in df.columns:
+            st.dataframe(df, use_container_width=True)
+        else:
+            metrics_df = compute_metrics_per_config(df, task_cmp)
+            local_m = metrics_df[metrics_df['model'].isin(local_models)]
+            api_m   = metrics_df[metrics_df['model'].isin(api_models)]
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**Modelos Locales (Ollama)**")
-            if not local_metrics.empty:
-                st.metric("F1 Promedio", f"{local_metrics['f1'].mean():.3f}")
-                st.metric("Accuracy Promedio", f"{local_metrics['accuracy'].mean():.3f}")
-                st.metric("Tiempo Promedio", f"{local_metrics['avg_time_seconds'].mean():.2f}s")
+            # ── Resumen comparativo Local vs API ───────────
+            _f1_local = local_m['f1'].mean() if not local_m.empty else None
+            _f1_api   = api_m['f1'].mean()   if not api_m.empty   else None
+            _tps_local = local_m['avg_tokens_per_second'].mean() if (not local_m.empty and 'avg_tokens_per_second' in local_m.columns) else None
+            _tps_api   = api_m['avg_tokens_per_second'].mean()   if (not api_m.empty   and 'avg_tokens_per_second' in api_m.columns)   else None
+
+            _kc = [c for c in [
+                _f1_local is not None,
+                _f1_api   is not None,
+                _tps_local is not None,
+                _tps_api   is not None,
+            ] if c]
+            if any([_f1_local, _f1_api, _tps_local, _tps_api]):
+                _cols = st.columns(sum([_f1_local is not None, _f1_api is not None,
+                                        _tps_local is not None, _tps_api is not None]))
+                _ci = 0
+                if _f1_local is not None:
+                    _delta = f"{_f1_local - _f1_api:+.3f} vs API" if _f1_api is not None else None
+                    _cols[_ci].metric("F1 Local (Ollama)", f"{_f1_local:.3f}", delta=_delta)
+                    _ci += 1
+                if _f1_api is not None:
+                    _delta = f"{_f1_api - _f1_local:+.3f} vs Local" if _f1_local is not None else None
+                    _cols[_ci].metric("F1 API (NIM)", f"{_f1_api:.3f}", delta=_delta)
+                    _ci += 1
+                if _tps_local is not None:
+                    _cols[_ci].metric("Tokens/s Local", f"{_tps_local:.1f}")
+                    _ci += 1
+                if _tps_api is not None:
+                    _cols[_ci].metric("Tokens/s API", f"{_tps_api:.1f}")
+
+            st.divider()
+
+            # ── Rendimiento por modelo (tabla) ─────────────
+            st.subheader("F1 por modelo")
+            model_agg = metrics_df.groupby('model').agg(
+                f1_mean=('f1', 'mean'), f1_std=('f1', 'std'),
+                accuracy=('accuracy', 'mean'),
+                precision=('precision', 'mean'),
+                recall=('recall', 'mean'),
+            ).round(3).reset_index()
+            model_agg['tipo'] = model_agg['model'].map(
+                lambda m: 'Local' if m in local_models else 'API')
+            model_agg['modelo'] = model_agg['model'].map(lambda x: MODEL_LABELS.get(x, x))
+            model_agg = model_agg[['tipo', 'modelo', 'f1_mean', 'f1_std', 'accuracy', 'precision', 'recall']]\
+                .rename(columns={'f1_mean': 'F1', 'f1_std': 'F1 ±',
+                                 'accuracy': 'Accuracy', 'precision': 'Precision', 'recall': 'Recall'})\
+                .sort_values(['tipo', 'F1'], ascending=[True, False]).reset_index(drop=True)
+            st.dataframe(
+                model_agg.style.background_gradient(subset=['F1', 'Accuracy'], cmap='RdYlGn', vmin=0, vmax=1),
+                use_container_width=True, hide_index=True,
+            )
+
+            st.divider()
+
+            # ── Mejor estrategia por modelo ────────────────
+            st.subheader("Mejor estrategia por modelo")
+            best_s = metrics_df.groupby(['model', strategy_col])['f1'].mean().reset_index()
+            best_pm = best_s.loc[best_s.groupby('model')['f1'].idxmax()].copy()
+            best_pm['tipo']      = best_pm['model'].map(lambda m: 'Local' if m in local_models else 'API')
+            best_pm['modelo']    = best_pm['model'].map(lambda x: MODEL_LABELS.get(x, x))
+            best_pm['estrategia'] = best_pm[strategy_col].map(lambda x: STRATEGY_LABELS.get(x, x))
+            best_pm = best_pm[['tipo', 'modelo', 'estrategia', 'f1']]\
+                .rename(columns={'f1': 'F1 medio'})\
+                .sort_values(['tipo', 'F1 medio'], ascending=[True, False]).reset_index(drop=True)
+            st.dataframe(
+                best_pm.style.background_gradient(subset=['F1 medio'], cmap='RdYlGn', vmin=0, vmax=1),
+                use_container_width=True, hide_index=True,
+            )
+
+            st.divider()
+
+            # ── Velocidad ──────────────────────────────────
+            st.subheader("Velocidad: tokens/s por modelo")
+            if 'avg_tokens_per_second' in metrics_df.columns:
+                try:
+                    from analysis import plot_speed_comparison
+                    fig = plot_speed_comparison(metrics_df)
+                    if fig:
+                        st.pyplot(fig)
+                        plt.close(fig)
+                    else:
+                        st.info("No hay datos de velocidad disponibles.")
+                except Exception as e:
+                    st.error(f"Error generando grafica: {e}")
             else:
-                st.info("Sin datos")
+                st.info("No hay datos de velocidad en los resultados cargados.")
 
-        with col2:
-            st.markdown("**Modelos API (NVIDIA NIM)**")
-            if not api_metrics.empty:
-                st.metric("F1 Promedio", f"{api_metrics['f1'].mean():.3f}")
-                st.metric("Accuracy Promedio", f"{api_metrics['accuracy'].mean():.3f}")
-                st.metric("Tiempo Promedio", f"{api_metrics['avg_time_seconds'].mean():.2f}s")
-            else:
-                st.info("Sin datos")
+            st.divider()
 
-        st.subheader("Trade-offs: Rendimiento vs Privacidad vs Coste")
-        st.markdown("""
-        | Aspecto | Modelos Locales (Ollama) | Modelos API (NVIDIA NIM) |
-        |---------|-------------------------|--------------------------|
-        | **Privacidad** | Total (datos no salen del equipo) | Parcial (datos enviados a API) |
-        | **Coste** | Solo hardware (GPU) | Gratuito con limites / Pay-per-use |
-        | **Latencia** | Dependiente de GPU local | Dependiente de red |
-        | **Escalabilidad** | Limitada por hardware | Alta |
-        | **Disponibilidad** | Siempre (offline) | Requiere conexion |
-        """)
+            # ── Trade-offs ─────────────────────────────────
+            st.subheader("Trade-offs: Rendimiento vs Privacidad vs Coste")
+            st.markdown("""
+            | Aspecto | Modelos Locales (Ollama) | Modelos API (NVIDIA NIM) |
+            |---------|-------------------------|--------------------------|
+            | **Privacidad** | Total (datos no salen del equipo) | Parcial (datos enviados a API) |
+            | **Coste** | Solo hardware (GPU) | Gratuito con limites / Pay-per-use |
+            | **Latencia** | Dependiente de GPU local | Dependiente de red |
+            | **Escalabilidad** | Limitada por hardware | Alta |
+            | **Disponibilidad** | Siempre (offline) | Requiere conexion |
+            """)
 
 
 # ============================================================
@@ -1162,7 +1539,7 @@ elif page == "Progreso Experimentos":
     EXPECTED_SEEDS = [42, 123, 456, 789, 1024]
     CONFIGS_PER_TASK = len(EXPECTED_MODELS) * len(EXPECTED_STRATEGIES) * EXPECTED_ITERATIONS  # 150
     TOTAL_CONFIGS = len(EXPECTED_TASKS) * CONFIGS_PER_TASK  # 750
-    STALE_SECONDS = 600  # 10 min
+    STALE_SECONDS = 3600  # 1 hora — configs lentos (CoT con modelos locales) pueden tardar >10min
 
     task_labels = {
         'classification': 'Clasificacion F/NF',
@@ -1179,8 +1556,11 @@ elif page == "Progreso Experimentos":
         files = []
         if CHECKPOINTS_DIR.exists():
             for f in sorted(CHECKPOINTS_DIR.glob("checkpoint_*.json")):
-                task_name = f.stem.replace("checkpoint_", "").rsplit("_", 2)[0]
-                if task_name not in EXPECTED_TASKS:
+                try:
+                    task_name = f.stem.replace("checkpoint_", "").rsplit("_", 2)[0]
+                except Exception:
+                    continue
+                if not task_name or task_name not in EXPECTED_TASKS:
                     continue
                 mtime = f.stat().st_mtime
                 files.append({
@@ -1189,9 +1569,12 @@ elif page == "Progreso Experimentos":
                     'active': (now - mtime) <= STALE_SECONDS,
                 })
         if EXPERIMENTS_DIR.exists():
-            for f in sorted(EXPERIMENTS_DIR.glob("results_*.csv")):
-                task_name = f.stem.replace("results_", "").rsplit("_", 2)[0]
-                if task_name not in EXPECTED_TASKS:
+            for f in sorted(EXPERIMENTS_DIR.rglob("results_*.csv")):
+                try:
+                    task_name = f.stem.replace("results_", "").rsplit("_", 2)[0]
+                except Exception:
+                    continue
+                if not task_name or task_name not in EXPECTED_TASKS:
                     continue
                 mtime = f.stat().st_mtime
                 files.append({
@@ -1234,31 +1617,30 @@ elif page == "Progreso Experimentos":
         return task_configs, time_by_model, all_records_flat
 
     def _select_display_files(files):
-        """Un archivo por tarea: el mas relevante.
+        """Archivos a mostrar en progreso.
 
-        Prioridad por tarea:
-        1. Checkpoint activo mas reciente (indica proceso en curso)
-        2. Resultado CSV mas reciente (experimento terminado)
-        3. Checkpoint inactivo mas reciente (experimento interrumpido)
+        - Checkpoints activos: se muestran TODOS (puede haber local + API a la vez)
+        - Tareas sin checkpoint activo: un archivo por tarea (resultado o checkpoint inactivo)
         """
-        best_per_task = {}
+        active_checkpoints = [f for f in files if f['type'] == 'checkpoint' and f['active']]
+        active_tasks = {f['task'] for f in active_checkpoints}
+
+        # Para tareas sin checkpoint activo, elegir el mejor archivo inactivo
+        best_inactive = {}
         for f in files:
-            t = f['task']
-            prev = best_per_task.get(t)
-            if prev is None:
-                best_per_task[t] = f
+            if f['task'] in active_tasks:
                 continue
-            # Prioridad: checkpoint activo > resultado > checkpoint inactivo
+            t = f['task']
+            prev = best_inactive.get(t)
+            if prev is None:
+                best_inactive[t] = f
+                continue
             def _priority(fi):
-                if fi['type'] == 'checkpoint' and fi['active']:
-                    return (2, fi['mtime'])
-                elif fi['type'] == 'result':
-                    return (1, fi['mtime'])
-                else:
-                    return (0, fi['mtime'])
+                return (1, fi['mtime']) if fi['type'] == 'result' else (0, fi['mtime'])
             if _priority(f) > _priority(prev):
-                best_per_task[t] = f
-        return list(best_per_task.values())
+                best_inactive[t] = f
+
+        return active_checkpoints + list(best_inactive.values())
 
     all_files_raw = _scan_all_files()
 
@@ -1415,7 +1797,7 @@ elif page == "Progreso Experimentos":
             m_all = m_active if m_active else EXPECTED_MODELS
             m_labels = [MODEL_LABELS.get(m, m) for m in m_all]
             m_values = [model_counts[m] for m in m_all]
-            m_colors = ['#2ecc71' if m.startswith('nim_') else '#3498db' for m in m_all]
+            m_colors = ['#2ecc71' if MODEL_CONFIGS.get(m, {}).get('type') == 'nvidia_nim' else '#3498db' for m in m_all]
             m_pcts = [v / max_per_model_task * 100 for v in m_values]
 
             fig1 = go.Figure()
@@ -1453,7 +1835,7 @@ elif page == "Progreso Experimentos":
                 tps_labels = [MODEL_LABELS.get(m, m) for m in tps_models]
                 tps_vals = [sum(tps_by_model[m]) / len(tps_by_model[m])
                             for m in tps_models]
-                tps_colors = ['#2ecc71' if m.startswith('nim_') else '#3498db'
+                tps_colors = ['#2ecc71' if MODEL_CONFIGS.get(m, {}).get('type') == 'nvidia_nim' else '#3498db'
                               for m in tps_models]
                 tps_counts = [len(tps_by_model[m]) for m in tps_models]
                 fig2.add_trace(go.Bar(
@@ -1524,28 +1906,31 @@ elif page == "Progreso Experimentos":
                 use_container_width=True
             )
 
-            st.caption("Tiempo acumulado por modelo x estrategia")
-            time_df = pd.DataFrame(time_matrix).T
-            time_df.columns = [STRATEGY_LABELS.get(s, s) for s in EXPECTED_STRATEGIES]
-            time_df.index = [MODEL_LABELS.get(m, m) for m in proc_models]
-            time_df.index.name = "Modelo"
+            try:
+                st.caption("Tiempo acumulado por modelo x estrategia")
+                time_df = pd.DataFrame(time_matrix).T
+                time_df.columns = [STRATEGY_LABELS.get(s, s) for s in EXPECTED_STRATEGIES]
+                time_df.index = [MODEL_LABELS.get(m, m) for m in proc_models]
+                time_df.index.name = "Modelo"
 
-            def _fmt_time(v):
-                if v < 60:
-                    return f"{v:.0f}s"
-                elif v < 3600:
-                    return f"{v/60:.1f}m"
-                else:
-                    return f"{v/3600:.1f}h"
+                def _fmt_time(v):
+                    if v < 60:
+                        return f"{v:.0f}s"
+                    elif v < 3600:
+                        return f"{v/60:.1f}m"
+                    else:
+                        return f"{v/3600:.1f}h"
 
-            # vmax = mayor tiempo observado o al menos 1s para evitar todo-rojo con un solo modelo
-            _t_max = max(time_df.values.max(), 1)
-            st.dataframe(
-                time_df.style.background_gradient(
-                    cmap='YlOrRd', vmin=0, vmax=_t_max
-                ).format(_fmt_time),
-                use_container_width=True
-            )
+                _t_max = max(float(time_df.values.max()), 1.0)
+                st.dataframe(
+                    time_df.style.background_gradient(
+                        cmap='YlOrRd', vmin=0, vmax=_t_max
+                    ).format(_fmt_time),
+                    use_container_width=True
+                )
+            except Exception:
+                st.dataframe(time_df if 'time_df' in dir() else pd.DataFrame(),
+                             use_container_width=True)
 
         # ── Detalle de archivos ───────────────────────────────
         with st.expander("Detalle de archivos monitorizados"):

@@ -10,8 +10,8 @@ models:
     - name: "llama3.1:8b-instruct-q4_K_M"
       short_name: "llama8b"
       type: "ollama"
-    - name: "gemma2:9b-instruct-q4_K_M"
-      short_name: "gemma9b"
+    - name: "llama3.2:3b-instruct-q4_K_M"
+      short_name: "llama3b"
       type: "ollama"
   nvidia_nim:
     - name: "meta/llama-3.1-70b-instruct"
@@ -56,39 +56,39 @@ experiment:
 # Tareas de RE
 tasks:
   classification:
-    dataset: "../data/promise_nfr.csv"
-    sample_size: 50
+    dataset: "../data/promise_nfr_v2.csv"
+    sample_size: 100
     text_column: "text"
     label_column: "label_binary"
   ambiguity:
-    dataset: "../data/ambiguity_dataset.csv"
-    sample_size: null  # usar todo el dataset
+    dataset: "../data/ambiguity_dataset_v2.csv"
+    sample_size: null  # usar todo el dataset (262 muestras)
     text_column: "text"
     label_column: "is_ambiguous"
   completeness:
-    dataset: "../data/completeness_dataset.csv"
-    sample_size: null
+    dataset: "../data/completeness_dataset_v2.csv"
+    sample_size: null  # usar todo el dataset (150 muestras)
     text_column: "text"
     label_column: "is_complete"
   inconsistency:
     dataset: "../data/inconsistency_dataset.csv"
-    sample_size: null
+    sample_size: null  # usar todo el dataset (30 pares)
     text_column: "text_a"
     label_column: "are_inconsistent"
   testability:
-    dataset: "../data/testability_dataset.csv"
-    sample_size: null
+    dataset: "../data/testability_dataset_v2.csv"
+    sample_size: null  # usar todo el dataset (97 muestras)
     text_column: "text"
     label_column: "is_testable"
 
 # Dataset principal (backward compat)
 dataset:
-  path: "../data/promise_nfr.csv"
+  path: "../data/promise_nfr_v2.csv"
   text_column: "text"
   label_column: "label_binary"
 
 # Rutas de salida
 output:
-  results_dir: "../results/experiments"
+  results_dir: "../results/experiments/v2"
   checkpoints_dir: "../results/checkpoints"
   logs_dir: "../results/logs"

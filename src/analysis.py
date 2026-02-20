@@ -264,7 +264,7 @@ def paired_ttest_local_vs_api(metrics_df: pd.DataFrame, metric: str = "f1",
                                api_models: Optional[List[str]] = None) -> dict:
     """T-test pareado: modelos locales vs API."""
     if local_models is None:
-        local_models = ['qwen7b', 'llama8b', 'gemma9b']
+        local_models = ['qwen7b', 'llama8b', 'llama3b']
     if api_models is None:
         api_models = ['nim_llama70b', 'nim_llama8b', 'nim_mistral']
 
