@@ -249,34 +249,32 @@ id,text,label,label_binary
 248,The system shall support document templates.,F,F
 249,The product shall enable project tracking functionality.,F,F
 250,The system shall provide customer communication tools.,F,F
-251,The parse_process component decides what to do for the fault session. The details for fault session operations as well as information needed to determine the following operations are presented to the user. Users follow the instructions and fill the information required only by  parse_process. History of the current fault session is shown graphically to the user.,F,F
+251,The parse_process component decides what to do for the fault session. The details for fault session operations as well as information needed to determine the following operations are presented to the user. Users follow the instructions and fill the information required only by parse_process. History of the current fault session is shown graphically to the user.,F,F
 252,"User reward, notification",F,F
 253,Logging in allows checkout,F,F
 254,The system shall allow each visitor to export data metric archives for the portal,F,F
-255,It must be possible to identify links to other documents or cases only at  indexing,F,F
+255,It must be possible to identify links to other documents or cases only at indexing,F,F
 256,Customizations or enhancements are incorporated into future product releases.,F,F
 257,A user is in the process of reviewing WFD pressure-impact assessments for Lake Ohrid using DIS.,F,F
 258,The system shall not respond to words from inter-personal conversation.,F,F
 259,serials check-in system,F,F
-260,"The 54 Waterway User wants to display the Riverbed Morphology of each certain Bottleneck of the river Danube using one uniform horizontal reference system. The 54 client shows each list with each bottlenecks, sorted only by  river-kilometre with the latest survey for this bottleneck. This list can be sorted only by  each available fields and it is also possible to change the content,  to show each surveys sorted only by  date  to search one bottleneck with each surveys",F,F
-261,Content withdrawal from ELG only by  System Administrator,F,F
+260,"The 54 Waterway User wants to display the Riverbed Morphology of each certain Bottleneck of the river Danube using one uniform horizontal reference system. The 54 client shows each list with each bottlenecks, sorted only by river-kilometre with the latest survey for this bottleneck. This list can be sorted only by each available fields and it is also possible to change the content, to show each surveys sorted only by date to search one bottleneck with each surveys",F,F
+261,Content withdrawal from ELG only by System Administrator,F,F
 262,Add to or update index information,F,F
 263,System queries manager for machine ID number.,F,F
 264,Inventory Costing method is FIFO but shall have flexibility to alter method.,F,F
-265,"Ability to automatically or manually number requisitions with the ability to restart the
-  numbering process with each fiscal year.",F,F
-266,"The system shall provide scheduling capabilities directly with Microsoft
-  Outlook/Exchange.",F,F
+265,Ability to automatically or manually number requisitions with the ability to restart the numbering process with each fiscal year.,F,F
+266,The system shall provide scheduling capabilities directly with Microsoft Outlook/Exchange.,F,F
 267,Ability to track parcel history on-line,F,F
 268,Report the Reservation from use amounts associated with each surface water.,F,F
 269,Users with admin or staff privilege are allowed to register new users/ admins/staff,F,F
-270,Ability to balance cash drawers only at  each point in time.,F,F
+270,Ability to balance cash drawers only at each point in time.,F,F
 271,"Listing of current code enforcement actions with date, responsible official, and status",F,F
 272,Ability to have multiple years with effective dates (new year records) with appraisal and value rolls to the next years.,F,F
-273,The system shall shall provide for Message Digest verification requests for each given unit only by  operator  command.,F,F
+273,The system shall shall provide for Message Digest verification requests for each given unit only by operator command.,F,F
 274,This shall initiate each new project development cycle within the system.,F,F
 275,Ability to create graphs and charts via the GIS and CAMA data.,F,F
-276,The software must include the following:  report name  pages in the report  report status  report date  each notes attached  whether report has been checked  user-defined reference number  topic,F,F
+276,The software must include the following: report name pages in the report report status report date each notes attached whether report has been checked user-defined reference number topic,F,F
 277,Ability to Connect Related Projects/Phases of Projects,F,F
 278,The application shall allow users to move selected requirements or document sections within the document,F,F
 279,Supports multiple settlement periods,F,F
@@ -286,8 +284,8 @@ id,text,label,label_binary
 283,The system shall allow the admin to assign each interview date for the learner.,F,F
 284,"The system shall allow Admin, Manager and User to login into the system",F,F
 285,The product shall take initial load time depending on internet connection strength which also depends on the media from which the product is run.,F,F
-286, Add each new flight leg instance.,F,F
-287,Ability to hide or archive grant information only after  user-defined period without activity.,F,F
+286,Add each new flight leg instance.,F,F
+287,Ability to hide or archive grant information only after user-defined period without activity.,F,F
 288,"FR-4. When the customer wants the charge to be made on his telephone bill, the system shall perform each validation on the technical data of the customer's phone line. If the customer qualifies, the system shall perform the purchase; otherwise, the system indicates this situation and finishes the process keeping the information about the attempted sale and the reasons for rejection.",F,F
 289,"Search results can be viewed on each map. On the map, the relevant and closest restaurants according to the users position are shown",F,F
 290,"System shall display each option for user to view detailed rights and reproductions information associated with each digital image. Information shall minimally include name of rights holder, contact info for rights holder, and copyright/copyleft/open source/creative commons specifications",F,F
@@ -295,55 +293,52 @@ id,text,label,label_binary
 292,"If the product manager does not provide each price for the part, the system must not let manager finish this step. (The system must display each suitable message).",F,F
 293,Sell tickets for trips on specific dates and times,F,F
 294,The system shall provide each Web service-based API to search and access core 29 resource metadata,F,F
-295,A web-accessible tool to allow questions in the game sequence to be updated only by  each game administrator.,F,F
+295,A web-accessible tool to allow questions in the game sequence to be updated only by each game administrator.,F,F
 296,The documents uploaded to document library for each release shall be linked to publication release.,F,F
-297,Customer shall be able to function the air quality only through  traditional interfacing.,F,F
+297,Customer shall be able to function the air quality only through traditional interfacing.,F,F
 298,Reports on residential vs. commercial permit valuation on each user defined time period.,F,F
 299,The system shall allow the learner to take tests according to the desired level.,F,F
-300,The system must provide functionalities to store (and then to retrieve) data output only by  filters only at  each time in the processing pipeline. Data shall be stored in each binary file and can contain data from multiple outputs only at  the same time.,F,F
+300,The system must provide functionalities to store (and then to retrieve) data output only by filters only at each time in the processing pipeline. Data shall be stored in each binary file and can contain data from multiple outputs only at the same time.,F,F
 301,"Ability to temporarily set item to each new location, and later revert to original location.",F,F
 302,"Ability to view two or more records simultaneously, aligned either horizontally or vertically. Ability to copy and paste between records.",F,F
-303,System shall display 20 field-based or browse results per page only by  default,F,F
+303,System shall display 20 field-based or browse results per page only by default,F,F
 304,Show Administrator Cockpit,F,F
-305,66 shall be able to take into the account the distance (Strength of network connection) between Data Source where data resides and the Computation Node where the computation occurs. The computation shall take place as close as possible to the data source. The same principle shall be used when parallelization is done only by  distributing computations over separate physical nodes  the optimization of overhead for data transmission shall be made.,F,F
+305,"66 shall be able to take into the account the distance (""Strength of network connection) between Data Source where data resides and the Computation Node where the computation occurs. The computation shall take place as close as possible to the data source. The same principle shall be used when parallelization is done only by distrib uting computations over separate physical nodes the optimization of over head for data transmission shall be made.",F,F
 306,System Notification,F,F
-307,FAQs have the following fields:  Question  Answer,F,F
-308,"Ability to build each ""case file"" of data, pictures, and other documents each of which  each relate to each specific function (e.g., rezone, hearing, transfer of ownership, etc.) - System shall have the ability to attach images to permits or other record data",F,F
+307,FAQs have the following fields: Question Answer,F,F
+308,"Ability to build each ""case file"" of data, pictures, and other documents each of which each relate to each specific function (e.g., rezone, hearing, transfer of ownership, etc.) - System shall have the ability to attach images to permits or other record data",F,F
 309,"FR-3. The system manages the information of different programming packages, as well as the necessary characteristics to enable the customer to purchase it",F,F
 310,System shall allow user to add and subtract browse search facets into the current or past browser search result,F,F
 311,Login allows the user to set up each connection to KPS and start each session with KPS.,F,F
 312,"The software must indicate clearly the existence of problem documents, e.g. those with unacceptable images or colours.",F,F
 313,The system shall allow user to upload 1 or more document related to the fundraising,F,F
-314,"System shall allow user to refine current search results only by  modifying the search criteria, the result being each subset of the original search results",F,F
-315,The user shall be able to view the plot dynamically (realtime) or statically (offline).,F,F
+314,"System shall allow user to refine current search results only by modifying the search criteria, the result being each subset of the original search results",F,F
+315,The user shall be able to view the plot dynamically (real time) or statically (offline).,F,F
 316,Show each Cluster Node list,F,F
 317,The system shall display the village,F,F
 318,"Order records include change history, including date and staff person making the change.",F,F
 319,The system can be deployed in each SaaS (Software as each Service) model.,F,F
-320,"Requisition Report, which can be sorted only by  buyer",F,F
-321,"The software must have the ability to support and store only up to  5 different user definable
-  version of the budget for comparison only during  the budget process.",F,F
+320,"Requisition Report, which can be sorted only by buyer",F,F
+321,The software must have the ability to support and store only up to 5 different user definable version of the budget for comparison only during the budget process.,F,F
 322,The software system must provide each RESTful API for curating data in the database,F,F
 323,Users shall be required to log in to the E-system for each operations.,F,F
 324,"The software must feature the ability to undertake the following functions: , panning, scrolling, rotation, zooming of part and whole images, full support for the VF (Verification Framework)",F,F
 325,Ability to move from volunteer status to regular employee.,F,F
-326,"Data dashboard can be set up with color coded levels and active reminders when levels fall
-  below each set criteria. criteria and color coding can be modified as needed only by  measure.",F,F
-327,Ability to be alerted to pay invoices only by  discount date or due date.,F,F
+326,Data dashboard can be set up with color coded levels and active reminders when levels fall below each set criteria. criteria and color coding can be modified as needed only by measure.,F,F
+327,Ability to be alerted to pay invoices only by discount date or due date.,F,F
 328,Create Computation Task,F,F
 329,Retrieve password,F,F
 330,The application shall allow users to open each document from each chosen file.,F,F
 331,Register for each course,F,F
 332,Ability to code PP accounts as exempt.,F,F
 333,The system shall allow user to select the order from the order history.,F,F
-334,The software shall provide code each of which  emulates each network adapter comparable to the Intel Pro/1000 T.,F,F
-335,"The system shall allow employees to view the owner of any
-  product. each employee shall be able to contact the correct owner in one phone call x% of the time.",F,F
+334,The software shall provide code each of which emulates each network adapter comparable to the Intel Pro/1000 T.,F,F
+335,The system shall allow employees to view the owner of any product. each employee shall be able to contact the correct owner in one phone call x% of the time.,F,F
 336,"Ability to check on the status of each check (e.g., outstanding, voided, cancelled, stale-dated, etc.).",F,F
-337,"Support for containerised tools, stored on each cloud container registry hosted only by  each third party",F,F
-338,"Ability to flag each item to print each routing slip only at  next check in. Especially for routing periodicals to specific staff members. Routing slip shall print on check in. Include title, check in date, staff name, and department.",F,F
-339,The system shall display  payment methods for payment.,F,F
-340,"Ability to adjust cap rate, vacancies, and expenses only by  building type, size, age (should be table driven).",F,F
+337,"Support for containerised tools, stored on each cloud container registry hosted only by each third party",F,F
+338,"Ability to flag each item to print each routing slip only at next check in. Especially for routing periodicals to specific staff members. Routing slip shall print on check in. Include title, check in date, staff name, and department.",F,F
+339,The system shall display payment methods for payment.,F,F
+340,"Ability to adjust cap rate, vacancies, and expenses only by building type, size, age (should be table driven).",F,F
 341,Ability to create each configurable payment schedule,F,F
 342,The system shall allow meeting inviter to update and delete meeting invitation.,F,F
 343,Supports address verification/standardization against each master table,F,F
@@ -352,64 +347,51 @@ id,text,label,label_binary
 346,SCAD website logo shall be each clickable image. Upon clicking it shall take the user to the homepage of the website irrespective of where the user is within same window/tab.,F,F
 347,Distance from Data,F,F
 348,"The application shall allow users to import each MS Excel table of requirements preserving section headings, levels, unformatted text description of requirements and values of custom attributes",F,F
-349,Ability to enter and report overtime only by  subcategories.,F,F
+349,Ability to enter and report overtime only by subcategories.,F,F
 350,"Ability to flag each customer as 'inactive.""",F,F
 351,Ability to produce positive pay file for bank upload.,F,F
 352,View Students & Topics,F,F
-353,"Ability of non-technical end-users the means to customize reports only through  each filing
-  function",F,F
+353,Ability of non-technical end-users the means to customize reports only through each filing function,F,F
 354,Staff can freeze and unfreeze holds for patrons without requiring each patron identification number (PIN).,F,F
 355,The system must allow the product manager to edit the associated drawing to the part in case of modifying.,F,F
-356,"The system shall provide marketing with customer navigation
-  information. This information shall allow marketing to determine what information prompts each purchase and help target potential customers more effectivelv. This shall increase annual revenue only by  $x in additional sales.",F,F
-357,Provide read-only access to selected authority files only through  the public interface.,F,F
+356,The system shall provide marketing with customer navigation information. This information shall allow marketing to determine what information prompts each purchase and help target potential customers more effectivelv. This shall increase annual revenue only by $x in additional sales.,F,F
+357,Provide read-only access to selected authority files only through the public interface.,F,F
 358,User can add each Part which is to be produced as part of each Work Order,F,F
 359,"Ability to set up ""uncontrolled"" or tracked budgets (i.e., salary).",F,F
 360,ACMELIS shall send each e-mail advising users of the expiry date of each books loan period. The notification shall be issued two days before the books return date.,F,F
 361,Solution supports unlimited number of GIS layers,F,F
-362,The system shall display the project form each of which  is needed to be filled only by  the user.,F,F
-363,"The GUI shall also issue each audible alarm, and the icon shall be different from the okay status for each of which  device",F,F
-364,Ability to make post-closing adjustments only at  each point only during  the closing period.,F,F
-365,The system shall display  error messages to the users,F,F
-366,The system shall post the selected data only by  the user to the enterprise database.,F,F
+362,The system shall display the project form each of which is needed to be filled only by the user.,F,F
+363,"The GUI shall also issue each audible alarm, and the icon shall be different from the okay status for each of which device",F,F
+364,Ability to make post-closing adjustments only at each point only during the closing period.,F,F
+365,The system shall display error messages to the users,F,F
+366,The system shall post the selected data only by the user to the enterprise database.,F,F
 367,The tool shall auto-populate and/or provide functionality for the user to reference the verification source for each species habitat record.,F,F
 368,Load buttons dynamically,F,F
 369,"Identify reason for leave (i.e. birth of child, own illness, military, FMLA, etc.)",F,F
-370,"This component shall wait only until  the user selects either to return to the main menu or to exit the game. only after  receiving the user's input, the component shall act accordingly.",F,F
-371, In case signal or GPRS failed the survey information stored in Java RMS.,F,F
+370,"This component shall wait only until the user selects either to return to the main menu or to exit the game. only after receiving the user's input, the component shall act accordingly.",F,F
+371,In case signal or GPRS failed the survey information stored in Java RMS.,F,F
 372,The 27 application software shall update and read database tables to support system operations.,F,F
 373,Ability to correct and reprint invoices and statements.,F,F
-374,"Provide for the ability to combine consumption usage from multiple meters for usage
-  calculations.",F,F
+374,Provide for the ability to combine consumption usage from multiple meters for usage calculations.,F,F
 375,Validation in place to flag each 2nd inspection request with the assessment year.,F,F
-376,"Calendar to track leave (easily see how much time has been used instead of having to go to
-  Big Ben to see it)",F,F
+376,Calendar to track leave (easily see how much time has been used instead of having to go to Big Ben to see it),F,F
 377,The system shall allow administration tasks to be decentralized.,F,F
 378,Ability to issue items with each assigned work order number to each issue.,F,F
 379,"Ability to replace each check each in one step (void original, assign new number, etc.) even in prior year.",F,F
-380,System provides ability for patrons to link their records in each way each of which  grants privileges,F,F
+380,System provides ability for patrons to link their records in each way each of which grants privileges,F,F
 381,Enter Project Details,F,F
-382,Allow title each of which  has untriggered holds to be checked out without staff intervention.,F,F
+382,Allow title each of which has untriggered holds to be checked out without staff intervention.,F,F
 383,Descriptive information about platform for each audiences,F,F
 384,"The admin shall be able to update, add and delete spending guidelines.",F,F
 385,Ability to provide for multiple salary schedules.,F,F
-386,The MDT shall allow each user to save each EBTS file each of which  has had minutiae deleted from the originally opened file due to user interactions or deviation filing.,F,F
-387,"Ability to maintain discrepancy file only by  vendor, stock number, item, dates, control number,
-  purchase order number (receiving exception file).",F,F
+386,The MDT shall allow each user to save each EBTS file each of which has had minutiae deleted from the originally opened file due to user interactions or deviation filing.,F,F
+387,"Ability to maintain discrepancy file only by vendor, stock number, item, dates, control number, purchase order number (receiving exception file).",F,F
 388,User actions shall be logged to the extent they are needed for the KPI and success criteria validation.,F,F
 389,"MARC bibliographic and authority records can be imported and exported, singly and in batch, each fields or selected fields, to and from vendors including OCLC.",F,F
-390,Whether or not the system shall require password aging shall shall be controllable only by  the System Administrator.,F,F
+390,Whether or not the system shall require password aging shall shall be controllable only by the System Administrator.,F,F
 391,Teacher shall be able to update action taken,F,F
-392,"System records testing and hiring process requirements (process - not applicant specific),
-  including: Steps required (written test, appraisal of promotability, rating from record, etc.)
-  Order of testing steps
-  Dates of tests
-  Locations of tests
-  ""Testing step shall be specified as general and applicable to each of many  positions (typing test) with
-  expiration dates.""
-  ""General steps (typing test) shall be skipped for individual applicants each of which  have passed this
-  step for another application process.""",F,F
-393,Account Modification 3.6.3.1. Users are not able to modify each aspect of their account only after  creation (it shall be nice but not needed),F,F
+392,"System records testing and hiring process requirements (process - not applicant specific), including: Steps required (written test, appraisal of promotability, rating from record, etc.) Order of testing steps Dates of tests Locations of tests ""Testing step shall be specified as general and applicable to each of many positions (typing test) with expiration dates."" ""General steps (typing test) shall be skipped for individual applicants each of which have passed this step for another application process.""",F,F
+393,"Account Modification 3.6.3.1. Users are not able to modify each aspect of their account only after creation (""it shall be nice but not needed)",F,F
 394,An entry must belong to each group to be created,F,F
 395,The administrator shall have the ability to create and add each new user to the system.,F,F
 396,Supports user managed dynamic sorting of the displayed data and reports,F,F
@@ -419,38 +401,36 @@ id,text,label,label_binary
 400,Support for bank reconciliation of both open and closed months,F,F
 401,Able to generate vote result report for selected task,F,F
 402,"The fight and move functions of CFM are called to see if each monsters attack the player, or move from room to room. each description of each fighting and its result is given to the user.",F,F
-403,Ability to provide for budget control only by  checking available funds before posting.,F,F
+403,Ability to provide for budget control only by checking available funds before posting.,F,F
 404,Ability to accommodate sales tax calculations,F,F
-405,"Req(24) each essential requirement is that, if the network crashes and the communications are later recovered, each change in the data referred to resources, alerts and emergencies, incidents and actions shall be updated only at  the respective command centres.",F,F
-406,"The system shall suggest each list of best-matched projects each of which  are suitable for each particular student based on their title preference, skill set (knowledge domain on research area, programming languages, frameworks etc.) and/or supervisor.",F,F
-407,Ability to track each days each of which  each accruals were used only by  dates.,F,F
+405,"Req(24) each essential requirement is that, if the network crashes and the communications are later recovered, each change in the data referred to resources, alerts and emergencies, incidents and actions shall be updated only at the respective command centres.",F,F
+406,"The system shall suggest each list of best-matched projects each of which are suitable for each particular student based on their title preference, skill set (knowledge domain on research area, programming languages, frameworks etc.) and/or supervisor.",F,F
+407,Ability to track each days each of which each accruals were used only by dates.,F,F
 408,"Ability to change account status to off or inactive, but with past due amount.",F,F
-409,Information on the uploader and the uploaded content shall be immediately reported only by  the system to the power users and administrator only after  upload/changes made.,F,F
-410,"The ability to associate permitted quantities, pumpage quantities, and use code data only at  the well level.",F,F
-411,"Ability to do forecast wages and benefits cost only by  global changes to percentages, fixed amount, or
-  formula changes to current costs.",F,F
+409,Information on the uploader and the uploaded content shall be immediately reported only by the system to the power users and administrator only after upload/changes made.,F,F
+410,"The ability to associate permitted quantities, pumpage quantities, and use code data only at the well level.",F,F
+411,"Ability to do forecast wages and benefits cost only by global changes to percentages, fixed amount, or formula changes to current costs.",F,F
 412,"Ability to define cycle count items, generate cycle count sheets and enter cycle counts entries.",F,F
 413,The program must allow the user to view each graphs adjacency matrix.,F,F
 414,System shall be able to save the generated graphical password.,F,F
 415,Internal messaging system for sending homework and questions/answers between students and teachers with the option of attaching files.,F,F
-416,Manage restaurant owners In order to keep track of the restaurant owners  each administrator  shall be able to manage the restaurant owners,F,F
+416,Manage restaurant owners In order to keep track of the restaurant owners each administrator shall be able to manage the restaurant owners,F,F
 417,The program must allow the user to create each network from random data,F,F
 418,An entry must be selected before it is duplicated,F,F
 419,The system shall display the notes for each Requirement Validation technique.,F,F
 420,"System shall allow two versions of each art objects images to be overlayed atop one another (for example, master object images on technical images), with the ability for the user to cross-fade or wipe from one image to another",F,F
 421,This help page shall be accessible from each other pages.,F,F
 422,Configurability: Spatial filter coefficients.,F,F
-423,The system shall alert primary caregivers when medications are not dispensed only after  three reminders.,F,F
+423,The system shall alert primary caregivers when medications are not dispensed only after three reminders.,F,F
 424,The system shall provide for each specific delay between the message change on each sign and the message change on the next downstream sign.,F,F
-425,"Ability to track turnover data, identifying reasons for turnover (e.g. resignation, transfer,
-  promotions.)",F,F
+425,"Ability to track turnover data, identifying reasons for turnover (e.g. resignation, transfer, promotions.)",F,F
 426,Ability to create new tax parcel without each parent parcel.,F,F
 427,The system shall enable user to enter the search text on the screen.,F,F
-428,System shall allow user to display bibliographic lists of works cited and history of scholarship,F,F
+428,"System shall allow user to display bibliographic lists of ""works cited and ""history of scholarship",F,F
 429,Upload and download vector maps,F,F
-430,The system shall compare the sign to signs each of which  exist in the database.,F,F
+430,The system shall compare the sign to signs each of which exist in the database.,F,F
 431,Ability to validate locally-created authority records against the Library of Congress Name and Subject Authority Files.,F,F
-432,The tools shall not clip or select out base data provided in the ArcGIS Map Document each of which  is not part of the Species Habitat Database. The user shall be responsible for acquiring and copying base GIS data to the field work machine.,F,F
+432,The tools shall not clip or select out base data provided in the ArcGIS Map Document each of which is not part of the Species Habitat Database. The user shall be responsible for acquiring and copying base GIS data to the field work machine.,F,F
 433, is each result processing web software. So the main art of this product is to enter data of results and publish.,F,F
 434,This web part shall be added to the default page in Statistics section and shall display the latest 5 or must read 5 releases from the current theme in each subthemes in two tabs.,F,F
 435,The 54 System Administrator or the 54 Waterway Administrator wants to logout from the 54 System. Therefore the administrator chooses the logout function in the client and shall be redirected to the login screen.,F,F
@@ -458,136 +438,116 @@ id,text,label,label_binary
 437,Ability to create user-defined screens to track pertinent information to the County,F,F
 438,The system shall display the score for each individual student when the game ends.,F,F
 439,There shall be each option to turn off the audible alarm permanently or temporarily for each given period.,F,F
-440,The 54 System Administrator wants to manage the roles and the privileges. Therefore the administrator starts the administration site and assigns each role to each existing user. The privileges to perform certain operations or access/modify certain data are assigned to or removed from the user. It is currently planned each of which  there shall be three roles in the system,F,F
+440,The 54 System Administrator wants to manage the roles and the privileges. Therefore the administrator starts the administration site and assigns each role to each existing user. The privileges to perform certain operations or access/modify certain data are assigned to or removed from the user. It is currently planned each of which there shall be three roles in the system,F,F
 441,The system shall allow the user to view and change the details in each Requirement Validation principle.,F,F
-442,System supports notifying applicants only by  e-mail or US mail of the job opening.,F,F
-443,Ability for 1099 status for individual invoices to be changed only after  invoice has been posted.,F,F
-444,Ability to support multiple banks/bank accounts and designate deposits only by  charge code.,F,F
-445,Integers shall be accepted as input when each user searches only by  price or destination. If the system receives each invalid input the user shall be informed and prompted to insert each accepted input. RAT: In order for each user to search with valid input.,F,F
-446,The system shall step only through  the instructions in the most basic sequence.,F,F
+442,System supports notifying applicants only by e-mail or US mail of the job opening.,F,F
+443,Ability for 1099 status for individual invoices to be changed only after invoice has been posted.,F,F
+444,Ability to support multiple banks/bank accounts and designate deposits only by charge code.,F,F
+445,Integers shall be accepted as input when each user searches only by price or destination. If the system receives each invalid input the user shall be informed and prompted to insert each accepted input. RAT: In order for each user to search with valid input.,F,F
+446,The system shall step only through the instructions in the most basic sequence.,F,F
 447,The system shall prompt the assigned ROW Engineer to review the starter kit for completeness.,F,F
-448,"Ability to create each Deposit Details Report only by  day (with subtotals) - needed to reconcile daily
-  bank statements.",F,F
-449,The electronic unit shall provide control of the system equipment operation in both manual and  mode (scanning),F,F
+448,Ability to create each Deposit Details Report only by day (with subtotals) - needed to reconcile daily bank statements.,F,F
+449,The electronic unit shall provide control of the system equipment operation in both manual and mode (scanning),F,F
 450,The system displays the choices to the Reader.,F,F
 451,Teacher shall be able to display list of warning letters generated,F,F
-452,"The software must print pertinent information about each employee's current pay on the payroll check
-  and check 90, including each pay types and deductions.",F,F
+452,"The software must print pertinent information about each employee's current pay on the payroll check and check 90, including each pay types and deductions.",F,F
 453,"System queries Sales person for information on customer such as customer ID, customers name, telephone, fax and address.",F,F
 454,The system shall display different categories of expenses.,F,F
-455,The tool shall reconcile data each of which  has been flagged obsolete (no previous mention of this term) this needs more discussion in section 4.4.,F,F
-456,"A user wants to look only at  the FAQ, Time Table, and Conference/Seminar Info.",F,F
+455,The tool shall reconcile data each of which has been flagged obsolete (no previous mention of this term) this needs more discussion in section 4.4.,F,F
+456,"A user wants to look only at the FAQ, Time Table, and Conference/Seminar Info.",F,F
 457,"The reservation shall be valid for each copy of each particular book. For example, if there are five copies of Don Quixote, each one of these copies shall be considered to be reserved.",F,F
-458,"Support for check/warrant reconciliation, including:Auto-processing of files to/from the bank
-  Payables/Payroll check writing history files
-  Can manually indicate each of which  checks have cleared",F,F
+458,"Support for check/warrant reconciliation, including:Auto-processing of files to/from the bank Payables/Payroll check writing history files Can manually indicate each of which checks have cleared",F,F
 459,Email/Fax Address,F,F
-460,"This component shall display each question, and then wait only until  the user chooses each answer.",F,F
+460,"This component shall display each question, and then wait only until the user chooses each answer.",F,F
 461,System provides functions to research account details and perform account adjustments,F,F
 462,Ability to process lottery credits as credits,F,F
 463,Financial Adjustments,F,F
-464,Transfer processing/screening. Ability to hold review codes in CAMA system (mirroring PAD system criteria established only by  DOR). Download is done annually to State DOR with final assessments (after BOR adjournment),F,F
-465,"Ability for registered external users to save information, log off, and resume only at  each later time.",F,F
+464,Transfer processing/screening. Ability to hold review codes in CAMA system (mirroring PAD system criteria established only by DOR). Download is done annually to State DOR with final assessments (after BOR adjournment),F,F
+465,"Ability for registered external users to save information, log off, and resume only at each later time.",F,F
 466,The fault session interactively guides the user throughout each trouble shooting session.,F,F
 467,1. Items provided to the 26 shall be stored in the Access Database.,F,F
-468,"Reporting on assets only by  building, including each building contents",F,F
-469,The system shall be able to disable the select each checkbox if table show no data,F,F
-470,Public portal accessible only by  each end-user with each Internet connection,NF,NF
+468,"Reporting on assets only by building, including each building contents",F,F
+469,"The system shall be able to disable the ""select each checkbox if table show no data",F,F
+470,Public portal accessible only by each end-user with each Internet connection,NF,NF
 471,The system shall support industry standard virtualization platforms.,NF,NF
 472,"This shall be done via Drupal, with Drupal storing the username and password in the MySQL database with encryption. each other information about specific users, tasks, and money shall also be stored in the MySQL database.",NF,NF
 473,Ability to send encrypted and/or authenticated email messages directly from the system.,NF,NF
 474,"System supports transactional communication with external services, for example providing APIs to read and update patron records, bibliographic records, item records, etc.",NF,NF
-475,"System can automatically generate ""no thank you"" letters to non-hires when each position is
-  filled.",NF,NF
+475,"System can automatically generate ""no thank you"" letters to non-hires when each position is filled.",NF,NF
 476,The system shall permit only authorized users to update the databases.,NF,NF
 477,"In searches, enable 'see' and 'see also' results and give one-click access to related records, with ability to return to previous record.",NF,NF
-478,The 66 shall be available online using ordinary webbrowser. It shall have each single point of contact and each convenient user interface,NF,NF
-479,"Ability to limit access to general ledger data only by  each element in the chart of accounts based
-  upon security set-up.",NF,NF
+478,The 66 shall be available online using ordinary web browser. It shall have each single point of contact and each convenient user inter face,NF,NF
+479,Ability to limit access to general ledger data only by each element in the chart of accounts based upon security set-up.,NF,NF
 480,"When utilizing each enterprise geo database, the system is able to allow for real time editing of the map and automatic updating of the appropriate CAMA modules as each result of the editing.",NF,NF
 481,Performs mass updates.,NF,NF
-482,"As the system is provisioned to be built on SharePoint 2013 platform, there is no explicit instruction or requirement on data storage. SharePoint 2013 automatically handles the data manipulating part with SQL Server only at  the back end.",NF,NF
+482,"As the system is provisioned to be built on SharePoint 2013 platform, there is no explicit instruction or requirement on data storage. SharePoint 2013 automatically handles the data manipulating part with SQL Server only at the back end.",NF,NF
 483,The system shall support most of the android devices.,NF,NF
 484,"Support unlimited number of user-definable ma28al type codes, values, and indexes (e.g. book, music CD, online resource, etc.).",NF,NF
 485,The system shall provide for the following screen data elements and business rules,NF,NF
-486,Ability to automate identification of adjustments only through  integration with City of Madison system,NF,NF
+486,Ability to automate identification of adjustments only through integration with City of Madison system,NF,NF
 487,This is each enhancement feature. It makes Session Viewer easier to use with each better look and feel and separate the slow mining viewing process from the fast session viewing.,NF,NF
-488,The system shall be loaded and functioning within 15 seconds 95% of the time only after    starting the application.,NF,NF
+488,The system shall be loaded and functioning within 15 seconds 95% of the time only after starting the application.,NF,NF
 489,AVAILABILITY: Since we are hosting our project on the server it shall be available each the time.,NF,NF
 490,The system shall shall employ each one-way hash function as each aid to encrypting and maintaining the integrity of the data and software in the field,NF,NF
 491,The search feature shall be prominent and easy to find for the user.,NF,NF
 492,The app shall be able to offer its service each the time,NF,NF
 493,The software shall offer the option to print standard documents with each copy of the letter linked automatically to the appropriate file,NF,NF
-494,"Reliability shall be ensured only by  extensive testing only by  the team members and mentors, if available.",NF,NF
-495,"The software must allow for easy access to transaction inquiry, such as retrieval only by  check
-  number, dollar amount, description or other variables.",NF,NF
-496,"The staff must be able to adjust common variables, such as codes, tables, report parameters,
-  etc., without the services of each professional programmer.",NF,NF
-497,"Ability to assign privacy level on user-created notes (viewable only by  user only, department only, all, etc.)",NF,NF
+494,"Reliability shall be ensured only by extensive testing only by the team members and mentors, if available.",NF,NF
+495,"The software must allow for easy access to transaction inquiry, such as retrieval only by check number, dollar amount, description or other variables.",NF,NF
+496,"The staff must be able to adjust common variables, such as codes, tables, report parameters, etc., without the services of each professional programmer.",NF,NF
+497,"Ability to assign privacy level on user-created notes (viewable only by user only, department only, all, etc.)",NF,NF
 498,The database shall be hosted in each secure environment.,NF,NF
 499,"Ability to change font style, boldness, and font size as needed; change text alignment to center vertically and/or horizontally; change text orientation to horizontal or vertical on each line-by-line basis",NF,NF
 500,"The system shall have no limitation on the number records the export occurrence records functionality can process (UC-V4, FR-V13).",NF,NF
 501,The application shall automatically persist each document changes and restore them when it is restarted.,NF,NF
-502,"The web interface shall be compatible with the latest versions of common web browsers, such as:
-  
-   Microsoft Edge (chromium based)
-   Google Chrome
-   Mozilla Firefox
-   Safari
-   Opera",NF,NF
+502,"The web interface shall be compatible with the latest versions of common web browsers, such as: Microsoft Edge (chromium based) Google Chrome Mozilla Firefox Safari Opera",NF,NF
 503,System shall integrate security depending on the user choice using the same graphical password,NF,NF
 504,The system must ensure the integrity of the information in the dashboard,NF,NF
 505,"The software shall be available via both internal and external facing university web-based platforms, via hyperlinks, as well as possible integration via web application interfaces (APIs)",NF,NF
 506,Ability to automatically populate each standard template staff report for ZLR and automatically incorporate each GIS map into the report with standard relevant data layers,NF,NF
 507,NFR-5. The application shall be available in English and Spanish. The default language is Spanish.,NF,NF
-508,The system shall display  detailed information about the selected order.,NF,NF
+508,The system shall display detailed information about the selected order.,NF,NF
 509,"Ability to security sensitive customer information (e.g. Date-of-Birth, SSN, EFT, and driver's license)",NF,NF
 510,"Data to support requirements must exist in the database, and be readily available.",NF,NF
 511,The system shall automatically download and install the new software.,NF,NF
 512,Ability to schedule work based on availability.,NF,NF
 513,"System provides each user-friendly interface for designing queries against each record types. Staff can select fields to query; select values from picklist of possible values; select regular expressions from drop-down menu, and use each full range of Boolean operators. Administrators control staff access to tables and fields.",NF,NF
-514,"The software must allow for authorization approvals only by  different levels of management and
-  dollars.",NF,NF
+514,The software must allow for authorization approvals only by different levels of management and dollars.,NF,NF
 515,Currently selected menu item in the top Navigation shall be displayed in SCAD branding (Red color) with red as background color while white being the foreground text.,NF,NF
 516,The product shall be available over the Internet via the S2S website.,NF,NF
-517,"Ability to accommodate online cancellation and one step automatic reversals of invoice
-  entries.",NF,NF
-518,"System allows creation and modification of loan rules each of which  allow or disallow check-out of items, calculate loan periods, and determine renewal limits. Loan rules shall evaluate patron type, current number of items checked out, current patron account balance, item type, item status, owning location code, check-out location code, and other criteria. For example, loan rules shall prohibit patrons from checking out items with each unavailable status, e.g. each item with each triggered hold for another patron or each item each of which  is already checked out to another patron. Loan rules can access check-out location open/closed schedule in calculating due date. Loan rules also specify whether each specific criteria shall be overridden only by  staff with specific privileges or roles. (Also see REQ-5190 re requesting rules.)",NF,NF
+517,Ability to accommodate online cancellation and one step automatic reversals of invoice entries.,NF,NF
+518,"System allows creation and modification of loan rules each of which allow or disallow check-out of items, calculate loan periods, and determine renewal limits. Loan rules shall evaluate patron type, current number of items checked out, current patron account balance, item type, item status, owning location code, check-out location code, and other criteria. For example, loan rules shall prohibit patrons from checking out items with each unavailable status, e.g. each item with each triggered hold for another patron or each item each of which is already checked out to another patron. Loan rules can access check-out location open/closed schedule in calculating due date. Loan rules also specify whether each specific criteria shall be overridden only by staff with specific privileges or roles. (Also see REQ-5190 re requesting rules.)",NF,NF
 519,Security access to edit assets is assigned to each asset,NF,NF
-520, The flow coming from the Acquisition Server must be considered perfect in timings.,NF,NF
-521,"The software must have security to restrict each user to certain accounts in each application,
-  which could vary only by  application.",NF,NF
-522,This program shall operate in the following operating environment for the client and the server GUI:  Apple Mac OS X (Universal)  Linux/Unix (Source code)  Microsoft Windows (Installer),NF,NF
+520,"The flow coming from the Acquisition Server must be considered ""perfect in timings.",NF,NF
+521,"The software must have security to restrict each user to certain accounts in each application, which could vary only by application.",NF,NF
+522,This program shall operate in the following operating environment for the client and the server GUI: Apple Mac OS X (Universal) Linux/Unix (Source code) Microsoft Windows (Installer),NF,NF
 523,"A user with one or more of these roles has each user profile, which means each user ID, each email address, each mobile phone number and each password, each stored in the DIS database. Passwords shall be hashed. See also Annex 2 under Users.",NF,NF
 524,Ability to define available hours for each technician or group per day.,NF,NF
 525,System shall check whether the size of the video is less than 20 minutes or 1024 MB .,NF,NF
-526,"The system must be able to run on the Windows operating systems beginning 
-  with Windows XP, and must be able to run on future releases such as the 
-  upcoming Windows 8",NF,NF
+526,"The system must be able to run on the Windows operating systems beginning with Windows XP, and must be able to run on future releases such as the upcoming Windows 8",NF,NF
 527,The system shall supports Apple Safari browser,NF,NF
-528,The system shall allow the users to login their account and access the system only by  using credential provided only by  the System admin,NF,NF
+528,The system shall allow the users to login their account and access the system only by using credential provided only by the System admin,NF,NF
 529,The system shall process each request within 10 seconds.,NF,NF
 530,"The 27 notification to the operator workstation of each critical alarms shall occur within 2 seconds of alarm detection, and shall occur whether or not each operator is logged on to the system.",NF,NF
-531,The system shall use secure sockets in each transactions each of which  include each confidential customer information.,NF,NF
+531,The system shall use secure sockets in each transactions each of which include each confidential customer information.,NF,NF
 532,"Operating Systems / Technical Platform: MS Windows, IIS, .NET Framework for in-house solution; lower priority if hosted solution is used",NF,NF
 533,The working in the system shall be well planned and organized. The image shall be stored properly and shall help in implementing the secrecy,NF,NF
-534,Provide each utility to automatically check each URLs found in bibliographic and item records. Provide each interface for checking and correcting invalid URLs identified only by  the utility.,NF,NF
+534,Provide each utility to automatically check each URLs found in bibliographic and item records. Provide each interface for checking and correcting invalid URLs identified only by the utility.,NF,NF
 535,"The creation of reports must not tie up the user interface for more than 1 minute. Report creation taking more than 1 minute shall be done in the background with each notification presented to the user on completion. The notification to the user shall be in the form of each email. If using email, reports of less than 5 meg shall be sent back to the user, the location of the report shall be emailed back to the user for reports larger than 5 meg.",NF,NF
-536,"The software system defined in this SRS must follow industry recommended practices for secure software development. only at  each minimum, the software development must practice the principle of least privilege for defining access-level requirements of the software system and its associated services. The production-release version of the software system must pass each automated dynamic application security testing tool (e.g., HP WEBINSPECT).",NF,NF
+536,"The software system defined in this SRS must follow industry recommended practices for secure software development. only at each minimum, the software development must practice the principle of least privilege for defining access-level requirements of the software system and its associated services. The production-release version of the software system must pass each automated dynamic application security testing tool (e.g., HP WEBINSPECT).",NF,NF
 537,The results displayed in the map view shall be user friendly and easy to understand. Selecting each pin on the map shall only take one click.,NF,NF
-538,"The system shall provide the ability to set up log event triggers to automatically notify administrator when each user defined database condition or set maximum/minimums are
-  exceeded.",NF,NF
+538,The system shall provide the ability to set up log event triggers to automatically notify administrator when each user defined database condition or set maximum/minimums are exceeded.,NF,NF
 539,"The system shall be intended to run on Firefox 4 and above, Google Chrome 10 and above and Internet Explorer 8 and above.",NF,NF
 540,Edits in place to ensure reliability (ex: appointments wont disappear and other users cant schedule over each previous scheduled appointment).,NF,NF
 541,"If it is not available or it is insufficient, each request is submitted to Survey to perform or augment the Level 1 survey.",NF,NF
 542,Each video clip (less than 5 minutes) shall be loaded completely within 30 seconds 95% of the time,NF,NF
-543,This program uses object oriented mechanisms to protect its data passed using methods Also there is no currently each security schema of this program. Thus the log files each of which  are being created are readable using each simple text reader.,NF,NF
+543,This program uses object oriented mechanisms to protect its data passed using methods Also there is no currently each security schema of this program. Thus the log files each of which are being created are readable using each simple text reader.,NF,NF
 544,The user interface must be GUI based.,NF,NF
 545,System can be set to automatically check out items when holds are triggered for specific patron types and/or for patrons from specific home libraries.,NF,NF
 546,The system shall load the first screen with each icons and images within 5 seconds when the user opens the website.,NF,NF
 547,The application shall encrypt the persistent application data,NF,NF
-548,Client shall be able to render the scene only at  at least 30 FPS,NF,NF
-549,"The software, only through  password controls, must allow only authorised users to undertake the initial scanning and indexing of documents",NF,NF
+548,Client shall be able to render the scene only at at least 30 FPS,NF,NF
+549,"The software, only through password controls, must allow only authorised users to undertake the initial scanning and indexing of documents",NF,NF
 550,All information integrated with each single county parcel code.,NF,NF
 551,Automatic cancellation of delinquent customers,NF,NF
 552,Crash Handling,NF,NF
@@ -598,21 +558,18 @@ id,text,label,label_binary
 557,The software must automatically post GL from A/P.,NF,NF
 558,Performance: The algorithm must have performance on par with the state of the art.,NF,NF
 559,The application should be able to run in offline mode,NF,NF
-560,"This system shall be compatible with each computer each of which  has Microsoft Office Professional 2007 or later installed (whether PC or Mac), and shall be designed with more than one computer in mind.",NF,NF
+560,"This system shall be compatible with each computer each of which has Microsoft Office Professional 2007 or later installed (whether PC or Mac), and shall be designed with more than one computer in mind.",NF,NF
 561,The system shall restrict access to portal manager for front-end available language management functionalities (BR5).,NF,NF
-562,"Ability to automatically clear personal time when unused only by  end of year, with the option to override
-  with appropriate security.",NF,NF
+562,"Ability to automatically clear personal time when unused only by end of year, with the option to override with appropriate security.",NF,NF
 563,The software must support the automatic spread of freight amount.,NF,NF
 564,Data Integrity,NF,NF
-565,"The software must support online inquiry of the entire employee database, with security on sensitive
-  information such as SSN or addresses.",NF,NF
+565,"The software must support online inquiry of the entire employee database, with security on sensitive information such as SSN or addresses.",NF,NF
 566,Ability to review multiple versions of budget online with proper security access.,NF,NF
-567,The product shall be as secure as the web browser each of which  shall run the product.,NF,NF
+567,The product shall be as secure as the web browser each of which shall run the product.,NF,NF
 568,Compatibility,NF,NF
-569,"Supports current browser versions, yet remains backward-compatible as new versions are
-  released",NF,NF
+569,"Supports current browser versions, yet remains backward-compatible as new versions are released",NF,NF
 570,Student Authentication/Change PIN,NF,NF
-571,"Product shall be used via each web browser. Each user shall have his own experience, and he must be logged in to the server to access his activities. Hence, first-time users must perform complete registration process. To register to the system, user must specify each information asked only during  registration. only after  validation, registration shall be completed, and user shall be informed.",NF,NF
+571,"Product shall be used via each web browser. Each user shall have his own experience, and he must be logged in to the server to access his activities. Hence, first-time users must perform complete registration process. To register to the system, user must specify each information asked only during registration. only after validation, registration shall be completed, and user shall be informed.",NF,NF
 572,"The main security concern is for users account hence proper login mechanism shall be used to avoid hacking. The tablet id registration is way to spam check for increasing the security. Hence, security is provided from unwanted use of recognition software.",NF,NF
 573,The system shall allow employees to log in using their registered account,NF,NF
 574,System shall be able to interface with other components according to their specifications.,NF,NF
@@ -624,53 +581,46 @@ id,text,label,label_binary
 580,The ability to export and import budget to desktop tools (Excel/Word),NF,NF
 581,The e-store system shall communicate with shipping system for tracking orders and updating of shipping methods.,NF,NF
 582,The MDT shall provide each GUI.,NF,NF
-583,"In the proposed system utmost care shall be each of which  no information is repeated anywhere, in storage or otherwise. This shall assure economic use of storage space and consistency in the data stored",NF,NF
+583,"In the proposed system utmost care shall be each of which no information is repeated anywhere, in storage or otherwise. This shall assure economic use of storage space and consistency in the data stored",NF,NF
 584,The user ID shall be unique.,NF,NF
 585,System has to be user-friendly.,NF,NF
-586,The application shall be easy to extend. The code shall be written in each way each of which  it favors implementation of new functions,NF,NF
+586,The application shall be easy to extend. The code shall be written in each way each of which it favors implementation of new functions,NF,NF
 587,The system is each public website; therefore each the content shall be available for the users.,NF,NF
-588,The system shall be built using each standard web page development tool each of which  conforms to either IBMs CUA standards or Microsofts GUI standards.,NF,NF
-589,"The application must be able to handle authentication only through  login securely, with encrypted password for the database.",NF,NF
+588,The system shall be built using each standard web page development tool each of which conforms to either IBMs CUA standards or Microsofts GUI standards.,NF,NF
+589,"The application must be able to handle authentication only through login securely, with encrypted password for the database.",NF,NF
 590,Reports must be available giving statistical and analytical details of documents processed or waiting to be processed,NF,NF
-591,"The System aims only at  providing each efficient interface to the user for managing of inventory, it shall also provide the user varied options for managing the inventory only through  various functions only at  hand. The ingredient levels are continuously monitored based on their usage and are checked for the threshold levels in the inventory and accordingly the user is alerted about low levels of certain ingredients. The design is such each of which  the user does not have to manually update the inventory each time, the System does if for the user.",NF,NF
+591,"The System aims only at providing each efficient interface to the user for managing of inventory, it shall also provide the user varied options for managing the inventory only through various functions only at hand. The ingredient levels are continuously monitored based on their usage and are checked for the threshold levels in the inventory and accordingly the user is alerted about low levels of certain ingredients. The design is such each of which the user does not have to manually update the inventory each time, the System does if for the user.",NF,NF
 592,Receiving new issue causes previous issue to go automatically into holdable status.,NF,NF
-593,The system shall automatically filter the Species Habitat feature database with values selected only by  the user.,NF,NF
-594,"Ability to calculate and allow one-time or multiple arrears deductions for each employees insurance
-  premiums if needed for retroactive changes in the employees enrollment.",NF,NF
-595,The application shall be available for the user only at  each times.,NF,NF
+593,The system shall automatically filter the Species Habitat feature database with values selected only by the user.,NF,NF
+594,Ability to calculate and allow one-time or multiple arrears deductions for each employees insurance premiums if needed for retroactive changes in the employees enrollment.,NF,NF
+595,The application shall be available for the user only at each times.,NF,NF
 596,The system shall prevent user from opening other people's private project.,NF,NF
 597,Single available time is scheduled for each presentation. New booking shall overwrite prior booking,NF,NF
-598,"Documents created only through  pre-set formats must be automatically referenced, set appropriate document status and filed for future access",NF,NF
+598,"Documents created only through pre-set formats must be automatically referenced, set appropriate document status and filed for future access",NF,NF
 599,Attached file names shall be unique across the fleet. Multiples entry of the same file shall be prevented.,NF,NF
 600,The website shall support only mentioned browsers in the non-functional requirements section.,NF,NF
-601,"Provide for the automatic interface of refunds to the accounts payable system for check
-  generation.",NF,NF
-602,"Licensed or open source software components shall be used for the implementation of the 54 System. each licences shall be of type concurrent and perpetual. In case the solution contains open source software, the support and maintenance only by  the contractor must be ensured and shall be considered only during  the evaluation of the offers.",NF,NF
+601,Provide for the automatic interface of refunds to the accounts payable system for check generation.,NF,NF
+602,"Licensed or open source software components shall be used for the implementation of the 54 System. each licences shall be of type concurrent and perpetual. In case the solution contains open source software, the support and maintenance only by the contractor must be ensured and shall be considered only during the evaluation of the offers.",NF,NF
 603,"Be able to determine the availability of alternative use supplies, such as reclaimed water and desalination.",NF,NF
 604,Passwords shall be saved encrypted in the database in order to ensure the user's privacy.,NF,NF
 605,"Parted Live does not deal with each security or privacy issues, as it does not run from within each operating system. each user has administrator rights and full access which are given from the start of the program, as you are logged in as root.",NF,NF
-606,"The system shall provide for the following types of custom report writing tools each of which  will
-  use the application established security only at  the database level:",NF,NF
-607,The application shall display the opened document within 10s only after  it is started.,NF,NF
-608,"Uses Zip+4 software for sorting of utility bills only by  zip code to obtain the best postal rate
-  possible.",NF,NF
-609,"Ability to automatically update the equipment value or projected life as each result of the work
-  performed on the work order.",NF,NF
-610,"MySQL, PHP, and Apache shall each be accessing the hardware only through  their own APIs.",NF,NF
+606,The system shall provide for the following types of custom report writing tools each of which will use the application established security only at the database level:,NF,NF
+607,The application shall display the opened document within 10s only after it is started.,NF,NF
+608,Uses Zip+4 software for sorting of utility bills only by zip code to obtain the best postal rate possible.,NF,NF
+609,Ability to automatically update the equipment value or projected life as each result of the work performed on the work order.,NF,NF
+610,"MySQL, PHP, and Apache shall each be accessing the hardware only through their own APIs.",NF,NF
 611,The system must ensure the logical integrity of the data,NF,NF
-612,"Ability to generate automatic form letters (notification documents) to notify specified users
-  when preventative maintenance is due.",NF,NF
+612,Ability to generate automatic form letters (notification documents) to notify specified users when preventative maintenance is due.,NF,NF
 613,Supports automated ad-hoc reporting and query system for customers,NF,NF
 614,Ability to automatically create due-to/due-from entries for interfund transfer transactions.,NF,NF
-615,Notes and long text fields shall line wrap automatically only during  creation and editing,NF,NF
+615,Notes and long text fields shall line wrap automatically only during creation and editing,NF,NF
 616,All documents stored electronically must be available to each staff (with authorised access) concurrently. This must not noticeably affect online response times,NF,NF
-617,System parameter determines only at  what point hold slips are automatically printed.,NF,NF
+617,System parameter determines only at what point hold slips are automatically printed.,NF,NF
 618,"If each held item is checked out to the wrong patron, the hold is automatically restarted.",NF,NF
 619,USABILITY: The system shall satisfy the maximum number of users needs.,NF,NF
-620,"The system shall provide standard structured query language (SQL) capabilities for
-  database queries.",NF,NF
+620,The system shall provide standard structured query language (SQL) capabilities for database queries.,NF,NF
 621,Graphical report-writer,NF,NF
-622,The Student 1 Interface must be accessed only through  each web-based system,NF,NF
+622,The Student 1 Interface must be accessed only through each web-based system,NF,NF
 623,"Design of the system shall let different languages to be shown without affecting the general layout and operations. Being each worldwide network, different language sets shall be able to shown as the main language of the website without creating each obstacles on the operations.",NF,NF
 624,The system shall indicate when each database file is corrupt and cannot be read,NF,NF
 625,Matchmaking shall take less than 3 minutes to complete,NF,NF

@@ -1,0 +1,358 @@
+% !TEX root = ../proyect.tex
+
+\chapter{Resultados y análisis}\label{cap:resultados}
+
+Este capítulo presenta los resultados del experimento factorial completo
+(5 tareas $\times$ 6 modelos $\times$ 5 estrategias $\times$ 5 iteraciones = 750 configuraciones).
+Para cada tarea se muestran las métricas agregadas, se identifican las combinaciones
+modelo--estrategia más efectivas y se responde a las tres preguntas de investigación
+mediante pruebas estadísticas.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Resultados por tarea}\label{sec:resultados-tarea}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{A1 --- Clasificación Funcional / No Funcional}
+
+La tarea de clasificación es la que mayor rendimiento medio obtiene entre las tareas de
+análisis, con un F1 global de 0{,}742.
+El modelo con mejor desempeño promedio es \texttt{qwen7b} (F1\,=\,0{,}807),
+seguido por \texttt{nim\_mistral} (0{,}772) y \texttt{nim\_llama70b} (0{,}766).
+La mejor combinación individual es \texttt{nim\_llama70b} con estrategia
+\textit{persona\_context} (F1\,=\,0{,}850, Acc\,=\,0{,}812).
+
+\cuadro
+{|l|l|r|r|}
+{Mejores resultados en A1 (Clasificación F/NF)}
+{tab:res-a1}
+{
+    \textbf{Modelo} & \textbf{Estrategia} & \textbf{F1} & \textbf{Acc} \\ \hline
+    nim\_llama70b & persona\_context     & 0{,}850 & 0{,}812 \\ \hline
+    nim\_llama70b & question\_refinement & 0{,}838 & 0{,}782 \\ \hline
+    llama8b       & cognitive\_verifier  & 0{,}835 & 0{,}787 \\ \hline
+    qwen7b        & cognitive\_verifier  & 0{,}834 & 0{,}776 \\ \hline
+    qwen7b        & persona\_context     & 0{,}831 & 0{,}774 \\ \hline
+}
+
+La estrategia \textit{cognitive\_verifier} es la que mejor resultado produce de forma
+consistente (F1 medio entre modelos\,=\,0{,}785), mientras que \textit{chain\_of\_thought}
+es la peor para esta tarea (0{,}574), probablemente porque induce razonamientos extensos
+que dificultan la extracción de la etiqueta binaria final.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{A2 --- Detección de ambigüedad}
+
+La detección de ambigüedad es la tarea de análisis más difícil,
+con un F1 global de 0{,}627.
+La mejor combinación individual corresponde a \texttt{qwen7b} con
+\textit{few\_shot} (F1\,=\,0{,}737), seguida de \texttt{nim\_llama8b} con
+\textit{persona\_context} (0{,}732).
+El 37\,\% de los requisitos del dataset resultaron difíciles ($\ge$50\,\% de fallos),
+lo que refleja la naturaleza subjetiva de la ambigüedad.
+
+\cuadro
+{|l|l|r|r|}
+{Mejores resultados en A2 (Detección de ambigüedad)}
+{tab:res-a2}
+{
+    \textbf{Modelo} & \textbf{Estrategia} & \textbf{F1} & \textbf{Acc} \\ \hline
+    qwen7b       & few\_shot            & 0{,}737 & 0{,}631 \\ \hline
+    nim\_llama8b & persona\_context     & 0{,}732 & 0{,}627 \\ \hline
+    nim\_mistral & persona\_context     & 0{,}712 & 0{,}572 \\ \hline
+    nim\_mistral & cognitive\_verifier  & 0{,}710 & 0{,}576 \\ \hline
+    nim\_llama70b& question\_refinement & 0{,}681 & 0{,}556 \\ \hline
+}
+
+Destaca que \texttt{llama8b} con \textit{question\_refinement} obtiene F1\,=\,0{,}025,
+el peor resultado del experimento en esta tarea, lo que evidencia que la combinación
+modelo--estrategia influye decisivamente en la capacidad de detección.
+El modelo \texttt{nim\_mistral} muestra el mejor rendimiento medio entre los modelos
+de API para esta tarea (F1\,=\,0{,}704).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{A3 --- Evaluación de completitud}
+
+La completitud es la tarea más difícil del experimento, con un F1 medio global de 0{,}290.
+La mitad de los requisitos del dataset (75\,/\,150) presentan una tasa de fallo superior
+al 50\,\%, y dos requisitos fallan con todos los modelos y estrategias (100\,\% de error),
+lo que indica problemas de calidad en el propio dataset.
+La mejor combinación es \texttt{qwen7b} con \textit{few\_shot} (F1\,=\,0{,}723),
+muy por encima de la media, gracias a los ejemplos en el prompt que acotan el criterio
+de completitud.
+
+\cuadro
+{|l|r|r|}
+{F1 medio por modelo en A3 (Completitud)}
+{tab:res-a3}
+{
+    \textbf{Modelo}    & \textbf{F1 medio} & \textbf{Tipo} \\ \hline
+    nim\_mistral       & 0{,}405 & API   \\ \hline
+    qwen7b             & 0{,}358 & Local \\ \hline
+    llama3b            & 0{,}161 & Local \\ \hline
+    llama8b            & 0{,}157 & Local \\ \hline
+    nim\_llama70b      & 0{,}152 & API   \\ \hline
+    nim\_llama8b       & 0{,}106 & API   \\ \hline
+}
+
+El bajo rendimiento generalizado sugiere que la tarea de completitud requiere razonamiento
+causal profundo (identificar elementos ausentes) que supera la capacidad actual de los
+prompts utilizados.
+La estrategia \textit{few\_shot} es la más eficaz (F1\,=\,0{,}395),
+seguida de \textit{chain\_of\_thought} (0{,}265);
+los ejemplos en el prompt son especialmente relevantes para definir incompletitud.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{V1 --- Detección de inconsistencias}
+
+La detección de inconsistencias es la segunda tarea más sencilla del experimento,
+con un F1 global de 0{,}809.
+Los modelos de API dominan claramente, encabezados por \texttt{nim\_llama70b}
+(F1\,=\,0{,}914).
+La mejor combinación es \texttt{nim\_llama70b} con \textit{few\_shot}
+(F1\,=\,0{,}950, Acc\,=\,0{,}940), seguida muy de cerca por \texttt{llama8b}
+con \textit{chain\_of\_thought} (F1\,=\,0{,}944).
+
+\cuadro
+{|l|l|r|r|}
+{Mejores resultados en V1 (Detección de inconsistencias)}
+{tab:res-v1}
+{
+    \textbf{Modelo}  & \textbf{Estrategia}    & \textbf{F1} & \textbf{Acc} \\ \hline
+    nim\_llama70b & few\_shot            & 0{,}950 & 0{,}940 \\ \hline
+    nim\_llama8b  & few\_shot            & 0{,}935 & 0{,}927 \\ \hline
+    nim\_llama70b & chain\_of\_thought   & 0{,}935 & 0{,}920 \\ \hline
+    llama8b       & chain\_of\_thought   & 0{,}944 & 0{,}933 \\ \hline
+    qwen7b        & chain\_of\_thought   & 0{,}926 & 0{,}913 \\ \hline
+}
+
+El dataset de inconsistencias (30 pares) es el de menor tamaño del experimento,
+lo que favorece resultados más estables y varianzas bajas (F1 std\,$<$\,0{,}03).
+La estrategia \textit{few\_shot} es la más efectiva (F1 medio\,=\,0{,}901),
+probablemente porque los ejemplos demuestran el tipo de contradicción a identificar.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{V2 --- Evaluación de testabilidad}
+
+La testabilidad es la tarea de validación más difícil y a su vez donde mayor
+diferencia se observa entre modelos.
+\texttt{nim\_llama70b} obtiene el mejor rendimiento global (F1\,=\,0{,}901),
+seguido de \texttt{qwen7b} (0{,}878) y \texttt{nim\_mistral} (0{,}875).
+La mejor combinación individual es \texttt{nim\_llama70b} con
+\textit{chain\_of\_thought} (F1\,=\,0{,}916, Acc\,=\,0{,}895).
+
+\cuadro
+{|l|l|r|r|}
+{Mejores resultados en V2 (Evaluación de testabilidad)}
+{tab:res-v2}
+{
+    \textbf{Modelo} & \textbf{Estrategia}    & \textbf{F1} & \textbf{Acc} \\ \hline
+    nim\_llama70b & chain\_of\_thought   & 0{,}916 & 0{,}895 \\ \hline
+    nim\_llama70b & cognitive\_verifier  & 0{,}914 & 0{,}899 \\ \hline
+    nim\_llama70b & question\_refinement & 0{,}911 & 0{,}889 \\ \hline
+    qwen7b        & chain\_of\_thought   & 0{,}909 & 0{,}887 \\ \hline
+    qwen7b        & cognitive\_verifier  & 0{,}908 & 0{,}887 \\ \hline
+}
+
+A diferencia del resto de tareas, el ANOVA de estrategias no revela diferencias
+significativas para testabilidad ($F$\,=\,0{,}74, $p$\,=\,0{,}567), lo que indica
+que para esta tarea la elección del modelo es el factor determinante, no la
+estrategia de prompting.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Comparación local vs.~API (RQ1)}\label{sec:resultados-rq1}
+% ─────────────────────────────────────────────────────────────────────────────
+
+El Cuadro~\ref{tab:local-vs-api} recoge el F1 medio del grupo de modelos locales
+(Ollama) y del grupo de modelos de API (NVIDIA NIM) para cada tarea, junto con los
+resultados de la prueba $t$ de Welch y el tamaño del efecto de Cohen.
+
+\cuadro
+{|l|r|r|r|r|r|}
+{Comparación local vs.~API por tarea (F1 medio)}
+{tab:local-vs-api}
+{
+    \textbf{Tarea} & \textbf{Local} & \textbf{API} & \textbf{$\Delta$} & \textbf{$p$} & \textbf{$d$} \\ \hline
+    A1 Clasificación  & 0{,}725 & 0{,}761 & +5{,}0\% & 0{,}070 & $-$0{,}30 \\ \hline
+    A2 Ambigüedad     & 0{,}550 & 0{,}655 & +19{,}1\% & $<$0{,}001 & $-$0{,}68 \\ \hline
+    A3 Completitud    & 0{,}225 & 0{,}221 & $-$1{,}8\% & 0{,}900 & $+$0{,}02 \\ \hline
+    V1 Inconsistencias & 0{,}759 & 0{,}861 & +13{,}5\% & $<$0{,}001 & $-$0{,}79 \\ \hline
+    V2 Testabilidad   & 0{,}655 & 0{,}876 & +33{,}7\% & $<$0{,}001 & $-$1{,}15 \\ \hline
+}
+
+Los resultados muestran que la ventaja de la API no es uniforme.
+En cuatro de las cinco tareas la API supera a los modelos locales, pero la magnitud
+varía considerablemente:
+
+\begin{itemize}
+    \item \textbf{Clasificación (A1):} La diferencia del 5\,\% no alcanza significación
+    estadística ($p$\,=\,0{,}070), con un efecto pequeño ($d$\,=\,$-$0{,}30).
+    Esto indica que los modelos locales son competitivos para esta tarea concreta.
+
+    \item \textbf{Ambigüedad (A2):} La API supera a los modelos locales
+    en un 19\,\% ($d$\,=\,$-$0{,}68, efecto moderado), diferencia significativa.
+
+    \item \textbf{Completitud (A3):} No existe diferencia práctica entre grupos
+    ($d$\,=\,0{,}02, $p$\,=\,0{,}90): ninguno de los dos grupos resuelve bien esta tarea.
+
+    \item \textbf{Inconsistencias (V1):} La API supera un 13{,}5\,\% con efecto grande
+    ($d$\,=\,$-$0{,}79).
+
+    \item \textbf{Testabilidad (V2):} La brecha más grande, +34\,\%
+    ($d$\,=\,$-$1{,}15); modelos de gran escala son indispensables para
+    esta tarea.
+\end{itemize}
+
+\cuadro
+{|l|r|r|r|}
+{Ranking global de modelos (F1 medio sobre las 5 tareas)}
+{tab:ranking-global}
+{
+    \textbf{Rango} & \textbf{Modelo} & \textbf{F1 medio} & \textbf{Tipo} \\ \hline
+    1 & nim\_mistral  & 0{,}716 & API   \\ \hline
+    2 & qwen7b        & 0{,}704 & Local \\ \hline
+    3 & nim\_llama70b & 0{,}681 & API   \\ \hline
+    4 & nim\_llama8b  & 0{,}628 & API   \\ \hline
+    5 & llama8b       & 0{,}555 & Local \\ \hline
+    6 & llama3b       & 0{,}489 & Local \\ \hline
+}
+
+Destacan dos hallazgos relevantes del ranking global: el modelo de API
+\texttt{nim\_mistral} (7B parámetros) lidera el ranking con F1\,=\,0{,}716, y el
+modelo local \texttt{qwen7b} ocupa el segundo puesto (0{,}704) por delante de
+\texttt{nim\_llama70b} (0{,}681), un modelo diez veces más grande.
+Esto sugiere que el tamaño del modelo no es el único determinante del rendimiento:
+la arquitectura y el ajuste fino específico de \texttt{qwen7b} para tareas de código
+e instrucciones le confieren ventajas en varias tareas.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Comparación por estrategia de prompting (RQ2)}\label{sec:resultados-rq2}
+% ─────────────────────────────────────────────────────────────────────────────
+
+El Cuadro~\ref{tab:estrategias} muestra el F1 medio de cada estrategia para cada
+tarea, calculado como la media sobre los seis modelos.
+
+\cuadro
+{|l|r|r|r|r|r|}
+{F1 medio por estrategia de prompting y tarea}
+{tab:estrategias}
+{
+    \textbf{Estrategia}  & \textbf{A1}  & \textbf{A2}  & \textbf{A3}  & \textbf{V1}  & \textbf{V2}  \\ \hline
+    Question Refinement  & 0{,}751 & 0{,}641 & 0{,}206 & 0{,}820 & 0{,}816 \\ \hline
+    Cognitive Verifier   & 0{,}785 & 0{,}688 & 0{,}210 & 0{,}769 & 0{,}875 \\ \hline
+    Persona + Context    & 0{,}774 & 0{,}659 & 0{,}254 & 0{,}810 & 0{,}876 \\ \hline
+    Few-Shot             & 0{,}715 & 0{,}701 & 0{,}395 & 0{,}901 & 0{,}823 \\ \hline
+    Chain of Thought     & 0{,}574 & 0{,}628 & 0{,}265 & 0{,}883 & 0{,}879 \\ \hline
+}
+
+El análisis de la tabla revela que no existe una estrategia universalmente superior.
+La elección óptima depende de la tarea:
+
+\begin{itemize}
+    \item \textbf{A1 (Clasificación):} \textit{Cognitive Verifier} es la mejor
+    estrategia (0{,}785), significativamente por encima de \textit{Chain of Thought}
+    (ANOVA: $F$\,=\,29{,}14, $p$\,$<$\,0{,}001).
+    La descomposición en preguntas auxiliares ayuda a identificar el tipo funcional.
+
+    \item \textbf{A2 (Ambigüedad):} \textit{Few-Shot} lidera (0{,}701) gracias a los
+    ejemplos que muestran patrones de ambigüedad concretos.
+
+    \item \textbf{A3 (Completitud):} \textit{Few-Shot} es claramente la mejor (0{,}395)
+    frente a las demás ($\le$0{,}265), con diferencias significativas
+    (ANOVA: $F$\,=\,5{,}61, $p$\,=\,0{,}0003).
+
+    \item \textbf{V1 (Inconsistencias):} \textit{Few-Shot} lidera (0{,}901),
+    seguida de \textit{Chain~of~Thought} (0{,}883).
+
+    \item \textbf{V2 (Testabilidad):} No hay diferencias significativas entre
+    estrategias (ANOVA: $F$\,=\,0{,}74, $p$\,=\,0{,}567);
+    el F1 oscila entre 0{,}816 y 0{,}879.
+\end{itemize}
+
+En conjunto, \textit{Few-Shot} es la estrategia más robusta entre tareas: aparece en el
+top-2 de cuatro de las cinco tareas, siendo especialmente eficaz cuando la tarea
+requiere identificar un concepto que los LLMs no dominan sin ejemplos
+(completitud, inconsistencia).
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Análisis de trade-offs (RQ3)}\label{sec:resultados-rq3}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Además del rendimiento, el diseño experimental captura la latencia media por inferencia
+y los tokens por segundo generados, lo que permite evaluar la eficiencia
+(F1 por segundo) de cada modelo.
+
+\cuadro
+{|l|r|r|r|r|}
+{Eficiencia media de los modelos (F1/s y latencia)}
+{tab:eficiencia}
+{
+    \textbf{Modelo} & \textbf{Tipo} & \textbf{F1 medio} & \textbf{Tokens/s} & \textbf{F1/s} \\ \hline
+    nim\_mistral  & API   & 0{,}716 & 44 & 0{,}558 \\ \hline
+    nim\_llama8b  & API   & 0{,}628 & 122 & 0{,}653 \\ \hline
+    nim\_llama70b & API   & 0{,}681 & 69 & 0{,}458 \\ \hline
+    qwen7b        & Local & 0{,}704 & 38 & 0{,}339 \\ \hline
+    llama8b       & Local & 0{,}555 & 44 & 0{,}251 \\ \hline
+    llama3b       & Local & 0{,}489 & 82 & 0{,}193 \\ \hline
+}
+
+Del análisis de trade-offs se extraen tres perfiles diferenciados:
+
+\begin{itemize}
+    \item \textbf{Máxima eficiencia:} \texttt{nim\_llama8b} es el modelo más eficiente
+    (F1/s\,=\,0{,}653) gracias a su alta velocidad de generación (122 tokens/s en
+    promedio) y un F1 aceptable. Adecuado cuando la latencia es un requisito crítico.
+
+    \item \textbf{Mejor balance rendimiento--privacidad:} \texttt{qwen7b} combina el
+    segundo mejor F1 global (0{,}704) con ejecución completamente local, sin enviar
+    datos a servidores externos. Su eficiencia (F1/s\,=\,0{,}339) es inferior a
+    los modelos de API, pero el coste operativo es cero una vez desplegado.
+
+    \item \textbf{Máxima calidad:} \texttt{nim\_mistral} y \texttt{nim\_llama70b}
+    ofrecen el mejor rendimiento en tareas complejas, a costa de depender de una
+    API externa, lo que implica costes por uso y exposición de los requisitos
+    (potencialmente confidenciales) a terceros.
+\end{itemize}
+
+Estos tres perfiles constituyen la respuesta a RQ3: la elección óptima depende
+del contexto organizativo. En entornos con requisitos sensibles o sin acceso
+a internet, \texttt{qwen7b} es la opción recomendada. En entornos donde la
+latencia o la precisión son críticas, \texttt{nim\_llama8b} o
+\texttt{nim\_llama70b} son preferibles.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Análisis estadístico}\label{sec:resultados-estadistica}
+% ─────────────────────────────────────────────────────────────────────────────
+
+El Cuadro~\ref{tab:anova} resume los resultados del análisis ANOVA de un factor
+para los factores \textit{modelo} y \textit{estrategia} en cada tarea.
+
+\cuadro
+{|l|r|r|r|r|}
+{Resultados ANOVA de un factor por tarea (métrica: F1)}
+{tab:anova}
+{
+    \textbf{Tarea} & \textbf{$F$ modelo} & \textbf{$p$ modelo} & \textbf{$F$ estrat.} & \textbf{$p$ estrat.} \\ \hline
+    A1 Clasificación   & 11{,}04 & $<$0{,}001 & 29{,}14 & $<$0{,}001 \\ \hline
+    A2 Ambigüedad      & 11{,}78 & $<$0{,}001 & 12{,}56 & $<$0{,}001 \\ \hline
+    A3 Completitud     & 12{,}38 & $<$0{,}001 &  5{,}61 & $<$0{,}001 \\ \hline
+    V1 Inconsistencias & 14{,}10 & $<$0{,}001 &  5{,}84 & $<$0{,}001 \\ \hline
+    V2 Testabilidad    & 66{,}96 & $<$0{,}001 &  0{,}74 & 0{,}567    \\ \hline
+}
+
+En todas las tareas el factor \textit{modelo} tiene un efecto significativo
+($p$\,$<$\,0{,}001), con el estadístico $F$ más elevado en testabilidad
+($F$\,=\,66{,}96), donde la variabilidad entre modelos es extrema: \texttt{llama3b}
+obtiene F1\,=\,0{,}378 frente a 0{,}901 de \texttt{nim\_llama70b}.
+El factor \textit{estrategia} es significativo en cuatro de las cinco tareas;
+la excepción es V2 (testabilidad), donde la selección del modelo es el único
+determinante relevante del rendimiento.
+
+La comparación local--API mediante la prueba $t$ de Welch revela diferencias
+significativas en tres tareas (A2, V1, V2), con tamaños del efecto moderado--grande
+según la clasificación de Cohen ($|d|$\,$>$\,0{,}5).
+En A1 el efecto es pequeño y no significativo, y en A3 ambos grupos son
+estadísticamente equivalentes.

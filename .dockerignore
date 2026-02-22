@@ -1,0 +1,30 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Secretos (se pasan en tiempo de ejecución con env_file)
+.env
+
+# Resultados (se montan como volumen en docker-compose)
+results/
+
+# Memoria TFG (no es parte del sistema)
+PRUEBA_TFG./
+
+# Git
+.git/
+.gitignore
+
+# Misc
+README.md
+*.egg-info/
+dist/
+build/
+.DS_Store
+Thumbs.db

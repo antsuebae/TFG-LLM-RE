@@ -1,0 +1,283 @@
+% !TEX root = ../proyect.tex
+
+\chapter{Sistema desarrollado}\label{cap:sistema}
+
+Este capítulo describe la arquitectura e implementación del sistema desarrollado para dar soporte
+al experimento y a la aplicación práctica de los resultados.
+El sistema se compone de cinco módulos principales: el pipeline de experimentación, el módulo de prompts,
+los wrappers de modelos, el motor de análisis y un componente de interfaz de usuario.
+
+
+\section{Arquitectura general}\label{sec:arquitectura}
+
+El sistema sigue una arquitectura en capas que separa claramente las responsabilidades:
+
+\begin{description}
+    \item[\textbf{Capa de datos}:] Gestión de los datasets de las cinco tareas en formato CSV,
+    con carga, filtrado y muestreo controlado por semilla.
+
+    \item[\textbf{Capa de modelos}:] Wrappers que abstraen la comunicación con modelos locales
+    (Ollama) y de API (NVIDIA NIM), con una interfaz uniforme.
+
+    \item[\textbf{Capa de prompts}:] Generación y parametrización de los 25 prompts (5 tareas
+    $\times$ 5 estrategias), con parsers específicos por tarea para extraer etiquetas de las
+    respuestas en texto libre.
+
+    \item[\textbf{Capa experimental}:] Orquestación del diseño factorial, gestión de checkpoints
+    y cálculo de métricas.
+
+    \item[\textbf{Capa de análisis}:] Generación de estadísticas descriptivas, gráficos comparativos
+    y pruebas de significación estadística.
+
+    \item[\textbf{Capa de interfaz}:] API REST (FastAPI) y frontend interactivo (Streamlit) para
+    uso en modo de análisis individual.
+\end{description}
+
+Las tecnologías principales utilizadas son Python 3.14, pandas y NumPy para la gestión de datos,
+scikit-learn para las métricas, scipy para los análisis estadísticos, matplotlib y seaborn para
+las visualizaciones, FastAPI para la API REST, y Streamlit para el frontend.
+
+
+\section{Pipeline de experimentación (\texttt{experiment.py})}\label{sec:pipeline}
+
+\subsection{Clase ExperimentRunner}
+
+La clase \texttt{ExperimentRunner} encapsula toda la lógica del experimento.
+Su constructor recibe la ruta al fichero de configuración \texttt{experiment\_config.yaml},
+que define los modelos, estrategias, tareas y semillas a utilizar.
+Los directorios de salida (resultados, checkpoints, logs) se crean automáticamente si no existen.
+
+El método principal \texttt{run\_experiment(task, models, strategies)} itera sobre el producto
+cartesiano de modelos, estrategias e iteraciones, ejecutando cada configuración secuencialmente.
+Para cada muestra del dataset se:
+\begin{enumerate}
+    \item Construye el prompt mediante el módulo \texttt{prompts.py}.
+    \item Llama al modelo y mide el tiempo de respuesta.
+    \item Parsea la respuesta para obtener la etiqueta predicha.
+    \item Acumula los resultados en un buffer.
+\end{enumerate}
+
+Al finalizar cada configuración (modelo, estrategia, iteración), los resultados se guardan en un
+checkpoint JSON para permitir la reanudación del experimento ante interrupciones.
+
+\subsection{Mecanismo de checkpoint y reanudación}
+
+El sistema mantiene un fichero de checkpoint por experimento con el siguiente formato:
+
+\begin{itemize}
+    \item Listado de configuraciones ya completadas (identificadas por \texttt{model+strategy+seed}).
+    \item Resultados parciales acumulados.
+    \item Metadatos del experimento (timestamp de inicio, versión del pipeline).
+\end{itemize}
+
+Al ejecutar el experimento con el flag \texttt{--resume}, el pipeline comprueba el checkpoint y
+omite las configuraciones ya completadas, reanudando a partir de la primera configuración pendiente.
+Al finalizar el experimento completo, el checkpoint se elimina y los resultados se consolidan en
+un único CSV.
+
+\subsection{Modo dry-run}
+
+Para verificar el correcto funcionamiento del pipeline sin consumir los recursos completos del
+experimento, se implementó un modo \texttt{--dry-run} que ejecuta solo 5 muestras por configuración
+y una única iteración con el primer modelo disponible.
+Este modo se empleó para validar cada nueva tarea o modificación del código antes de lanzar el
+experimento completo.
+
+
+\section{Módulo de prompts (\texttt{prompts.py})}\label{sec:prompts}
+
+\subsection{Estructura de los prompts}
+
+El módulo \texttt{prompts.py} define un diccionario anidado \texttt{PROMPTS[task][strategy]} que
+contiene los 25 templates de prompt como cadenas con la variable \texttt{\{requirement\}} (o
+\texttt{\{requirement1\}} y \texttt{\{requirement2\}} para la tarea de inconsistencias).
+
+Los templates utilizan Python format strings, lo que permite su parametrización dinámica con el
+texto del requisito a analizar.
+
+\subsection{Función \texttt{build\_prompt}}
+
+La función \texttt{build\_prompt(task, strategy, sample)} recibe el identificador de la tarea,
+la estrategia y la muestra del dataset, y devuelve el prompt listo para enviar al modelo.
+Internamente selecciona el template adecuado e inyecta los campos del requisito.
+
+\subsection{Parsers de respuesta por tarea}
+
+Cada tarea tiene un parser específico que extrae la etiqueta predicha del texto libre generado por
+el modelo:
+
+\begin{itemize}
+    \item \textbf{A1 (F/NF):} Busca las letras ``F'' o ``NF'' en la respuesta, priorizando las
+    primeras ocurrencias y filtrando falsos positivos mediante expresiones regulares.
+    \item \textbf{A2 (Ambigüedad), A3 (Completitud), V2 (Testabilidad):} Buscan palabras clave
+    binarias (``YES''/``NO'', ``AMBIGUO''/``CLARO'', ``1''/``0'') con normalización de mayúsculas.
+    \item \textbf{V1 (Inconsistencias):} igual esquema; etiquetas de salida:
+    \texttt{INCON\-SISTENTE} o \texttt{CONSIS\-TENTE}.
+\end{itemize}
+
+Cuando el parser no encuentra ninguna etiqueta reconocible, la predicción se marca como inválida
+y se contabiliza en la tasa \texttt{invalid\_rate}.
+
+\subsection{Prompts combinados y pipeline de documentos}
+
+Además de los prompts individuales por tarea, el módulo define un conjunto de \textbf{prompts
+combinados} que solicitan al modelo analizar un requisito en las cuatro dimensiones de calidad
+(ambigüedad, completitud, inconsistencia, testabilidad) en una única llamada.
+Este diseño permite al frontend analizar documentos de requisitos de forma eficiente, reduciendo
+el número de llamadas al modelo.
+
+
+\section{Wrappers de modelos (\texttt{models.py})}\label{sec:wrappers}
+
+\subsection{Interfaz unificada}
+
+Todos los modelos exponen el mismo método \texttt{generate(prompt, max\_tokens)} que devuelve un
+diccionario con los campos:
+\begin{itemize}
+    \item \texttt{response}: texto generado por el modelo.
+    \item \texttt{tokens\_per\_second}: velocidad de generación (solo para modelos locales).
+    \item \texttt{latency}: tiempo total de la llamada en segundos.
+    \item \texttt{model}: nombre del modelo utilizado.
+\end{itemize}
+
+\subsection{OllamaModel}
+
+La clase \texttt{OllamaModel} utiliza la biblioteca cliente de Ollama para Python.
+Los parámetros de generación (temperatura, número máximo de tokens) se configuran en el constructor.
+El método \texttt{generate} mide la latencia con \texttt{time.time()} y extrae las métricas de
+rendimiento del objeto de respuesta de Ollama.
+
+\subsection{NVIDIANIMModel}
+
+La clase \texttt{NVIDIANIMModel} utiliza el cliente de OpenAI apuntando al endpoint de NVIDIA NIM
+(\texttt{https://integrate.api.\allowbreak nvidia.com/v1}).
+La API Key se carga desde el fichero \texttt{.env} mediante la biblioteca \texttt{python-dotenv}.
+El modelo no reporta tokens/s, ya que la infraestructura de NVIDIA no expone esta métrica.
+
+\subsection{Reintentos con backoff exponencial}
+
+La función \texttt{\_retry\_with\_backoff(func, max\_retries=5)} envuelve cualquier llamada al
+modelo con un mecanismo de reintento:
+\begin{itemize}
+    \item Reintento inmediato ante fallos genéricos con un retardo de $2^{intento}$ segundos.
+    \item Retardo mínimo de $3 \times intento$ segundos ante errores HTTP 429 (límite de tasa).
+    \item Si se agotan los 5 intentos, se propaga la última excepción.
+\end{itemize}
+
+Este mecanismo garantiza la robustez del pipeline ante interrupciones de red o límites de
+tasa de la API.
+
+
+\section{Módulo de análisis (\texttt{analysis.py})}\label{sec:analisis}
+
+El módulo \texttt{analysis.py} proporciona funciones para generar informes y visualizaciones
+a partir de los ficheros CSV de resultados.
+
+\subsection{Gráficos generados}
+
+\begin{itemize}
+    \item \textbf{Heatmap modelo × estrategia:} Mapa de calor del F1-score para cada combinación
+    de modelo y estrategia, permitiendo identificar visualmente las mejores configuraciones.
+    \item \textbf{Boxplots por modelo:} Distribución del F1-score entre las 5 iteraciones para
+    cada modelo, mostrando variabilidad.
+    \item \textbf{Gráfico de barras por tarea:} Comparación del F1-score medio por tarea.
+\end{itemize}
+
+\subsection{Análisis estadístico}
+
+El módulo implementa las siguientes funciones de análisis:
+\begin{itemize}
+    \item \texttt{run\_anova(df, group\_col, metric)}: ANOVA de un factor
+    sobre las métricas, agrupadas por modelo o estrategia.
+    \item \texttt{run\_ttest(df, group1, group2, metric)}: Prueba t de Welch para comparaciones
+    entre pares.
+    \item \texttt{cohens\_d(group1, group2)}: Estimador del tamaño del efecto.
+\end{itemize}
+
+\subsection{Generación de informes consolidados}
+
+La función \texttt{generate\_all\_reports(results\_dir, output\_dir)} recorre el directorio de
+resultados, concatena todos los CSV de la misma tarea (independientemente del origen, local o API)
+y genera un informe completo con tablas de resumen y gráficos para cada tarea.
+
+
+\section{API REST (\texttt{api.py})}\label{sec:api}
+
+\subsection{Descripción general}
+
+La API REST implementada con FastAPI expone los modelos LLM del sistema para su uso desde
+cualquier cliente HTTP.
+Su objetivo principal es servir como componente de integración para proyectos externos que
+deseen incorporar análisis de requisitos sin ejecutar el pipeline experimental completo.
+
+\subsection{Endpoints principales}
+
+\cuadro
+{|p{3.5cm}|l|p{5.5cm}|}
+{Endpoints de la API REST}
+{tab:endpoints}
+{
+    \textbf{Ruta}          & \textbf{Método} & \textbf{Descripción} \\ \hline
+    \texttt{/classify}     & POST & Clasifica un requisito como F o NF \\ \hline
+    \texttt{/analyze}      & POST & Analiza ambigüedad, completitud o testabilidad \\ \hline
+    \texttt{/validate}     & POST & Detecta inconsistencias entre un par de requisitos \\ \hline
+    \texttt{/analyze-all}  & POST & Análisis combinado de los cuatro atributos de calidad \\ \hline
+    \texttt{/health}       & GET  & Comprobación de estado del servicio \\ \hline
+}
+
+\subsection{Validación y documentación}
+
+Todos los modelos de datos de entrada y salida se definen mediante Pydantic, lo que garantiza la
+validación automática de tipos y la generación de documentación OpenAPI (accesible en
+\texttt{/docs}) sin configuración adicional.
+
+El middleware CORS está habilitado para permitir el acceso desde el frontend Streamlit y desde
+cualquier otro cliente web.
+
+
+\section{Frontend Streamlit (\texttt{app.py})}\label{sec:frontend}
+
+\subsection{Descripción general}
+
+El frontend interactivo implementado con Streamlit permite explorar las capacidades del sistema
+sin necesidad de conocimientos de programación.
+Se accede mediante navegador web tras ejecutar \texttt{streamlit run app.py}.
+
+\subsection{Páginas del frontend}
+
+El frontend está organizado en siete páginas accesibles desde el menú lateral:
+
+\begin{enumerate}
+    \item \textbf{Pipeline Documento:} Permite cargar un documento de texto con requisitos, extraer
+    automáticamente los requisitos mediante un LLM, y analizar cada uno en las cuatro dimensiones
+    de calidad (ambigüedad, completitud, testabilidad, inconsistencias). Los resultados se presentan
+    en una tabla interactiva con codificación de color por semáforo.
+
+    \item \textbf{Clasificar Requisito (F/NF):} Interfaz para clasificar un requisito individual
+    como Funcional o No Funcional. Permite seleccionar el modelo y la estrategia de prompting, y
+    muestra la respuesta completa del modelo junto con la etiqueta inferida.
+
+    \item \textbf{Analizar Calidad:} Análisis de un requisito individual en sus atributos de
+    ambigüedad, completitud y testabilidad, con explicación del razonamiento del modelo.
+
+    \item \textbf{Validar Consistencia:} Verificación de la consistencia entre dos requisitos.
+    El usuario introduce ambos requisitos y el sistema determina si existe contradicción.
+
+    \item \textbf{Resultados Experimentos:} Dashboard de visualización de los resultados experimentales
+    almacenados en el directorio \texttt{results/}. Muestra heatmaps, boxplots y tablas de resumen
+    filtradas por tarea.
+
+    \item \textbf{Comparar Modelos:} Tabla comparativa del rendimiento de todos los modelos sobre
+    todas las tareas, con posibilidad de exportar a CSV.
+
+    \item \textbf{Monitorización:} Panel de estado del sistema que muestra los modelos disponibles
+    en Ollama, los recursos del sistema (CPU, RAM, GPU) y el historial reciente de solicitudes.
+\end{enumerate}
+
+\subsection{Sistema de advertencias}
+
+El módulo \texttt{warnings\_analysis.py} implementa un sistema que analiza en tiempo real la
+calidad de los requisitos introducidos por el usuario antes de su envío al modelo, detectando
+patrones comunes de baja calidad (términos vagos, ausencia de sujeto, condiciones incompletas).
+Las advertencias se muestran como mensajes de aviso en la interfaz para guiar al usuario en la
+mejora del requisito.

@@ -1,0 +1,28 @@
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Distribución del dataset A1 (Clasificación F/NF, muestra experimental de 100)}}{10}{}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Distribución del dataset A2 (Ambigüedad)}}{10}{}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Distribución del dataset A3 (Completitud)}}{10}{}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Distribución del dataset V1 (Inconsistencias)}}{10}{}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Distribución del dataset V2 (Testabilidad)}}{11}{}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Modelos locales evaluados}}{11}{}%
+\contentsline {table}{\numberline {3.7}{\ignorespaces Modelos de API evaluados (NVIDIA NIM)}}{11}{}%
+\contentsline {table}{\numberline {3.8}{\ignorespaces Parámetros de generación del modelo}}{14}{}%
+\contentsline {table}{\numberline {3.9}{\ignorespaces Hardware del entorno de experimentación}}{14}{}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Endpoints de la API REST}}{19}{}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Mejores resultados en A1 (Clasificación F/NF)}}{21}{}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Mejores resultados en A2 (Detección de ambigüedad)}}{22}{}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces F1 medio por modelo en A3 (Completitud)}}{22}{}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Mejores resultados en V1 (Detección de inconsistencias)}}{22}{}%
+\contentsline {table}{\numberline {5.5}{\ignorespaces Mejores resultados en V2 (Evaluación de testabilidad)}}{23}{}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces Comparación local vs.~API por tarea (F1 medio)}}{23}{}%
+\contentsline {table}{\numberline {5.7}{\ignorespaces Ranking global de modelos (F1 medio sobre las 5 tareas)}}{24}{}%
+\contentsline {table}{\numberline {5.8}{\ignorespaces F1 medio por estrategia de prompting y tarea}}{24}{}%
+\contentsline {table}{\numberline {5.9}{\ignorespaces Eficiencia media de los modelos (F1/s y latencia)}}{25}{}%
+\contentsline {table}{\numberline {5.10}{\ignorespaces Resultados ANOVA de un factor por tarea (métrica: F1)}}{25}{}%
+\addvspace {10\p@ }
+\contentsfinish 

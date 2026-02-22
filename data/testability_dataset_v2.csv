@@ -50,49 +50,49 @@ id,text,is_testable,reason
 49,The CAPTCHA shall require users to solve a challenge after 3 consecutive failed login attempts.,True,measurable
 50,The system should be cost-effective.,False,subjective
 51,"For those payloads identified in Table 3-2, the TCS shall be able to generate payload planning information to be uplinked to the AV separate from a flight route plan. [SSS103] The TCS shall provide the system functionality necessary to generate a payload plan that, as a minimum, shall include the following information: [SSS104]",True,measurable
-52,2.2.14     The composition of call groups shall be able to be modified within the network. A  single user shall be able to be a member of one or more call groups. (M),True,measurable
+52,2.2.14 The composition of call groups shall be able to be modified within the network. A single user shall be able to be a member of one or more call groups. (M),True,measurable
 53,"Within the braking curve area, a warning shall be given to the driver to enable him to react and avoid intervention from ETCS equipment at least 5 sec. before the intervention.",True,measurable
 54,"The subject of a specimen/sample collected for laboratory testing must be linked to the specimen/sample by an identifier (i.e., Subject ID) that is unique within the jurisdiction.",True,measurable
 55,"Within each GSM-R network, each Train Number shall be unique for the period of the journey. (M)",True,measurable
-56,The equipment shall be capable of coping with temperature variations of up to +/- 1°C/minute. (M),True,measurable
-57,"The duration of each tone (see 8.3.2 and 8.3.4) added in the voice channel, shall be 70ms ± 5ms, and there shall be a minimum gap of 65ms between each tone. (M)",True,measurable
+56,The equipment shall be capable of coping with temperature variations of up to +/- 1degC/minute. (M),True,measurable
+57,"The duration of each tone (see 8.3.2 and 8.3.4) added in the voice channel, shall be 70ms +/- 5ms, and there shall be a minimum gap of 65ms between each tone. (M)",True,measurable
 58,The distance between a train following another train shall be equal to or greater than the braking distance of the following train.,True,measurable
-59,3.4.3     Call set-up times for 99% of cases shall not be more than 1.5 times the required call set- up time. (M),True,measurable
-60,The Member States need to update the mapping in case of any change within a short time frame               (e.g. five days after a legal change has been put into force).,True,measurable
+59,3.4.3 Call set-up times for 99% of cases shall not be more than 1.5 times the required call set- up time. (M),True,measurable
+60,The Member States need to update the mapping in case of any change within a short time frame (e.g. five days after a legal change has been put into force).,True,measurable
 61,REQ-1: Query times will take no longer than 5 seconds to any website.,True,measurable
 62,"The user must associate at least one role, division, designator code, and lab location at the time of creating/adding a new user.",True,measurable
-63,"3.5.2     The  group  or  broadcast  call  area  used  will  have  the  effect  of  determining  which  mobiles can participate in the call (ie those currently within the area defined). It shall  be  possible  to  determine  the  area  over  which  the  call  takes  place  by  one,  or  a  combination, of the following: (M)",True,measurable
-64,Claim Amount will capture Second Follow up Fee (from VSP Payment terms) +  (Qty of drugs * Retails Price (from Drugs Master),True,measurable
-65,The system shall perform a search in the Active Directory to verify the status of the user — Active/Inactive within the company—when the user attempts to create/add a new user in the [system name] system.,True,measurable
+63,"3.5.2 The group or broadcast call area used will have the effect of determining which mobiles can participate in the call (ie those currently within the area defined). It shall be possible to determine the area over which the call takes place by one, or a combination, of the following: (M)",True,measurable
+64,Claim Amount will capture Second Follow up Fee (from VSP Payment terms) + (Qty of drugs * Retails Price (from Drugs Master),True,measurable
+65,The system shall perform a search in the Active Directory to verify the status of the user - Active/Inactive within the company-when the user attempts to create/add a new user in the [system name] system.,True,measurable
 66,REQ-2: Sending the hyperlink to the default browser will take less than 1 second.,True,measurable
-67,"The detector LAN is also based on Ethernet, at least for the development systems.   A solution meeting the performance requirements of the ﬁnal system is to be  decided later.",True,measurable
+67,"The detector LAN is also based on Ethernet, at least for the development systems. A solution meeting the performance requirements of the final system is to be decided later.",True,measurable
 68,"The requirements specify the requirements to control the user access to correspondences, files, and records and various functionalities provided within the system.",True,measurable
 69,If acknowledgement is specified the driver shall acknowledge transfer from Full Supervision to Partial Supervision within 5 seconds,True,measurable
 70,"The TCS shall provide an internal interface for establishing communications with the Real Time Processor (RTP) within TCS. [SSS326] This interface shall allow the information from the data server to be made available to other components of the TCS. [SSS327] The RTP interface shall support distributed processing capability. [SSS328] The RTP interface requirements and specifications will be defined in the Data Server IDD, TCS 238.",True,measurable
-71,12.3.1     The maximum length of a message segment shall be 96 characters. A message can  include several segments. (M),True,measurable
+71,12.3.1 The maximum length of a message segment shall be 96 characters. A message can include several segments. (M),True,measurable
 72,"The train shall, as a minimum, be supervised to a ceiling speed; the supervised speed shall not be shown on the DMI unless selected by the driver.",True,measurable
 73,The Operational radio shall conform to IP 54 [IEC 529/EN 60529] as a minimum. (M),True,measurable
-74,"Figure 3.4-1 illustrates the TCS internal interfaces.  Except for the internal interfaces enumerated under this section, all TCS internal interfaces are left to the design and to the requirement specifications for system components. The TCS will provide, as a minimum, the following internal interfaces:",True,measurable
-75,"Warm start-up, starting from scratch but also excluding software download time  should take about 1 minute.",True,measurable
+74,"Figure 3.4-1 illustrates the TCS internal interfaces. Except for the internal interfaces enumerated under this section, all TCS internal interfaces are left to the design and to the requirement specifications for system components. The TCS will provide, as a minimum, the following internal interfaces:",True,measurable
+75,"Warm start-up, starting from scratch but also excluding software download time should take about 1 minute.",True,measurable
 76,The support solution should be accessible to the users both from within the application and also outside the application through a browser interface.,True,measurable
-77,All control software must provide support for simulated use  within the virtual telescope,True,measurable
-78,2.4.9     Any user who is not within the list of allowed EIRENE users shall not be able to gain  access to any of the functions and services provided by the network. (M)  Call forwarding,True,measurable
-79,2.3.8     The network shall support data rates of at least 2.4 kbit/s. (M),True,measurable
+77,All control software must provide support for simulated use within the virtual telescope,True,measurable
+78,2.4.9 Any user who is not within the list of allowed EIRENE users shall not be able to gain access to any of the functions and services provided by the network. (M) Call forwarding,True,measurable
+79,2.3.8 The network shall support data rates of at least 2.4 kbit/s. (M),True,measurable
 80,"The TCS shall have the capability to command the AV to use the navigation methods inherent to the selected AV. [SSS130] The operator shall have the capability to initiate as well as change, to include as a minimum manual override, UAV navigation methods by sending the proper control commands to the UAV. [SSS131]",True,measurable
-81,"End User Mode: Portion of XS services shall be used by various classes of  users: data consumers, data and database managers, network information infrastructure  resource managers. Some of these uses of the data management services will entail  unique requirements that shall be fulfilled within the capability of XS services.",True,measurable
-82,"There should be a full telescope simulator to enable the astronomer  to test observing programs for completeness, errors, and functionality. This simulator  should function within the virtual telescope environment of the Gemini system.",True,measurable
-83,The aerial and any other equipment mounted external to the train shall function correctly during rapid temperature fluctuations of up to 3°C/second. (M),True,measurable
-84,11.3.3.3 It shall be possible to deregister up to ten functional numbers to items of equipment     physically connected to the Cab radio within 30 seconds. (M),True,measurable
-85,9.2.5.1     Group  call  service  areas  shall  be  freely  configurable  within  the  operational  responsibility of each railway network. (M),True,measurable
+81,"End User Mode: Portion of XS services shall be used by various classes of users: data consumers, data and database managers, network information infrastructure resource managers. Some of these uses of the data management services will entail unique requirements that shall be fulfilled within the capability of XS services.",True,measurable
+82,"There should be a full telescope simulator to enable the astronomer to test observing programs for completeness, errors, and functionality. This simulator should function within the virtual telescope environment of the Gemini system.",True,measurable
+83,The aerial and any other equipment mounted external to the train shall function correctly during rapid temperature fluctuations of up to 3degC/second. (M),True,measurable
+84,11.3.3.3 It shall be possible to deregister up to ten functional numbers to items of equipment physically connected to the Cab radio within 30 seconds. (M),True,measurable
+85,9.2.5.1 Group call service areas shall be freely configurable within the operational responsibility of each railway network. (M),True,measurable
 86,Showing users where they are: Each presentation segment (page or window) should provide the user with a clear and sufficient indication of where he or she is in the navigation structure and of the current segment position with respect to the overall structure.,False,subjective
-87,The right granularity and consistency of criteria MUST be found through testing and iterative redefinition               in order to ensure legitimacy and to retrieve adequate mapping results.,False,subjective
-88,"If the service requirements are acceptable according to the provider’s policy, mediator passes it to the local PA.",False,subjective
+87,The right granularity and consistency of criteria MUST be found through testing and iterative redefinition in order to ensure legitimacy and to retrieve adequate mapping results.,False,subjective
+88,"If the service requirements are acceptable according to the provider's policy, mediator passes it to the local PA.",False,subjective
 89,The system shall be easy to upgrade.,False,subjective
 90,The system shall prompt customer with friend easy to read error messages.,False,subjective
 91,Testability shall be considered in the design and development of the TCS. [SSS421] The system shall be functionally and physically partitioned to allow for efficient fault isolation. [SSS422] Control over internal items and devices shall be provided for detecting and isolating internal faults. [SSS423] Test points and data paths shall be defined to support efficient fault isolation. [SSS424],False,subjective
 92,"Upon switch on, once the radio is connected to a mobile network, it shall be able to receive all calls made using the MSISDN or appropriate group call number. (M)",False,subjective
-93,The economic operator is not supported in retrieving and collecting the required attestations from             the appropriate bodies;,False,subjective
-94,WP2 SHOULD provide easy solutions for transforming the contents of context specific evidence into simple context specific representations (e.g. a Balance sheet can have several values but an easy representation could be the fulfilment of certain ranges for example below 1 Million / from 1 Million to 10 / …).,False,subjective
+93,The economic operator is not supported in retrieving and collecting the required attestations from the appropriate bodies;,False,subjective
+94,WP2 SHOULD provide easy solutions for transforming the contents of context specific evidence into simple context specific representations (e.g. a Balance sheet can have several values but an easy representation could be the fulfilment of certain ranges for example below 1 Million / from 1 Million to 10 / ...).,False,subjective
 95,Linking back to the home page or landmark pages: Each page should contain a link leading to the home page of the application or to a landmark page that is easy to recognize for the user.,False,subjective
 96,"Verification of requirements will be accomplished by the use of appropriate combinations of inspections, analyses, demonstrations and tests. The method to be used for verification of each requirement is identified in Appendix B. The following defines verification methods as used in this specification:",False,subjective
 97,The Cab radio should be capable of selecting the most appropriate mobile radio network automatically using the selection criteria stated in section 10.5. (O),False,subjective

@@ -2,15 +2,17 @@
 
 Optimizacion de la respuesta de los LLMs en el proceso de Ingenieria de Requisitos.
 
-TFG de Ingenieria de Software que evalua modelos LLM locales (Qwen 7B, Llama 8B, Gemma 9B) frente a modelos via API (NVIDIA NIM: Llama 70B, Llama 8B, Mistral 7B) en 5 tareas de ingenieria de requisitos, comparando 5 estrategias de prompting.
+TFG de Ingenieria de Software que evalua modelos LLM locales (Qwen 2.5 7B, Llama 3.1 8B, Llama 3.2 3B) frente a modelos via API (NVIDIA NIM: Llama 3.1 70B, Llama 3.1 8B, Mistral 7B) en 5 tareas de ingenieria de requisitos, comparando 5 estrategias de prompting.
 
-## Requisitos previos
+## Ejecucion local
+
+### Requisitos
 
 - Python 3.10+
 - [Ollama](https://ollama.ai) (para modelos locales)
 - Cuenta en [NVIDIA NIM](https://build.nvidia.com/) (opcional, para modelos API)
 
-## Instalacion
+### Instalacion
 
 ```bash
 git clone https://github.com/antsuebae/TFG-LLM-RE.git
@@ -18,12 +20,12 @@ cd TFG-LLM-RE
 ./run.sh setup
 ```
 
-Para los modelos locales, descarga los modelos con Ollama:
+Descarga los modelos locales con Ollama:
 
 ```bash
 ollama pull qwen2.5:7b-instruct-q5_K_M
 ollama pull llama3.1:8b-instruct-q4_K_M
-ollama pull gemma2:9b-instruct-q4_K_M
+ollama pull llama3.2:3b-instruct-q4_K_M
 ```
 
 Para los modelos API, crea un archivo `.env` en la raiz del proyecto:
@@ -32,9 +34,9 @@ Para los modelos API, crea un archivo `.env` en la raiz del proyecto:
 NVIDIA_API_KEY=tu_clave_aqui
 ```
 
-## Uso
+### Uso
 
-### Interfaz web (Streamlit)
+#### Interfaz web (Streamlit)
 
 ```bash
 ./run.sh streamlit
@@ -42,33 +44,32 @@ NVIDIA_API_KEY=tu_clave_aqui
 
 Abre `http://localhost:8501`. Desde ahi puedes:
 
-- **Pipeline Documento**: Sube un fichero de requisitos (.txt, .csv, .md, .pdf) y ejecuta el analisis completo con uno o varios modelos y estrategias. Genera informe con clasificacion F/NF, ambiguedad, completitud, testabilidad e inconsistencias. Permite generar un documento con los requisitos corregidos.
+- **Pipeline Documento**: Sube un fichero de requisitos (.txt, .csv, .md, .pdf) y ejecuta el analisis completo con uno o varios modelos y estrategias. Genera informe con clasificacion F/NF, ambiguedad, completitud, testabilidad e inconsistencias, y permite reescribir los requisitos defectuosos.
 - **Clasificar Requisito**: Clasifica un requisito individual como Funcional o No Funcional.
 - **Analizar Calidad**: Analiza ambiguedad, completitud o testabilidad de un requisito.
 - **Validar Consistencia**: Compara dos requisitos para detectar inconsistencias.
-- **Resultados**: Dashboard con ejecuciones guardadas del pipeline y resultados de experimentos.
-- **Comparar Modelos**: Tabla comparativa de rendimiento entre modelos locales y API.
+- **Resultados Experimentos**: Dashboard con tres pestanas: historial del pipeline, resultados de benchmark (heatmaps, boxplots, radar, F1 vs tiempo) y comparativa Local vs API.
 
-### Pipeline por linea de comandos
+#### Pipeline por linea de comandos
 
 ```bash
 # Analizar un documento de requisitos
-./run.sh pipeline data/revolution_fest_requisitos.txt
+./run.sh pipeline requisitos.txt
 
 # Con modelo y estrategia especificos
-./run.sh pipeline data/dataset_ejemplo.pdf --model llama8b --strategy chain_of_thought
+./run.sh pipeline requisitos.pdf --model llama8b --strategy chain_of_thought
 
 # Saltar analisis de inconsistencias (mas rapido)
 ./run.sh pipeline requisitos.csv --skip-inconsistency
 ```
 
-### Experimentos (benchmark)
+#### Experimentos (benchmark)
 
 ```bash
-# Dry-run para verificar
+# Dry-run para verificar configuracion
 ./run.sh experiment --dry-run --task classification --models qwen7b
 
-# Ejecutar experimento completo
+# Experimento completo
 ./run.sh experiment --task classification --models qwen7b llama8b --strategies few_shot chain_of_thought
 
 # Reanudar desde checkpoint
@@ -78,82 +79,129 @@ Abre `http://localhost:8501`. Desde ahi puedes:
 ./run.sh analysis results/experiments/results_classification_XXXXX.csv
 
 # Analisis de todas las tareas a la vez
-./run.sh analysis --all --results-dir results/experiments/
+./run.sh analysis --all --results-dir results/experiments/v2
 ```
 
-### API REST
+#### API REST
 
 ```bash
 ./run.sh api
 ```
 
-Documentacion en `http://localhost:8000/docs`.
+Documentacion interactiva en `http://localhost:8000/docs`.
 
-## Estructura
+#### Verificar dependencias
+
+```bash
+./run.sh check
+```
+
+---
+
+## Ejecucion con Docker
+
+Alternativa que no requiere instalar Python, Ollama ni dependencias en el sistema host. Requiere Docker y `nvidia-container-toolkit` para acceso a GPU.
+
+### Requisitos
+
+- [Docker](https://docs.docker.com/get-docker/) con Docker Compose
+- [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) (para GPU en contenedor)
+
+### Inicio rapido
+
+```bash
+# 1. Construir la imagen
+./run.sh docker-build
+
+# 2. Arrancar todos los servicios
+./run.sh docker-up
+
+# 3. Descargar modelos en el contenedor (solo la primera vez, ~15 min)
+./run.sh docker-models
+```
+
+Los servicios quedan accesibles en:
+
+| Servicio | URL |
+|----------|-----|
+| Streamlit | http://localhost:8501 |
+| API REST | http://localhost:8000/docs |
+| Ollama | http://localhost:11434 |
+
+### Gestion de servicios
+
+```bash
+./run.sh docker-down          # detener todos los servicios
+./run.sh docker-logs          # ver logs en tiempo real
+./run.sh docker-logs app      # logs solo del frontend
+./run.sh docker-logs api      # logs solo de la API
+```
+
+Los modelos de Ollama se almacenan en un volumen Docker nombrado (`ollama_data`) y persisten entre reinicios. Los resultados de experimentos se montan desde `./results/` del host.
+
+> **Nota:** Si no tienes GPU o prefieres usar solo modelos API (NVIDIA NIM), elimina el bloque `deploy:` del servicio `ollama` en `docker-compose.yml`.
+
+---
+
+## Estructura del proyecto
 
 ```
-config/                  Configuracion de experimentos
-data/                    Datasets (PROMISE, FNFC, ReqEval, PURE)
-  sources/               Fuentes raw descargadas (excluido parcialmente de git)
+config/                  Configuracion de experimentos (YAML)
+data/                    Datasets de evaluacion (CSV)
 src/
-  app.py                 Frontend Streamlit
+  app.py                 Frontend Streamlit (6 paginas)
   pipeline.py            Pipeline de analisis de documentos
   experiment.py          Pipeline de experimentos con checkpoint/resume
-  prompts.py             30 prompts (5 tareas x 6 estrategias) + parsers
-  models.py              Wrappers para Ollama y NVIDIA NIM
-  metrics.py             Metricas de evaluacion
+  prompts.py             25 prompts (5 tareas x 5 estrategias) + parsers
+  models.py              Wrappers para Ollama y NVIDIA NIM con reintentos
+  metrics.py             Metricas de evaluacion (F1, accuracy, precision, recall)
   analysis.py            Graficos y analisis estadistico (ANOVA, t-test, Cohen's d)
   api.py                 API REST (FastAPI)
+  clean_datasets.py      Limpieza y normalizacion de datasets
+Dockerfile               Imagen Docker para app y API
+docker-compose.yml       Orquestacion de servicios (Ollama + Streamlit + API)
 results/                 Resultados generados (excluido de git)
   experiments/           CSVs de resultados de experimentos
-  checkpoints/           Checkpoints temporales (se borran al acabar)
+  checkpoints/           Checkpoints temporales
   analysis/              Graficos y tablas generadas
   logs/                  Logs de ejecucion
   pipeline/              Resultados del pipeline de documentos
 ```
 
-## Modelos
+## Modelos evaluados
 
-| Modelo | Tipo | Backend |
-|--------|------|---------|
-| Qwen 2.5 7B | Local | Ollama |
-| Llama 3.1 8B | Local | Ollama |
-| Gemma 2 9B | Local | Ollama |
-| Llama 3.1 70B | API | NVIDIA NIM |
-| Llama 3.1 8B | API | NVIDIA NIM |
-| Mistral 7B v0.3 | API | NVIDIA NIM |
+| Modelo | Tipo | Backend | Parametros |
+|--------|------|---------|-----------|
+| Qwen 2.5 7B Instruct (Q5) | Local | Ollama | 7B |
+| Llama 3.1 8B Instruct (Q4) | Local | Ollama | 8B |
+| Llama 3.2 3B Instruct (Q4) | Local | Ollama | 3B |
+| Llama 3.1 70B Instruct | API | NVIDIA NIM | 70B |
+| Llama 3.1 8B Instruct | API | NVIDIA NIM | 8B |
+| Mistral 7B v0.3 Instruct | API | NVIDIA NIM | 7B |
 
 ## Estrategias de prompting
 
 | Estrategia | Descripcion |
 |------------|-------------|
 | Question Refinement (QR) | Reformula la pregunta antes de responder |
-| Cognitive Verifier (CV) | Analisis paso a paso con verificacion |
-| Persona + Context (PC) | Asigna rol de experto al modelo |
+| Cognitive Verifier (CV) | Descompone el problema en preguntas auxiliares |
+| Persona + Context (PC) | Asigna rol de experto en RE al modelo |
 | Few-Shot (FS) | Incluye ejemplos resueltos en el prompt |
 | Chain of Thought (CoT) | Razonamiento explicito paso a paso |
 
-## Tareas de RE
+## Tareas de RE evaluadas
 
-1. **Clasificacion F/NF** - Funcional vs No Funcional
-2. **Deteccion de ambiguedad** - Identifica terminos vagos, pronombres y cuantificadores
-3. **Evaluacion de completitud** - Detecta elementos faltantes
-4. **Deteccion de inconsistencias** - Busca contradicciones entre pares de requisitos
-5. **Evaluacion de testabilidad** - Determina si un requisito es verificable
-
-## Datasets
-
-| Dataset | Tarea | Muestras | Fuente |
-|---------|-------|----------|--------|
-| promise_nfr_v2.csv | Clasificacion F/NF | 625 | PROMISE + FNFC (HuggingFace) |
-| ambiguity_dataset_v2.csv | Ambiguedad | 262 | Sintetico + ReqEval (NLP4RE 2020) |
-| completeness_dataset_v2.csv | Completitud | 150 | Sintetico + PURE (Ferrari et al. 2017) |
-| testability_dataset_v2.csv | Testabilidad | 97 | Sintetico + PURE |
-| inconsistency_dataset.csv | Inconsistencias | 30 | Sintetico (pares anotados) |
+| Codigo | Tarea | Dataset | Muestras |
+|--------|-------|---------|---------|
+| A1 | Clasificacion F/NF | promise_nfr_v2.csv | 625 |
+| A2 | Deteccion de ambiguedad | ambiguity_dataset_v2.csv | 262 |
+| A3 | Evaluacion de completitud | completeness_dataset_v2.csv | 150 |
+| V1 | Deteccion de inconsistencias | inconsistency_dataset.csv | 30 pares |
+| V2 | Evaluacion de testabilidad | testability_dataset_v2.csv | 97 |
 
 ## Diseno experimental
 
-- **Factorial:** 5 tareas x 6 modelos x 5 estrategias x 5 iteraciones
+- **Factorial:** 5 tareas × 6 modelos × 5 estrategias × 5 iteraciones = 750 configuraciones
 - **Seeds:** [42, 123, 456, 789, 1024]
 - **Temperatura:** 0.4
-- **Sample size:** 50 requisitos por iteracion (clasificacion), dataset completo (resto)
+- **Hardware:** Intel i7-13650HX, NVIDIA RTX 4060 Max-Q 8 GB, 32 GB RAM, Fedora Linux 43

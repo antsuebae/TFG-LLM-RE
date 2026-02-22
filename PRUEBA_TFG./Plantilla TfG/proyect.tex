@@ -1,0 +1,55 @@
+% !TEX encoding = UTF-8 Unicode
+\documentclass{pclass}
+\usepackage[utf8]{inputenc} % para linux y mac
+\usepackage{enumitem}
+\usepackage{graphicx}       % Paquete para manejar imágenes
+\usepackage{float}
+\usepackage{array}
+\usepackage{booktabs}       % Tablas profesionales
+\usepackage{multirow}       % Celdas multilínea en tablas
+% apacite ya está cargado por pclass.cls
+
+%DIFERENTES TIPOS DE LETRA
+\usepackage{times}
+
+
+\begin{document}
+\tipo{Grado}   % Grado o Máster
+\titulopro{Optimización de la respuesta de los LLMs en el proceso de Ingeniería de Requisitos}
+\tutor{Nombre del Tutor}
+\departamento{Lenguajes y Sistemas Informáticos}
+\autores{Antonio Suero Baeza}{}
+
+\dia{Febrero de 2026}
+\titulacion{Grado en I.I. en Tecnologías Informáticas}
+
+\hacerportada
+
+	\input{tocdef}
+\frontmatter
+
+    \input{resumen}
+    %\input{agradecimientos}
+
+	\tableofcontents % Índice de contenidos
+ 	\listoftables    % Índice de cuadros
+ 	\listoffigures   % Índice de figuras
+ 	%\lstlistoflistings % Índice de códigos
+
+ \mainmatter
+
+    \input{Capitulos/capitulo1}
+    \input{Capitulos/capitulo2}
+    \input{Capitulos/capitulo3}
+    \input{Capitulos/capitulo4}
+    \input{Capitulos/capitulo5}
+    \input{Capitulos/capitulo6}
+
+\backmatter
+
+% \input{Capitulos/apendices}
+
+\bibliographystyle{apacite}
+\bibliography{pfcbib}
+
+\end{document}
