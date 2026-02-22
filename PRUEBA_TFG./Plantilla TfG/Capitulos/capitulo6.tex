@@ -1,0 +1,198 @@
+% !TEX root = ../proyect.tex
+
+\chapter{Conclusiones}\label{cap:conclusiones}
+
+Este capítulo sintetiza los hallazgos del experimento factorial, responde a las
+tres preguntas de investigación planteadas en el Capítulo~1, enumera las
+contribuciones del trabajo y señala sus limitaciones y posibles líneas futuras.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Respuesta a las preguntas de investigación}\label{sec:conclusiones-rqs}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{RQ1 --- ¿En qué medida difieren los modelos locales y los modelos
+de API en tareas de Ingeniería de Requisitos?}
+
+La respuesta no es uniforme: la ventaja de los modelos de API depende de la tarea.
+
+En \textbf{clasificación funcional/no funcional} (A1), la diferencia es pequeña
+(+5\,\%, $d$\,=\,$-$0{,}30) y estadísticamente no significativa ($p$\,=\,0{,}070),
+lo que indica que los modelos locales son viables para esta tarea.
+En \textbf{evaluación de completitud} (A3), ambos grupos obtienen rendimientos
+equivalentes y bajos (F1\,$\approx$\,0{,}22), lo que refleja que la tarea es
+difícil para todos los modelos independientemente del tipo de acceso.
+
+En cambio, para \textbf{detección de ambigüedad} (A2, $\Delta$\,=\,+19\,\%),
+\textbf{inconsistencias} (V1, +14\,\%) y \textbf{testabilidad} (V2, +34\,\%),
+la API supera significativamente a los modelos locales ($p$\,$<$\,0{,}001),
+con efectos moderados a muy grandes ($d$ entre $-$0{,}68 y $-$1{,}15).
+
+El modelo local más competitivo, \texttt{qwen7b} (F1 global\,=\,0{,}704), supera
+en el ranking general a \texttt{nim\_llama70b} (0{,}681), un modelo diez veces
+mayor, lo que demuestra que la arquitectura y el ajuste fino pueden compensar
+parcialmente la diferencia de tamaño.
+Sin embargo, en las tareas de validación más complejas (V1 y V2), la brecha
+resulta insalvable sin acceder a modelos de gran escala.
+
+\subsection{RQ2 --- ¿Qué estrategia de prompting produce el mejor rendimiento?}
+
+No existe una estrategia universalmente superior: la elección óptima depende de
+la naturaleza de la tarea.
+
+\textit{Few-Shot} es la estrategia más robusta entre tareas, siendo la mejor o
+segunda mejor en cuatro de las cinco tareas.
+Resulta especialmente eficaz en tareas donde el concepto a evaluar es difícil
+de comunicar sin ejemplos: completitud (F1 medio\,=\,0{,}395, frente a
+$\le$0{,}265 de las demás) e inconsistencias (0{,}901).
+
+\textit{Cognitive Verifier} es la estrategia óptima para clasificación (F1\,=\,0{,}785),
+probablemente porque la descomposición en preguntas auxiliares obliga al modelo
+a razonar explícitamente sobre los criterios funcional/no funcional.
+
+Para \textbf{testabilidad}, las diferencias entre estrategias no son significativas
+(ANOVA: $p$\,=\,0{,}567): la selección del modelo importa mucho más que la
+estrategia empleada.
+
+\textit{Chain of Thought} es la peor estrategia para clasificación (F1\,=\,0{,}574),
+pero compite con \textit{Few-Shot} en tareas de validación, donde el razonamiento
+explícito ayuda a detectar contradicciones o criterios de verificabilidad.
+CoT resulta perjudicial cuando el razonamiento extenso dificulta la extracción
+de la etiqueta final.
+
+\subsection{RQ3 --- ¿Cuáles son los trade-offs entre rendimiento, coste y privacidad?}
+
+El experimento identifica tres perfiles claramente diferenciados:
+
+\begin{itemize}
+    \item \textbf{Máximo rendimiento:} \texttt{nim\_llama70b} (API) ofrece el mejor
+    resultado en tareas de validación (V2: F1\,=\,0{,}916), pero requiere enviar
+    los requisitos a una infraestructura externa y depende de la disponibilidad
+    de la API.
+
+    \item \textbf{Mejor balance rendimiento--privacidad:} \texttt{qwen7b} (local)
+    alcanza un F1 global de 0{,}704, el segundo mejor del experimento, con ejecución
+    completamente privada y coste nulo tras el despliegue.
+    Recomendado para organizaciones con requisitos confidenciales o entornos sin
+    acceso a internet.
+
+    \item \textbf{Mayor eficiencia:} \texttt{nim\_llama8b} (API) ofrece el mejor
+    ratio F1/latencia (0{,}653 F1/s) gracias a su alta velocidad (122 tokens/s),
+    con un F1 global de 0{,}628.
+    Recomendado cuando la latencia en tiempo real es un requisito crítico.
+\end{itemize}
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Contribuciones del trabajo}\label{sec:contribuciones}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Este trabajo aporta las siguientes contribuciones originales al campo de la
+Ingeniería de Requisitos asistida por LLMs:
+
+\begin{itemize}
+    \item \textbf{Primera evaluación sistemática de modelos LLM locales en IR.}
+    Hasta la fecha, ningún estudio de la literatura revisada por \citeA{cheng2024llms}
+    evalúa modelos ejecutados localmente.
+    Este trabajo cubre tres modelos locales (Qwen 2.5 7B, Llama 3.1 8B, Llama 3.2 3B)
+    en cinco tareas de IR, estableciendo una línea base de referencia para la comunidad.
+
+    \item \textbf{Diseño factorial completo de 750 configuraciones.}
+    El experimento es, hasta donde se conoce, el más amplio en términos de
+    combinaciones modelo--estrategia evaluadas simultáneamente en tareas de IR,
+    con análisis estadístico riguroso (ANOVA, prueba $t$ de Welch, Cohen's $d$).
+
+    \item \textbf{Datasets anotados para completitud y testabilidad.}
+    Los datasets de las tareas A3 y V2 son contribuciones originales de este trabajo,
+    dado que no existen conjuntos de datos públicos para estas tareas en el contexto
+    de IR.
+    Ambos datasets están disponibles en el repositorio del proyecto.
+
+    \item \textbf{Sistema integrado de experimentación y análisis.}
+    El proyecto incluye un pipeline experimental con soporte de checkpoint y
+    reanudación, un módulo de análisis estadístico automatizado, una API REST
+    y un frontend interactivo, formando un sistema completo y reutilizable para
+    futuras evaluaciones.
+
+    \item \textbf{Limpieza y normalización de datasets públicos.}
+    Se ha documentado y corregido la presencia de caracteres de control,
+    saltos de línea y caracteres Unicode no normalizados en los datasets
+    utilizados, incluyendo el dataset PROMISE NFR (\citeA{cleland2007promise}),
+    mejorando su calidad para uso futuro.
+\end{itemize}
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Limitaciones}\label{sec:limitaciones}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{itemize}
+    \item \textbf{Tamaño de los datasets propios.}
+    Los datasets de completitud (150 muestras) y testabilidad (97 muestras) son de
+    tamaño reducido, lo que limita la generalización estadística de los resultados
+    en estas tareas.
+    El análisis de errores muestra que en completitud el 50\,\% de los requisitos
+    presenta tasas de fallo superiores al 50\,\%, lo que sugiere tanto dificultad
+    intrínseca de la tarea como posibles problemas de anotación en el dataset.
+
+    \item \textbf{Calidad del dataset PROMISE NFR.}
+    Se han detectado 52 registros problemáticos en \texttt{promise\_nfr\_v2.csv}:
+    8 textos de menos de 20 caracteres (etiquetas en lugar de requisitos completos),
+    36 con saltos de línea internos y 8 con caracteres de control Windows heredados
+    del dataset original.
+    Estos errores, presentes en el dataset fuente \citeA{cleland2007promise},
+    pueden haber contribuido a los fallos en cascada observados en algunos requisitos.
+
+    \item \textbf{Hardware local limitado.}
+    La GPU disponible (NVIDIA RTX 4060 Max-Q, 8\,GB VRAM) restringe los modelos
+    locales evaluados a un máximo de 8B parámetros con cuantización Q4 o Q5.
+    Modelos locales de mayor tamaño (13B, 34B) podrían reducir la brecha con la API.
+
+    \item \textbf{Obsolescencia acelerada de modelos.}
+    Los modelos evaluados corresponden a versiones disponibles hasta principios de
+    2025.
+    La rápida evolución del campo puede hacer que las conclusiones cuantitativas
+    queden desactualizadas en el corto plazo, aunque las conclusiones metodológicas
+    mantienen su validez.
+
+    \item \textbf{Ausencia de validación humana.}
+    Las métricas se calculan respecto a etiquetas anotadas por los autores, sin
+    validación inter-anotador para los datasets propios (A3 y V2).
+    Un coeficiente de acuerdo entre anotadores (kappa de Cohen) fortalecería
+    la credibilidad de las anotaciones.
+\end{itemize}
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Trabajo futuro}\label{sec:trabajo-futuro}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{itemize}
+    \item \textbf{Ampliar y validar los datasets.}
+    Sustituir los datasets sintéticos por corpus públicos con validación
+    inter-anotador, en particular integrando ReqEval para la tarea de ambigüedad
+    y el dataset completo PROMISE\_exp (969 muestras) para clasificación.
+
+    \item \textbf{Evaluar modelos de mayor tamaño localmente.}
+    Aprovechar técnicas de cuantización más agresiva (GGUF Q2, Q3) o hardware
+    adicional para evaluar modelos de 13B, 34B y 70B ejecutados localmente,
+    reduciendo la brecha con la API sin comprometer la privacidad.
+
+    \item \textbf{Ajuste fino (\textit{fine-tuning}) sobre datasets de IR.}
+    Comparar el rendimiento del prompting evaluado en este trabajo con modelos
+    ajustados específicamente para tareas de IR, lo que permitiría cuantificar
+    el valor añadido del fine-tuning frente a la ingeniería de prompts.
+
+    \item \textbf{Extender el análisis a nuevas tareas de IR.}
+    Incorporar tareas no evaluadas en este trabajo: trazabilidad de requisitos,
+    priorización, detección de duplicados y verificación de conformidad con
+    estándares (IEEE 830, ISO 29148).
+
+    \item \textbf{Integrar el sistema con herramientas industriales de gestión de
+    requisitos como JIRA o IBM DOORS.}
+
+    \item \textbf{Análisis de incertidumbre y calibración.}
+    Evaluar si los modelos están calibrados, es decir, si su nivel de confianza
+    en la predicción correlaciona con su tasa de acierto, lo que permitiría
+    filtrar predicciones de baja confianza en entornos de producción.
+\end{itemize}

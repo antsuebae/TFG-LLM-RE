@@ -1,0 +1,61 @@
+services:
+
+  # ── Ollama: servidor de modelos locales ───────────────────────────────────
+  ollama:
+    image: ollama/ollama
+    container_name: tfg-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama   # modelos descargados persisten entre reinicios
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # ── Frontend Streamlit ────────────────────────────────────────────────────
+  app:
+    build: .
+    container_name: tfg-app
+    ports:
+      - "8501:8501"
+    env_file:
+      - path: .env
+        required: false          # arranca sin .env si no hay clave NIM configurada
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./results:/app/results   # resultados de experimentos persistentes
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  # ── API REST FastAPI ──────────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: tfg-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./results:/app/results
+    depends_on:
+      - ollama
+    command:
+      - uvicorn
+      - api:app
+      - --host=0.0.0.0
+      - --port=8000
+      - --app-dir=/app/src
+    restart: unless-stopped
+
+volumes:
+  ollama_data:   # volumen nombrado para que los modelos de Ollama sobrevivan rm -f

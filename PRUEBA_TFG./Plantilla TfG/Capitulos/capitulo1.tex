@@ -1,0 +1,129 @@
+% !TEX root = ../proyect.tex
+
+\chapter{Introducción}\label{cap:introduccion}
+
+La Ingeniería de Requisitos (IR) constituye una de las fases más críticas del ciclo de vida del software.
+Errores cometidos en esta etapa se propagan al resto del desarrollo, incrementando de forma exponencial
+el coste de corrección \cite{boehm1988understanding}.
+La calidad de los requisitos afecta directamente a la correcta implementación del sistema: un requisito
+ambiguo, incompleto o inconsistente puede dar lugar a malentendidos entre cliente y desarrollador que
+solo se detectan en fases avanzadas del proyecto.
+
+En paralelo, los Modelos de Lenguaje Grande (LLM, del inglés \textit{Large Language Models}) han experimentado
+un desarrollo vertiginoso en los últimos años. Modelos como GPT-4, Llama o Mistral demuestran capacidades
+avanzadas de comprensión del lenguaje natural que los hacen candidatos prometedores para automatizar
+tareas de análisis de texto en contextos de ingeniería del software.
+
+
+\section{Motivación}\label{sec:motivacion}
+
+La revisión sistemática de la literatura realizada por \citeA{cheng2024llms} sobre el uso de LLMs en
+Ingeniería de Requisitos analiza 27 estudios publicados entre 2020 y 2024.
+Uno de los hallazgos más relevantes de dicha revisión es que \textbf{ninguno de los estudios evaluados
+incorpora modelos de lenguaje ejecutados de forma local}.
+Todos los trabajos revisados hacen uso exclusivo de modelos de pago accesibles mediante API, principalmente
+variantes de la familia GPT de OpenAI.
+
+Esta ausencia implica una brecha significativa en el conocimiento disponible sobre el rendimiento
+comparado entre:
+\begin{itemize}
+    \item Modelos \textbf{locales} (ejecutados en hardware propio, sin envío de datos a servidores externos).
+    \item Modelos \textbf{en la nube} accedidos mediante API (mayor capacidad, mayor coste, menor privacidad).
+\end{itemize}
+
+Dicha brecha tiene implicaciones prácticas notables.
+Las organizaciones que trabajan con documentación de requisitos confidencial ---como empresas de defensa,
+sector financiero o administración pública--- no pueden utilizar APIs externas por razones de privacidad
+y soberanía de los datos.
+Estas organizaciones necesitan conocer si los modelos locales, generalmente de menor tamaño y
+menor coste de inferencia, son capaces de ofrecer un rendimiento aceptable en tareas de IR.
+
+Por otro lado, \citeA{ronanki2024evaluating} evaluaron tres patrones de prompt con GPT-3.5 en tareas
+de IR, concluyendo que la elección de la estrategia de prompting afecta significativamente al rendimiento.
+Sin embargo, su estudio se limita a un único modelo y no investiga si dichos patrones generalizan a otros
+modelos, ya sean de mayor o menor tamaño, locales o en la nube.
+
+Este Trabajo de Fin de Grado aborda directamente las dos brechas identificadas: la ausencia de evaluaciones
+de modelos locales en IR y la falta de comparativas sistemáticas de estrategias de prompting entre modelos
+heterogéneos.
+
+
+\section{Objetivos del trabajo}\label{sec:objetivos}
+
+El objetivo principal de este trabajo es \textbf{evaluar y comparar el rendimiento de modelos LLM locales
+y de API en cinco tareas de Ingeniería de Requisitos}, bajo cinco estrategias de prompting distintas,
+con el fin de proporcionar guías basadas en evidencia para su aplicación práctica.
+
+Los objetivos específicos son los siguientes:
+
+\begin{enumerate}
+    \item Implementar un \textbf{pipeline de experimentación reproducible} que permita evaluar de forma
+    automática cualquier combinación de modelo, tarea y estrategia de prompting.
+
+    \item Evaluar \textbf{seis modelos LLM}  ---tres locales (Qwen 2.5 7B, Llama 3.1 8B, Llama 3.2 3B)
+    y tres accedidos mediante la plataforma NVIDIA NIM (Llama 3.1 70B, Llama 3.1 8B, Mistral 7B)---
+    sobre cinco tareas de IR.
+
+    \item Comparar \textbf{cinco estrategias de prompting} (\textit{Question Refinement, Cognitive
+    Verifier, Persona + Context, Few-Shot} y \textit{Chain of Thought}) con respecto a su efecto sobre
+    la calidad de las predicciones.
+
+    \item Analizar los \textbf{trade-offs} entre rendimiento, coste computacional y privacidad de datos,
+    de cara a orientar la toma de decisiones en proyectos reales.
+
+    \item Desarrollar un \textbf{sistema completo} que integre el pipeline experimental con una API REST
+    y un frontend interactivo, permitiendo el análisis de documentos de requisitos en tiempo real.
+
+    \item Contribuir con \textbf{datasets anotados} para las tareas de evaluación de completitud y
+    testabilidad, áreas en las que no existen recursos públicos consolidados.
+\end{enumerate}
+
+
+\section{Preguntas de investigación}\label{sec:rqs}
+
+Para estructurar el análisis y facilitar la interpretación de los resultados, el trabajo se orienta
+en torno a tres preguntas de investigación:
+
+\begin{description}
+    \item[\textbf{RQ1 --- Rendimiento local vs.~API:}]
+    ¿Existen diferencias estadísticamente significativas entre el rendimiento de los modelos locales
+    y los modelos de API en las tareas de Ingeniería de Requisitos evaluadas?
+
+    \item[\textbf{RQ2 --- Estrategia de prompting óptima:}]
+    ¿Qué estrategia de prompting produce el mejor rendimiento para cada combinación de modelo y tarea,
+    y es posible identificar una estrategia dominante de forma general?
+
+    \item[\textbf{RQ3 --- Trade-offs:}]
+    ¿Cuáles son los compromisos entre rendimiento (F1-score), coste computacional (tokens por segundo,
+    latencia) y privacidad de los datos cuando se comparan modelos locales y de API?
+\end{description}
+
+
+\section{Estructura del documento}\label{sec:estructura}
+
+El presente documento se organiza en los siguientes capítulos:
+
+\begin{description}
+    \item[\textbf{Capítulo 2 --- Estado del Arte:}]
+    Revisión de los conceptos fundamentales de Ingeniería de Requisitos, descripción de los Modelos
+    de Lenguaje Grande, análisis de los trabajos previos sobre la aplicación de LLMs en IR, y
+    caracterización del gap identificado.
+
+    \item[\textbf{Capítulo 3 --- Metodología:}]
+    Descripción detallada del diseño experimental, los conjuntos de datos utilizados, los modelos
+    evaluados, las estrategias de prompting implementadas, las métricas de evaluación y el
+    procedimiento experimental.
+
+    \item[\textbf{Capítulo 4 --- Sistema desarrollado:}]
+    Presentación de la arquitectura del sistema, incluyendo el pipeline de experimentación, los
+    módulos de prompts y modelos, el motor de análisis estadístico, la API REST y el frontend
+    interactivo.
+
+    \item[\textbf{Capítulo 5 --- Resultados y análisis:}]
+    Exposición de los resultados obtenidos en los experimentos, comparativa por tarea, modelo y
+    estrategia, y análisis estadístico (ANOVA, pruebas \textit{t}, tamaño del efecto).
+
+    \item[\textbf{Capítulo 6 --- Conclusiones:}]
+    Respuesta a las preguntas de investigación, limitaciones del estudio, implicaciones prácticas
+    y líneas de trabajo futuro.
+\end{description}

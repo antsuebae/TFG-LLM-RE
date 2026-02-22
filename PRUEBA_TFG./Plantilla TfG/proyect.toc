@@ -1,0 +1,101 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {chapter}{\'Indice general}{III}{}%
+\contentsline {chapter}{{\'I}ndice de cuadros}{VI}{}%
+\contentsline {chapter}{\'{I}ndice de figuras}{VII}{}%
+\contentsline {chapter}{\numberline {1}Introducción}{1}{}%
+\contentsline {section}{\numberline {1.1}Motivación}{1}{}%
+\contentsline {section}{\numberline {1.2}Objetivos del trabajo}{2}{}%
+\contentsline {section}{\numberline {1.3}Preguntas de investigación}{2}{}%
+\contentsline {section}{\numberline {1.4}Estructura del documento}{3}{}%
+\contentsline {chapter}{\numberline {2}Estado del Arte}{4}{}%
+\contentsline {section}{\numberline {2.1}Ingeniería de Requisitos}{4}{}%
+\contentsline {subsection}{\numberline {2.1.1}Tareas principales de la Ingeniería de Requisitos}{4}{}%
+\contentsline {subsection}{\numberline {2.1.2}Desafíos actuales en IR}{5}{}%
+\contentsline {section}{\numberline {2.2}Modelos de Lenguaje Grande (LLMs)}{5}{}%
+\contentsline {subsection}{\numberline {2.2.1}Arquitectura Transformer}{5}{}%
+\contentsline {subsection}{\numberline {2.2.2}Evolución y modelos actuales}{6}{}%
+\contentsline {subsection}{\numberline {2.2.3}Tipología de modelos según el modo de acceso}{6}{}%
+\contentsline {subsection}{\numberline {2.2.4}Modelos evaluados en este trabajo}{6}{}%
+\contentsline {section}{\numberline {2.3}Aplicación de LLMs en Ingeniería de Requisitos}{6}{}%
+\contentsline {subsection}{\numberline {2.3.1}Revisión sistemática de Cheng et al.}{6}{}%
+\contentsline {subsection}{\numberline {2.3.2}Trabajos relacionados en clasificación de requisitos}{7}{}%
+\contentsline {subsection}{\numberline {2.3.3}Detección de ambigüedad y otros atributos de calidad}{7}{}%
+\contentsline {section}{\numberline {2.4}Estrategias de Prompting}{7}{}%
+\contentsline {section}{\numberline {2.5}Gap identificado y motivación del estudio}{8}{}%
+\contentsline {chapter}{\numberline {3}Metodología}{9}{}%
+\contentsline {section}{\numberline {3.1}Diseño experimental}{9}{}%
+\contentsline {section}{\numberline {3.2}Conjuntos de datos}{9}{}%
+\contentsline {subsection}{\numberline {3.2.1}A1 --- Clasificación Funcional / No Funcional}{9}{}%
+\contentsline {subsection}{\numberline {3.2.2}A2 --- Detección de Ambigüedad}{10}{}%
+\contentsline {subsection}{\numberline {3.2.3}A3 --- Evaluación de Completitud}{10}{}%
+\contentsline {subsection}{\numberline {3.2.4}V1 --- Detección de Inconsistencias}{10}{}%
+\contentsline {subsection}{\numberline {3.2.5}V2 --- Evaluación de Testabilidad}{10}{}%
+\contentsline {section}{\numberline {3.3}Modelos evaluados}{11}{}%
+\contentsline {subsection}{\numberline {3.3.1}Modelos locales (Ollama)}{11}{}%
+\contentsline {subsection}{\numberline {3.3.2}Modelos de API (NVIDIA NIM)}{11}{}%
+\contentsline {subsection}{\numberline {3.3.3}Criterios de selección}{11}{}%
+\contentsline {section}{\numberline {3.4}Estrategias de prompting}{12}{}%
+\contentsline {subsection}{\numberline {3.4.1}Question Refinement (QR)}{12}{}%
+\contentsline {subsection}{\numberline {3.4.2}Cognitive Verifier (CV)}{12}{}%
+\contentsline {subsection}{\numberline {3.4.3}Persona + Context (PC)}{12}{}%
+\contentsline {subsection}{\numberline {3.4.4}Few-Shot (FS)}{12}{}%
+\contentsline {subsection}{\numberline {3.4.5}Chain of Thought (CoT)}{12}{}%
+\contentsline {section}{\numberline {3.5}Métricas de evaluación}{12}{}%
+\contentsline {subsection}{\numberline {3.5.1}Métricas de rendimiento}{12}{}%
+\contentsline {subsection}{\numberline {3.5.2}Tasa de respuestas inválidas (invalid\_rate)}{13}{}%
+\contentsline {subsection}{\numberline {3.5.3}Rendimiento computacional}{13}{}%
+\contentsline {subsection}{\numberline {3.5.4}Análisis estadístico}{13}{}%
+\contentsline {section}{\numberline {3.6}Procedimiento experimental}{13}{}%
+\contentsline {subsection}{\numberline {3.6.1}Pipeline de ejecución}{13}{}%
+\contentsline {subsection}{\numberline {3.6.2}Parámetros de generación}{14}{}%
+\contentsline {subsection}{\numberline {3.6.3}Gestión de fallos y reproducibilidad}{14}{}%
+\contentsline {subsection}{\numberline {3.6.4}Hardware utilizado}{14}{}%
+\contentsline {chapter}{\numberline {4}Sistema desarrollado}{15}{}%
+\contentsline {section}{\numberline {4.1}Arquitectura general}{15}{}%
+\contentsline {section}{\numberline {4.2}Pipeline de experimentación (\texttt {experiment.py})}{15}{}%
+\contentsline {subsection}{\numberline {4.2.1}Clase ExperimentRunner}{15}{}%
+\contentsline {subsection}{\numberline {4.2.2}Mecanismo de checkpoint y reanudación}{16}{}%
+\contentsline {subsection}{\numberline {4.2.3}Modo dry-run}{16}{}%
+\contentsline {section}{\numberline {4.3}Módulo de prompts (\texttt {prompts.py})}{16}{}%
+\contentsline {subsection}{\numberline {4.3.1}Estructura de los prompts}{16}{}%
+\contentsline {subsection}{\numberline {4.3.2}Función \texttt {build\_prompt}}{16}{}%
+\contentsline {subsection}{\numberline {4.3.3}Parsers de respuesta por tarea}{17}{}%
+\contentsline {subsection}{\numberline {4.3.4}Prompts combinados y pipeline de documentos}{17}{}%
+\contentsline {section}{\numberline {4.4}Wrappers de modelos (\texttt {models.py})}{17}{}%
+\contentsline {subsection}{\numberline {4.4.1}Interfaz unificada}{17}{}%
+\contentsline {subsection}{\numberline {4.4.2}OllamaModel}{17}{}%
+\contentsline {subsection}{\numberline {4.4.3}NVIDIANIMModel}{17}{}%
+\contentsline {subsection}{\numberline {4.4.4}Reintentos con backoff exponencial}{18}{}%
+\contentsline {section}{\numberline {4.5}Módulo de análisis (\texttt {analysis.py})}{18}{}%
+\contentsline {subsection}{\numberline {4.5.1}Gráficos generados}{18}{}%
+\contentsline {subsection}{\numberline {4.5.2}Análisis estadístico}{18}{}%
+\contentsline {subsection}{\numberline {4.5.3}Generación de informes consolidados}{18}{}%
+\contentsline {section}{\numberline {4.6}API REST (\texttt {api.py})}{18}{}%
+\contentsline {subsection}{\numberline {4.6.1}Descripción general}{18}{}%
+\contentsline {subsection}{\numberline {4.6.2}Endpoints principales}{19}{}%
+\contentsline {subsection}{\numberline {4.6.3}Validación y documentación}{19}{}%
+\contentsline {section}{\numberline {4.7}Frontend Streamlit (\texttt {app.py})}{19}{}%
+\contentsline {subsection}{\numberline {4.7.1}Descripción general}{19}{}%
+\contentsline {subsection}{\numberline {4.7.2}Páginas del frontend}{19}{}%
+\contentsline {subsection}{\numberline {4.7.3}Sistema de advertencias}{20}{}%
+\contentsline {chapter}{\numberline {5}Resultados y análisis}{21}{}%
+\contentsline {section}{\numberline {5.1}Resultados por tarea}{21}{}%
+\contentsline {subsection}{\numberline {5.1.1}A1 --- Clasificación Funcional / No Funcional}{21}{}%
+\contentsline {subsection}{\numberline {5.1.2}A2 --- Detección de ambigüedad}{21}{}%
+\contentsline {subsection}{\numberline {5.1.3}A3 --- Evaluación de completitud}{22}{}%
+\contentsline {subsection}{\numberline {5.1.4}V1 --- Detección de inconsistencias}{22}{}%
+\contentsline {subsection}{\numberline {5.1.5}V2 --- Evaluación de testabilidad}{23}{}%
+\contentsline {section}{\numberline {5.2}Comparación local vs.~API (RQ1)}{23}{}%
+\contentsline {section}{\numberline {5.3}Comparación por estrategia de prompting (RQ2)}{24}{}%
+\contentsline {section}{\numberline {5.4}Análisis de trade-offs (RQ3)}{25}{}%
+\contentsline {section}{\numberline {5.5}Análisis estadístico}{25}{}%
+\contentsline {chapter}{\numberline {6}Conclusiones}{27}{}%
+\contentsline {section}{\numberline {6.1}Respuesta a las preguntas de investigación}{27}{}%
+\contentsline {subsection}{\numberline {6.1.1}RQ1 --- ¿En qué medida difieren los modelos locales y los modelos de API en tareas de Ingeniería de Requisitos?}{27}{}%
+\contentsline {subsection}{\numberline {6.1.2}RQ2 --- ¿Qué estrategia de prompting produce el mejor rendimiento?}{27}{}%
+\contentsline {subsection}{\numberline {6.1.3}RQ3 --- ¿Cuáles son los trade-offs entre rendimiento, coste y privacidad?}{28}{}%
+\contentsline {section}{\numberline {6.2}Contribuciones del trabajo}{28}{}%
+\contentsline {section}{\numberline {6.3}Limitaciones}{29}{}%
+\contentsline {section}{\numberline {6.4}Trabajo futuro}{29}{}%
+\contentsline {chapter}{Referencias}{30}{}%
+\contentsfinish 

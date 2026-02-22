@@ -1,0 +1,330 @@
+% !TEX root = ../proyect.tex
+
+\chapter{Metodología}\label{cap:metodologia}
+
+Este capítulo describe el diseño experimental adoptado, los conjuntos de datos utilizados, los modelos
+evaluados, las estrategias de prompting implementadas, las métricas de evaluación y el procedimiento
+experimental seguido.
+
+
+\section{Diseño experimental}\label{sec:diseno}
+
+El estudio adopta un diseño factorial completo para maximizar la comparabilidad entre condiciones
+experimentales.
+Los factores del diseño son:
+
+\begin{itemize}
+    \item \textbf{Tarea} (5 niveles): clasificación F/NF, detección de ambigüedad, evaluación de
+    completitud, detección de inconsistencias, evaluación de testabilidad.
+    \item \textbf{Modelo} (6 niveles): tres locales y tres de API.
+    \item \textbf{Estrategia de prompting} (5 niveles): QR, CV, PC, FS, CoT.
+    \item \textbf{Iteración} (5 niveles): se ejecuta cada configuración con 5 semillas distintas para
+    estabilizar los resultados ante la aleatoriedad del muestreo del modelo.
+\end{itemize}
+
+El número total de configuraciones evaluadas es:
+\[
+    5 \text{ tareas} \times 6 \text{ modelos} \times 5 \text{ estrategias} \times 5 \text{ iteraciones}
+    = 750 \text{ configuraciones}
+\]
+
+Cada configuración genera una predicción por muestra del dataset de la tarea correspondiente.
+El total de llamadas al modelo se calcula como el número de configuraciones multiplicado por el
+tamaño del dataset de cada tarea.
+
+
+\section{Conjuntos de datos}\label{sec:datasets}
+
+\subsection{A1 --- Clasificación Funcional / No Funcional}
+
+Se utiliza una versión ampliada del dataset PROMISE NFR, propuesto originalmente por
+\citeA{cleland2007promise} y empleado como referencia estándar en la literatura de clasificación de
+requisitos.
+El conjunto completo contiene 625 requisitos (365 funcionales y 260 no funcionales); para los
+experimentos se extrae una muestra aleatoria de 100 requisitos manteniendo la distribución
+proporcional original (aproximadamente 58\% F / 42\% NF).
+
+\cuadro
+{|l|r|r|}
+{Distribución del dataset A1 (Clasificación F/NF, muestra experimental de 100)}
+{tab:dataset-a1}
+{
+    \textbf{Etiqueta} & \textbf{Muestras} & \textbf{Porcentaje} \\ \hline
+    Funcional (F)     & 58 & 58\% \\ \hline
+    No Funcional (NF) & 42 & 42\% \\ \hline
+    \textbf{Total}    & \textbf{100} & \textbf{100\%} \\ \hline
+}
+
+\subsection{A2 --- Detección de Ambigüedad}
+
+El dataset de ambigüedad contiene 262 requisitos anotados como ambiguos o no ambiguos.
+Los requisitos se anotaron manualmente siguiendo los criterios de \textit{requirements smells}
+definidos por \citeA{femmer2017rapid}: un requisito es ambiguo si admite múltiples interpretaciones
+válidas o utiliza términos vagos sin cuantificar.
+La distribución resultante muestra un ligero desbalance favorable a los requisitos ambiguos.
+
+\cuadro
+{|l|r|r|}
+{Distribución del dataset A2 (Ambigüedad)}
+{tab:dataset-a2}
+{
+    \textbf{Etiqueta}       & \textbf{Muestras} & \textbf{Porcentaje} \\ \hline
+    Ambiguo (1)             & 139 & 53\% \\ \hline
+    No Ambiguo (0)          & 123 & 47\% \\ \hline
+    \textbf{Total}          & \textbf{262} & \textbf{100\%} \\ \hline
+}
+
+\subsection{A3 --- Evaluación de Completitud}
+
+El dataset de completitud es una contribución original de este trabajo, dado que no existen conjuntos
+de datos públicos para esta tarea en el contexto de IR.
+Contiene 150 requisitos anotados como completos o incompletos, donde un requisito se considera
+incompleto si omite sujeto, precondición, postcondición o parámetros necesarios para su implementación.
+
+\cuadro
+{|l|r|r|}
+{Distribución del dataset A3 (Completitud)}
+{tab:dataset-a3}
+{
+    \textbf{Etiqueta}       & \textbf{Muestras} & \textbf{Porcentaje} \\ \hline
+    Completo (1)            & 75 & 50\% \\ \hline
+    Incompleto (0)          & 75 & 50\% \\ \hline
+    \textbf{Total}          & \textbf{150} & \textbf{100\%} \\ \hline
+}
+
+\subsection{V1 --- Detección de Inconsistencias}
+
+El dataset de inconsistencias contiene 30 pares de requisitos, cada uno etiquetado como consistente
+o inconsistente.
+Dos requisitos son inconsistentes si afirman condiciones mutuamente excluyentes sobre el mismo
+aspecto del sistema.
+El par se presenta al modelo junto con la instrucción de determinar si existe contradicción.
+
+\cuadro
+{|l|r|r|}
+{Distribución del dataset V1 (Inconsistencias)}
+{tab:dataset-v1}
+{
+    \textbf{Etiqueta}       & \textbf{Pares} & \textbf{Porcentaje} \\ \hline
+    Inconsistente (1)       & 17 & 57\% \\ \hline
+    Consistente (0)         & 13 & 43\% \\ \hline
+    \textbf{Total}          & \textbf{30} & \textbf{100\%} \\ \hline
+}
+
+\subsection{V2 --- Evaluación de Testabilidad}
+
+El dataset de testabilidad es también una contribución original de este trabajo.
+Contiene 97 requisitos anotados como testables o no testables, siguiendo los criterios del estándar
+IEEE 830: un requisito es testable si puede ser verificado mediante una prueba objetiva, reproducible
+y cuyos criterios de aceptación son unívocos.
+
+\cuadro
+{|l|r|r|}
+{Distribución del dataset V2 (Testabilidad)}
+{tab:dataset-v2}
+{
+    \textbf{Etiqueta}       & \textbf{Muestras} & \textbf{Porcentaje} \\ \hline
+    Testable (1)            & 60 & 62\% \\ \hline
+    No Testable (0)         & 37 & 38\% \\ \hline
+    \textbf{Total}          & \textbf{97} & \textbf{100\%} \\ \hline
+}
+
+
+\section{Modelos evaluados}\label{sec:modelos}
+
+\subsection{Modelos locales (Ollama)}
+
+Los modelos locales se ejecutan mediante Ollama, una herramienta que permite gestionar y servir
+modelos LLM en hardware local mediante una interfaz compatible con la API de OpenAI.
+Los modelos se cuantizan para reducir el consumo de memoria, utilizando el formato GGUF.
+
+\cuadro
+{|l|p{3.5cm}|c|c|}
+{Modelos locales evaluados}
+{tab:modelos-local}
+{
+    \textbf{Identificador} & \textbf{Modelo} & \textbf{Parámetros} & \textbf{Cuantización} \\ \hline
+    \texttt{qwen7b}   & Qwen 2.5 Coder 7B Instruct & 7B & Q5\_K\_M \\ \hline
+    \texttt{llama8b}  & Llama 3.1 8B Instruct      & 8B & Q4\_K\_M \\ \hline
+    \texttt{llama3b}  & Llama 3.2 3B Instruct      & 3B & Q4\_K\_M \\ \hline
+}
+
+\subsection{Modelos de API (NVIDIA NIM)}
+
+Los modelos de API se acceden mediante NVIDIA NIM (\textit{NVIDIA Inference Microservices}), una
+plataforma que proporciona acceso gratuito a modelos LLM de gran tamaño con una interfaz compatible
+con la API de OpenAI.
+La elección de NVIDIA NIM frente a OpenAI se justifica por su coste cero, que permite ejecutar el
+experimento completo sin incurrir en gastos.
+
+\cuadro
+{|l|p{4cm}|c|}
+{Modelos de API evaluados (NVIDIA NIM)}
+{tab:modelos-api}
+{
+    \textbf{Identificador} & \textbf{Modelo} & \textbf{Parámetros} \\ \hline
+    \texttt{nim\_llama70b}  & meta/llama-3.1-70b-instruct           & 70B \\ \hline
+    \texttt{nim\_llama8b}   & meta/llama-3.1-8b-instruct            & 8B  \\ \hline
+    \texttt{nim\_mistral}   & mistralai/mistral-7b-instruct-v0.3    & 7B  \\ \hline
+}
+
+\subsection{Criterios de selección}
+
+Los modelos se seleccionaron atendiendo a los siguientes criterios:
+
+\begin{itemize}
+    \item \textbf{Representatividad:} Cubrir un amplio rango de tamaños (3B, 7B, 8B, 70B) y
+    familias de modelos (Qwen, Llama, Mistral).
+    \item \textbf{Disponibilidad open-source:} Todos los modelos evaluados tienen pesos
+    públicamente disponibles bajo licencias permisivas.
+    \item \textbf{Ejecutabilidad local:} Los modelos locales seleccionados pueden ejecutarse
+    en la GPU del equipo de experimentación (NVIDIA RTX 4060, 8 GB VRAM) mediante cuantización.
+    \item \textbf{Coste cero:} Los modelos de API se acceden a través de NVIDIA NIM, que
+    proporciona una capa de créditos gratuitos suficientes para el experimento completo.
+\end{itemize}
+
+
+\section{Estrategias de prompting}\label{sec:estrategias}
+
+\subsection{Question Refinement (QR)}
+
+La estrategia \textit{Question Refinement} instruye al modelo para que, antes de clasificar el
+requisito, reformule mentalmente la tarea con el objetivo de aclarar posibles ambigüedades en el
+enunciado.
+El prompt sigue el siguiente esquema:
+
+\begin{quote}
+\textit{``Clasifica el siguiente requisito [...]. Si la clasificación no es clara, reformula mentalmente
+la pregunta para entender mejor el requisito antes de clasificar. [...] Clasificación:''}
+\end{quote}
+
+\subsection{Cognitive Verifier (CV)}
+
+El patrón \textit{Cognitive Verifier} pide al modelo que descomponga el problema en pasos de análisis
+explícitos antes de emitir la respuesta final.
+Esto se traduce en prompts que enumeran los pasos de razonamiento que el modelo debe seguir.
+
+\subsection{Persona + Context (PC)}
+
+Esta estrategia asigna al modelo una identidad experta en Ingeniería de Requisitos (por ejemplo,
+``ingeniero de requisitos senior con 10 años de experiencia en IEEE 830 e ISO 29148'') y proporciona
+contexto sobre las categorías de la tarea, con el objetivo de que el modelo active sus conocimientos
+sobre el dominio.
+
+\subsection{Few-Shot (FS)}
+
+Se incluyen entre 3 y 5 ejemplos etiquetados en el prompt antes de presentar el caso a clasificar.
+Los ejemplos se seleccionan de forma fija para garantizar reproducibilidad entre iteraciones.
+Esta técnica aprovecha el aprendizaje en contexto de los LLMs sin necesidad de ajuste de parámetros.
+
+\subsection{Chain of Thought (CoT)}
+
+La estrategia \textit{Chain of Thought} solicita al modelo que muestre su razonamiento paso a paso
+antes de emitir la clasificación final.
+Según \citeA{wei2022chain}, esta técnica mejora el rendimiento en tareas de razonamiento,
+especialmente en modelos de mayor tamaño.
+
+
+\section{Métricas de evaluación}\label{sec:metricas}
+
+\subsection{Métricas de rendimiento}
+
+Para todas las tareas se calculan las métricas estándar de clasificación binaria:
+
+\begin{description}
+    \item[\textbf{Accuracy (Acc)}:] Proporción de predicciones correctas sobre el total.
+    \item[\textbf{Precisión (P)}:] Proporción de verdaderos positivos sobre todas las predicciones
+    positivas.
+    \item[\textbf{Recall (R)}:] Proporción de verdaderos positivos sobre todos los positivos reales.
+    \item[\textbf{F1-score (F1)}:] Media armónica de precisión y recall; métrica principal de
+    comparación en todos los análisis.
+\end{description}
+
+La métrica principal de comparación es el \textbf{F1-score macro}, que da igual peso a cada clase
+independientemente de su frecuencia en el dataset.
+
+\subsection{Tasa de respuestas inválidas (invalid\_rate)}
+
+Se registra la proporción de respuestas del modelo que no pueden ser mapeadas a ninguna etiqueta
+válida (por ejemplo, respuestas en formato no esperado o en idioma diferente al solicitado).
+Una tasa alta de respuestas inválidas indica problemas de seguimiento de instrucciones.
+
+\subsection{Rendimiento computacional}
+
+Para los modelos locales se mide:
+\begin{itemize}
+    \item \textbf{Tokens por segundo (tokens/s):} Velocidad de generación de texto, relevante para
+    evaluar la viabilidad de uso en producción.
+    \item \textbf{Latencia media (s):} Tiempo medio de respuesta por consulta.
+\end{itemize}
+
+\subsection{Análisis estadístico}
+
+Para responder a las preguntas de investigación se aplican los siguientes análisis:
+
+\begin{itemize}
+    \item \textbf{ANOVA de un factor} para determinar si existen diferencias significativas entre
+    grupos (modelos o estrategias).
+    \item \textbf{Prueba t de Student} para comparaciones entre pares específicos.
+    \item \textbf{Cohen's d} como estimador del tamaño del efecto.
+    \item Se utiliza un nivel de significación $\alpha = 0.05$ en todas las pruebas.
+\end{itemize}
+
+
+\section{Procedimiento experimental}\label{sec:procedimiento}
+
+\subsection{Pipeline de ejecución}
+
+El experimento se ejecuta mediante un pipeline automatizado implementado en Python.
+Para cada configuración (tarea, modelo, estrategia, iteración):
+
+\begin{enumerate}
+    \item Se carga el dataset de la tarea correspondiente.
+    \item Se barajan las muestras con la semilla de la iteración (seeds: 42, 123, 456, 789, 1024).
+    \item Para cada muestra se construye el prompt según la estrategia.
+    \item Se envía el prompt al modelo (local u API) con temperatura 0.4 y máximo 512 tokens.
+    \item Se parsea la respuesta del modelo para extraer la etiqueta predicha.
+    \item Se calculan las métricas comparando predicciones con etiquetas reales.
+    \item Los resultados se almacenan en un fichero CSV junto con metadatos de la ejecución.
+\end{enumerate}
+
+\subsection{Parámetros de generación}
+
+\cuadro
+{|l|l|}
+{Parámetros de generación del modelo}
+{tab:params}
+{
+    \textbf{Parámetro} & \textbf{Valor} \\ \hline
+    Temperatura        & 0.4 \\ \hline
+    Máximo de tokens   & 512 \\ \hline
+    Seeds (iteraciones) & 42, 123, 456, 789, 1024 \\ \hline
+    Intentos por fallo & 5 (backoff exponencial) \\ \hline
+}
+
+\subsection{Gestión de fallos y reproducibilidad}
+
+El pipeline implementa un mecanismo de checkpoint que guarda el progreso al finalizar cada
+configuración, permitiendo reanudar el experimento ante interrupciones sin perder resultados previos.
+Los reintentos ante fallos de red o de la API se realizan con un retardo exponencial (\textit{exponential
+backoff}) de base 2 segundos, con un máximo de 5 intentos por consulta.
+
+\subsection{Hardware utilizado}
+
+Los experimentos locales se ejecutan en el siguiente equipo:
+
+\cuadro
+{|l|l|}
+{Hardware del entorno de experimentación}
+{tab:hardware}
+{
+    \textbf{Componente} & \textbf{Especificación} \\ \hline
+    CPU                 & Intel Core i7-13650HX (20 núcleos, 4.9 GHz) \\ \hline
+    GPU                 & NVIDIA GeForce RTX 4060 Max-Q (8 GB VRAM) \\ \hline
+    RAM                 & 32 GB DDR5 \\ \hline
+    Almacenamiento      & SSD NVMe \\ \hline
+    Sistema operativo   & Fedora Linux 43 (kernel 6.18) \\ \hline
+}
+
+Los experimentos con modelos de API (NVIDIA NIM) no dependen del hardware local, ya que la inferencia
+se realiza en los servidores de NVIDIA.

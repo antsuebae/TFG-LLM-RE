@@ -148,7 +148,7 @@ st.sidebar.title("RE-LLM")
 st.sidebar.markdown("Analisis de Requisitos con LLMs")
 
 _PAGES = ["Pipeline Documento", "Clasificar Requisito", "Analizar Calidad",
-           "Validar Consistencia", "Resultados Experimentos", "Comparar Modelos",
+           "Validar Consistencia", "Resultados Experimentos",
            "Progreso Experimentos"]
 
 # Restaurar página desde URL al hacer F5
@@ -864,51 +864,162 @@ elif page == "Analizar Calidad":
 # ============================================================
 elif page == "Validar Consistencia":
     st.title("Validacion de Consistencia entre Requisitos")
-    st.markdown("Detecta inconsistencias entre pares de requisitos.")
+    st.markdown("Introduce una lista de requisitos para detectar inconsistencias entre todos los pares posibles.")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        req_a = st.text_area("Requisito A", height=100,
-                             value="El sistema almacenara todos los datos del usuario localmente en su dispositivo.")
-    with col2:
-        req_b = st.text_area("Requisito B", height=100,
-                             value="Todos los datos de usuario deben almacenarse en una base de datos en la nube.")
+    _CONSIST_PLACEHOLDER = (
+        "El sistema almacenara todos los datos del usuario localmente en su dispositivo.\n"
+        "Todos los datos de usuario deben almacenarse en una base de datos en la nube.\n"
+        "El sistema respondera a cualquier consulta en menos de 1 segundo.\n"
+        "El sistema procesara consultas complejas en un maximo de 10 segundos."
+    )
 
-    model_key = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()), key="consist_model",
-                              format_func=lambda x: MODEL_LABELS.get(x, x))
-    strategy = st.selectbox("Estrategia", STRATEGY_NAMES, key="consist_strategy",
-                            format_func=lambda x: STRATEGY_LABELS.get(x, x))
+    reqs_raw = st.text_area("Requisitos (uno por linea)", height=200,
+                             placeholder=_CONSIST_PLACEHOLDER)
 
-    # Advertencias de entrada
-    for w in check_input_warnings(req_a) + check_input_warnings(req_b):
-        st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
+    _cc1, _cc2 = st.columns(2)
+    with _cc1:
+        model_key = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()), key="consist_model",
+                                  format_func=lambda x: MODEL_LABELS.get(x, x))
+    with _cc2:
+        strategy = st.selectbox("Estrategia", STRATEGY_NAMES, key="consist_strategy",
+                                format_func=lambda x: STRATEGY_LABELS.get(x, x))
 
-    if st.button("Validar Consistencia", type="primary"):
-        with st.spinner("Validando..."):
+    MAX_REQS = 15
+    reqs = [r.strip() for r in reqs_raw.strip().splitlines() if r.strip()]
+
+    if len(reqs) > MAX_REQS:
+        st.warning(f"Maximo {MAX_REQS} requisitos para evitar tiempos excesivos. "
+                   f"Se usaran los primeros {MAX_REQS}.")
+        reqs = reqs[:MAX_REQS]
+
+    if reqs:
+        import itertools
+        pairs = list(itertools.combinations(range(len(reqs)), 2))
+        st.info(f"{len(reqs)} requisitos → **{len(pairs)} pares** a evaluar")
+
+    _btn_disabled = len(reqs) < 2
+    if st.button("Validar Consistencia", type="primary", disabled=_btn_disabled):
+        st.session_state.pop("consist_results", None)
+
+        _model = get_model_instance(model_key)
+        _results = []
+        _pbar = st.progress(0, text="Evaluando pares...")
+        _total = len(pairs)
+
+        for _idx, (i, j) in enumerate(pairs):
             try:
-                model = get_model_instance(model_key)
-                prompt = build_prompt("inconsistency", strategy,
-                                      requirement_a=req_a, requirement_b=req_b)
-                response = model.generate(prompt, max_tokens=512)
+                _prompt = build_prompt("inconsistency", strategy,
+                                       requirement_a=reqs[i], requirement_b=reqs[j])
+                _resp = _model.generate(_prompt, max_tokens=512)
+                _parsed = parse_response("inconsistency", _resp['content']) if _resp['success'] else {}
+                _results.append({
+                    'i': i, 'j': j,
+                    'req_a': reqs[i], 'req_b': reqs[j],
+                    'is_inconsistent': bool(_parsed.get('is_inconsistent', False)),
+                    'description': _parsed.get('description', ''),
+                    'success': _resp['success'],
+                    'time': _resp.get('time_seconds', 0),
+                })
+            except Exception as _e:
+                _results.append({
+                    'i': i, 'j': j,
+                    'req_a': reqs[i], 'req_b': reqs[j],
+                    'is_inconsistent': False, 'description': str(_e),
+                    'success': False, 'time': 0,
+                })
+            _pbar.progress((_idx + 1) / _total,
+                           text=f"Evaluando par {_idx + 1}/{_total}...")
 
-                if response['success']:
-                    parsed = parse_response("inconsistency", response['content'])
+        _pbar.empty()
+        st.session_state["consist_results"] = {"reqs": reqs, "results": _results}
 
-                    if parsed.get('is_inconsistent'):
-                        st.markdown("### :red[Inconsistencia detectada]")
-                        desc = parsed.get('description', 'Sin descripcion disponible.')
-                        st.markdown(f"**Descripcion:** {desc}")
-                    else:
-                        st.markdown("### :green[Requisitos consistentes]")
+    # ── Mostrar resultados ────────────────────────────────────
+    if "consist_results" in st.session_state:
+        _data = st.session_state["consist_results"]
+        _reqs = _data["reqs"]
+        _results = _data["results"]
+        _n = len(_reqs)
+        _inconsistent = [r for r in _results if r['is_inconsistent']]
+        _errors = [r for r in _results if not r['success']]
 
-                    st.metric("Tiempo", f"{response['time_seconds']:.2f}s")
+        st.divider()
 
-                    with st.expander("Respuesta completa"):
-                        st.text(response['content'])
-                else:
-                    st.error(f"Error: {response['error']}")
-            except Exception as e:
-                st.error(f"Error: {e}")
+        # KPIs
+        _k1, _k2, _k3, _k4 = st.columns(4)
+        _k1.metric("Requisitos", _n)
+        _k2.metric("Pares evaluados", len(_results))
+        _k3.metric("Inconsistencias", len(_inconsistent))
+        _k4.metric("Consistencia", f"{(1 - len(_inconsistent)/max(len(_results),1))*100:.0f}%")
+
+        if _errors:
+            st.warning(f"{len(_errors)} pares no pudieron evaluarse.")
+
+        st.divider()
+
+        # Matriz de consistencia (heatmap interactivo)
+        import plotly.graph_objects as go
+        _labels = [f"R{i+1}" for i in range(_n)]
+        _matrix = [[None]*_n for _ in range(_n)]
+        for r in _results:
+            _matrix[r['i']][r['j']] = 1 if r['is_inconsistent'] else 0
+            _matrix[r['j']][r['i']] = 1 if r['is_inconsistent'] else 0
+        for i in range(_n):
+            _matrix[i][i] = -1  # diagonal
+
+        _hover = [["" ]*_n for _ in range(_n)]
+        for r in _results:
+            _txt = ("Inconsistentes" if r['is_inconsistent'] else "Consistentes")
+            if r['description']:
+                _txt += f"<br>{r['description'][:120]}"
+            _hover[r['i']][r['j']] = _txt
+            _hover[r['j']][r['i']] = _txt
+        for i in range(_n):
+            _hover[i][i] = f"R{i+1}: {_reqs[i][:60]}..."
+
+        _fig_mat = go.Figure(go.Heatmap(
+            z=_matrix,
+            x=_labels, y=_labels,
+            text=_hover,
+            hovertemplate="%{text}<extra></extra>",
+            colorscale=[[0, '#2ecc71'], [0.4, '#f39c12'], [0.6, '#e74c3c'], [1, '#e74c3c']],
+            zmin=-1, zmax=1,
+            showscale=False,
+            xgap=2, ygap=2,
+        ))
+        _fig_mat.update_layout(
+            title=dict(text="Matriz de consistencia (rojo = inconsistente, verde = consistente)",
+                       font=dict(size=13)),
+            height=max(300, _n * 45 + 100),
+            margin=dict(l=40, r=20, t=50, b=40),
+            yaxis=dict(autorange='reversed'),
+        )
+        st.plotly_chart(_fig_mat, use_container_width=True, config={'displayModeBar': False})
+
+        # Lista de inconsistencias
+        if _inconsistent:
+            st.subheader(f"Inconsistencias detectadas ({len(_inconsistent)})")
+            for r in _inconsistent:
+                with st.expander(f"R{r['i']+1} vs R{r['j']+1}"):
+                    _ic1, _ic2 = st.columns(2)
+                    _ic1.markdown(f"**R{r['i']+1}:** {r['req_a']}")
+                    _ic2.markdown(f"**R{r['j']+1}:** {r['req_b']}")
+                    if r['description']:
+                        st.error(r['description'])
+        else:
+            st.success("No se detectaron inconsistencias entre los requisitos.")
+
+        # Descarga CSV
+        _csv_rows = [{
+            'req_a_idx': r['i']+1, 'req_b_idx': r['j']+1,
+            'req_a': r['req_a'], 'req_b': r['req_b'],
+            'inconsistente': r['is_inconsistent'],
+            'descripcion': r['description'],
+        } for r in _results]
+        st.download_button(
+            "Descargar resultados CSV",
+            pd.DataFrame(_csv_rows).to_csv(index=False),
+            "consistencia.csv", "text/csv",
+        )
 
 
 # ============================================================
@@ -917,10 +1028,11 @@ elif page == "Validar Consistencia":
 elif page == "Resultados Experimentos":
     st.title("Dashboard de Resultados")
 
-    view_mode = st.radio("Ver", ["Pipeline (analisis de documentos)", "Experimentos (benchmark)"],
-                         horizontal=True)
+    tab_pipeline, tab_bench, tab_cmp = st.tabs(
+        ["Pipeline (documentos)", "Benchmark (experimentos)", "Comparar Local vs API"]
+    )
 
-    if view_mode == "Pipeline (analisis de documentos)":
+    with tab_pipeline:
         # ── Ejecuciones del pipeline con metadata ─────────
         from pipeline import load_pipeline_runs
         pipeline_dir = RESULTS_DIR / "pipeline"
@@ -996,7 +1108,7 @@ elif page == "Resultados Experimentos":
                                     key=f"dl_html_{idx}"
                                 )
 
-    else:
+    with tab_bench:
         # ── Resultados de experimentos (benchmark) ────────
         import matplotlib.pyplot as plt
         from analysis import compute_metrics_per_config
@@ -1348,177 +1460,146 @@ elif page == "Resultados Experimentos":
             else:
                 st.dataframe(df, use_container_width=True)
 
+    with tab_cmp:
+        import matplotlib.pyplot as plt
+        from analysis import compute_metrics_per_config
 
-# ============================================================
-# PAGE 6: Comparar Modelos
-# ============================================================
-elif page == "Comparar Modelos":
-    st.title("Comparacion Local vs API")
-    import matplotlib.pyplot as plt
-    from analysis import compute_metrics_per_config
+        TASK_DISPLAY_CMP = {
+            'classification':  'Clasificacion F/NF',
+            'ambiguity':       'Deteccion de Ambiguedad',
+            'completeness':    'Evaluacion de Completitud',
+            'inconsistency':   'Deteccion de Inconsistencias',
+            'testability':     'Evaluacion de Testabilidad',
+        }
 
-    TASK_DISPLAY_CMP = {
-        'classification':  'Clasificacion F/NF',
-        'ambiguity':       'Deteccion de Ambiguedad',
-        'completeness':    'Evaluacion de Completitud',
-        'inconsistency':   'Deteccion de Inconsistencias',
-        'testability':     'Evaluacion de Testabilidad',
-    }
+        # ── Controles ─────────────────────────────────────────────
+        ctrl1, ctrl2 = st.columns([1, 2])
+        with ctrl1:
+            version_cmp = st.radio("Version", ["v1", "v2", "Ambas"], horizontal=True, key="cmp_version")
+        with ctrl2:
+            dirs_cmp = [v for v in ["v1", "v2"] if version_cmp in (v, "Ambas")]
+            avail_tasks_cmp = [
+                t for t in TASK_DISPLAY_CMP
+                if any(list((EXPERIMENTS_DIR / v).glob(f"results_{t}_*.csv"))
+                       for v in dirs_cmp if (EXPERIMENTS_DIR / v).exists())
+            ]
+            if not avail_tasks_cmp:
+                st.warning("No hay resultados para la version seleccionada.")
+                st.stop()
+            task_cmp = st.selectbox(
+                "Tarea", avail_tasks_cmp,
+                format_func=lambda x: TASK_DISPLAY_CMP.get(x, x),
+                key="cmp_task",
+            )
 
-    def _load_cmp(task, version):
-        dirs = []
-        if version in ("v1", "Ambas"):
-            dirs.append(EXPERIMENTS_DIR / "v1")
-        if version in ("v2", "Ambas"):
-            dirs.append(EXPERIMENTS_DIR / "v2")
-        dfs = []
-        for d in dirs:
-            if d.exists():
-                for f in sorted(d.glob(f"results_{task}_*.csv")):
-                    try:
-                        _df = pd.read_csv(f)
-                        _df['_version'] = d.name
-                        dfs.append(_df)
-                    except Exception:
-                        pass
-        return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+        df_cmp = _load_benchmark(task_cmp, version_cmp)
 
-    # ── Controles ─────────────────────────────────────────────
-    ctrl1, ctrl2 = st.columns([1, 2])
-    with ctrl1:
-        version_cmp = st.radio("Version", ["v1", "v2", "Ambas"], horizontal=True, key="cmp_version")
-    with ctrl2:
-        dirs_cmp = [v for v in ["v1", "v2"] if version_cmp in (v, "Ambas")]
-        avail_tasks_cmp = [
-            t for t in TASK_DISPLAY_CMP
-            if any(list((EXPERIMENTS_DIR / v).glob(f"results_{t}_*.csv"))
-                   for v in dirs_cmp if (EXPERIMENTS_DIR / v).exists())
-        ]
-        if not avail_tasks_cmp:
-            st.warning("No hay resultados para la version seleccionada.")
-            st.stop()
-        task_cmp = st.selectbox(
-            "Tarea", avail_tasks_cmp,
-            format_func=lambda x: TASK_DISPLAY_CMP.get(x, x),
-            key="cmp_task",
-        )
-
-    df = _load_cmp(task_cmp, version_cmp)
-
-    if df.empty:
-        st.info("No hay datos para esta seleccion. Ejecuta los experimentos primero.")
-    else:
-        strategy_col = 'strategy' if 'strategy' in df.columns else 'pattern'
-        local_models = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'ollama']
-        api_models   = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'nvidia_nim']
-
-        if 'model' not in df.columns or strategy_col not in df.columns:
-            st.dataframe(df, use_container_width=True)
+        if df_cmp.empty:
+            st.info("No hay datos para esta seleccion. Ejecuta los experimentos primero.")
         else:
-            metrics_df = compute_metrics_per_config(df, task_cmp)
-            local_m = metrics_df[metrics_df['model'].isin(local_models)]
-            api_m   = metrics_df[metrics_df['model'].isin(api_models)]
+            strategy_col_cmp = 'strategy' if 'strategy' in df_cmp.columns else 'pattern'
+            local_models = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'ollama']
+            api_models   = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'nvidia_nim']
 
-            # ── Resumen comparativo Local vs API ───────────
-            _f1_local = local_m['f1'].mean() if not local_m.empty else None
-            _f1_api   = api_m['f1'].mean()   if not api_m.empty   else None
-            _tps_local = local_m['avg_tokens_per_second'].mean() if (not local_m.empty and 'avg_tokens_per_second' in local_m.columns) else None
-            _tps_api   = api_m['avg_tokens_per_second'].mean()   if (not api_m.empty   and 'avg_tokens_per_second' in api_m.columns)   else None
-
-            _kc = [c for c in [
-                _f1_local is not None,
-                _f1_api   is not None,
-                _tps_local is not None,
-                _tps_api   is not None,
-            ] if c]
-            if any([_f1_local, _f1_api, _tps_local, _tps_api]):
-                _cols = st.columns(sum([_f1_local is not None, _f1_api is not None,
-                                        _tps_local is not None, _tps_api is not None]))
-                _ci = 0
-                if _f1_local is not None:
-                    _delta = f"{_f1_local - _f1_api:+.3f} vs API" if _f1_api is not None else None
-                    _cols[_ci].metric("F1 Local (Ollama)", f"{_f1_local:.3f}", delta=_delta)
-                    _ci += 1
-                if _f1_api is not None:
-                    _delta = f"{_f1_api - _f1_local:+.3f} vs Local" if _f1_local is not None else None
-                    _cols[_ci].metric("F1 API (NIM)", f"{_f1_api:.3f}", delta=_delta)
-                    _ci += 1
-                if _tps_local is not None:
-                    _cols[_ci].metric("Tokens/s Local", f"{_tps_local:.1f}")
-                    _ci += 1
-                if _tps_api is not None:
-                    _cols[_ci].metric("Tokens/s API", f"{_tps_api:.1f}")
-
-            st.divider()
-
-            # ── Rendimiento por modelo (tabla) ─────────────
-            st.subheader("F1 por modelo")
-            model_agg = metrics_df.groupby('model').agg(
-                f1_mean=('f1', 'mean'), f1_std=('f1', 'std'),
-                accuracy=('accuracy', 'mean'),
-                precision=('precision', 'mean'),
-                recall=('recall', 'mean'),
-            ).round(3).reset_index()
-            model_agg['tipo'] = model_agg['model'].map(
-                lambda m: 'Local' if m in local_models else 'API')
-            model_agg['modelo'] = model_agg['model'].map(lambda x: MODEL_LABELS.get(x, x))
-            model_agg = model_agg[['tipo', 'modelo', 'f1_mean', 'f1_std', 'accuracy', 'precision', 'recall']]\
-                .rename(columns={'f1_mean': 'F1', 'f1_std': 'F1 ±',
-                                 'accuracy': 'Accuracy', 'precision': 'Precision', 'recall': 'Recall'})\
-                .sort_values(['tipo', 'F1'], ascending=[True, False]).reset_index(drop=True)
-            st.dataframe(
-                model_agg.style.background_gradient(subset=['F1', 'Accuracy'], cmap='RdYlGn', vmin=0, vmax=1),
-                use_container_width=True, hide_index=True,
-            )
-
-            st.divider()
-
-            # ── Mejor estrategia por modelo ────────────────
-            st.subheader("Mejor estrategia por modelo")
-            best_s = metrics_df.groupby(['model', strategy_col])['f1'].mean().reset_index()
-            best_pm = best_s.loc[best_s.groupby('model')['f1'].idxmax()].copy()
-            best_pm['tipo']      = best_pm['model'].map(lambda m: 'Local' if m in local_models else 'API')
-            best_pm['modelo']    = best_pm['model'].map(lambda x: MODEL_LABELS.get(x, x))
-            best_pm['estrategia'] = best_pm[strategy_col].map(lambda x: STRATEGY_LABELS.get(x, x))
-            best_pm = best_pm[['tipo', 'modelo', 'estrategia', 'f1']]\
-                .rename(columns={'f1': 'F1 medio'})\
-                .sort_values(['tipo', 'F1 medio'], ascending=[True, False]).reset_index(drop=True)
-            st.dataframe(
-                best_pm.style.background_gradient(subset=['F1 medio'], cmap='RdYlGn', vmin=0, vmax=1),
-                use_container_width=True, hide_index=True,
-            )
-
-            st.divider()
-
-            # ── Velocidad ──────────────────────────────────
-            st.subheader("Velocidad: tokens/s por modelo")
-            if 'avg_tokens_per_second' in metrics_df.columns:
-                try:
-                    from analysis import plot_speed_comparison
-                    fig = plot_speed_comparison(metrics_df)
-                    if fig:
-                        st.pyplot(fig)
-                        plt.close(fig)
-                    else:
-                        st.info("No hay datos de velocidad disponibles.")
-                except Exception as e:
-                    st.error(f"Error generando grafica: {e}")
+            if 'model' not in df_cmp.columns or strategy_col_cmp not in df_cmp.columns:
+                st.dataframe(df_cmp, use_container_width=True)
             else:
-                st.info("No hay datos de velocidad en los resultados cargados.")
+                metrics_cmp = compute_metrics_per_config(df_cmp, task_cmp)
+                local_m = metrics_cmp[metrics_cmp['model'].isin(local_models)]
+                api_m   = metrics_cmp[metrics_cmp['model'].isin(api_models)]
 
-            st.divider()
+                # ── KPI cards ──────────────────────────────
+                _f1_local  = local_m['f1'].mean() if not local_m.empty else None
+                _f1_api    = api_m['f1'].mean()   if not api_m.empty   else None
+                _tps_local = local_m['avg_tokens_per_second'].mean() if (not local_m.empty and 'avg_tokens_per_second' in local_m.columns) else None
+                _tps_api   = api_m['avg_tokens_per_second'].mean()   if (not api_m.empty   and 'avg_tokens_per_second' in api_m.columns)   else None
 
-            # ── Trade-offs ─────────────────────────────────
-            st.subheader("Trade-offs: Rendimiento vs Privacidad vs Coste")
-            st.markdown("""
-            | Aspecto | Modelos Locales (Ollama) | Modelos API (NVIDIA NIM) |
-            |---------|-------------------------|--------------------------|
-            | **Privacidad** | Total (datos no salen del equipo) | Parcial (datos enviados a API) |
-            | **Coste** | Solo hardware (GPU) | Gratuito con limites / Pay-per-use |
-            | **Latencia** | Dependiente de GPU local | Dependiente de red |
-            | **Escalabilidad** | Limitada por hardware | Alta |
-            | **Disponibilidad** | Siempre (offline) | Requiere conexion |
-            """)
+                if any([_f1_local, _f1_api, _tps_local, _tps_api]):
+                    _cols = st.columns(sum([x is not None for x in [_f1_local, _f1_api, _tps_local, _tps_api]]))
+                    _ci = 0
+                    if _f1_local is not None:
+                        _delta = f"{_f1_local - _f1_api:+.3f} vs API" if _f1_api is not None else None
+                        _cols[_ci].metric("F1 Local (Ollama)", f"{_f1_local:.3f}", delta=_delta)
+                        _ci += 1
+                    if _f1_api is not None:
+                        _delta = f"{_f1_api - _f1_local:+.3f} vs Local" if _f1_local is not None else None
+                        _cols[_ci].metric("F1 API (NIM)", f"{_f1_api:.3f}", delta=_delta)
+                        _ci += 1
+                    if _tps_local is not None:
+                        _cols[_ci].metric("Tokens/s Local", f"{_tps_local:.1f}")
+                        _ci += 1
+                    if _tps_api is not None:
+                        _cols[_ci].metric("Tokens/s API", f"{_tps_api:.1f}")
+
+                st.divider()
+
+                # ── F1 por modelo ──────────────────────────
+                st.subheader("F1 por modelo")
+                model_agg = metrics_cmp.groupby('model').agg(
+                    f1_mean=('f1', 'mean'), f1_std=('f1', 'std'),
+                    accuracy=('accuracy', 'mean'),
+                    precision=('precision', 'mean'),
+                    recall=('recall', 'mean'),
+                ).round(3).reset_index()
+                model_agg['tipo']   = model_agg['model'].map(lambda m: 'Local' if m in local_models else 'API')
+                model_agg['modelo'] = model_agg['model'].map(lambda x: MODEL_LABELS.get(x, x))
+                model_agg = model_agg[['tipo', 'modelo', 'f1_mean', 'f1_std', 'accuracy', 'precision', 'recall']]\
+                    .rename(columns={'f1_mean': 'F1', 'f1_std': 'F1 ±',
+                                     'accuracy': 'Accuracy', 'precision': 'Precision', 'recall': 'Recall'})\
+                    .sort_values(['tipo', 'F1'], ascending=[True, False]).reset_index(drop=True)
+                st.dataframe(
+                    model_agg.style.background_gradient(subset=['F1', 'Accuracy'], cmap='RdYlGn', vmin=0, vmax=1),
+                    use_container_width=True, hide_index=True,
+                )
+
+                st.divider()
+
+                # ── Mejor estrategia por modelo ────────────
+                st.subheader("Mejor estrategia por modelo")
+                best_s = metrics_cmp.groupby(['model', strategy_col_cmp])['f1'].mean().reset_index()
+                best_pm = best_s.loc[best_s.groupby('model')['f1'].idxmax()].copy()
+                best_pm['tipo']       = best_pm['model'].map(lambda m: 'Local' if m in local_models else 'API')
+                best_pm['modelo']     = best_pm['model'].map(lambda x: MODEL_LABELS.get(x, x))
+                best_pm['estrategia'] = best_pm[strategy_col_cmp].map(lambda x: STRATEGY_LABELS.get(x, x))
+                best_pm = best_pm[['tipo', 'modelo', 'estrategia', 'f1']]\
+                    .rename(columns={'f1': 'F1 medio'})\
+                    .sort_values(['tipo', 'F1 medio'], ascending=[True, False]).reset_index(drop=True)
+                st.dataframe(
+                    best_pm.style.background_gradient(subset=['F1 medio'], cmap='RdYlGn', vmin=0, vmax=1),
+                    use_container_width=True, hide_index=True,
+                )
+
+                st.divider()
+
+                # ── Velocidad ──────────────────────────────
+                st.subheader("Velocidad: tokens/s por modelo")
+                if 'avg_tokens_per_second' in metrics_cmp.columns:
+                    try:
+                        from analysis import plot_speed_comparison
+                        fig = plot_speed_comparison(metrics_cmp)
+                        if fig:
+                            st.pyplot(fig)
+                            plt.close(fig)
+                        else:
+                            st.info("No hay datos de velocidad disponibles.")
+                    except Exception as e:
+                        st.error(f"Error generando grafica: {e}")
+                else:
+                    st.info("No hay datos de velocidad en los resultados cargados.")
+
+                st.divider()
+
+                # ── Trade-offs ─────────────────────────────
+                st.subheader("Trade-offs: Rendimiento vs Privacidad vs Coste")
+                st.markdown("""
+                | Aspecto | Modelos Locales (Ollama) | Modelos API (NVIDIA NIM) |
+                |---------|-------------------------|--------------------------|
+                | **Privacidad** | Total (datos no salen del equipo) | Parcial (datos enviados a API) |
+                | **Coste** | Solo hardware (GPU) | Gratuito con limites / Pay-per-use |
+                | **Latencia** | Dependiente de GPU local | Dependiente de red |
+                | **Escalabilidad** | Limitada por hardware | Alta |
+                | **Disponibilidad** | Siempre (offline) | Requiere conexion |
+                """)
 
 
 # ============================================================

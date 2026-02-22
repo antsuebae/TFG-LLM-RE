@@ -1,0 +1,66 @@
+\cdpchapter{Resumen}
+
+Los Modelos de Lenguaje Grande (LLMs) han abierto nuevas posibilidades para la automatización de
+tareas de Ingeniería de Requisitos (IR), pero su aplicación práctica presenta incógnitas relevantes:
+¿qué tan capaces son los modelos que pueden ejecutarse de forma local, sin enviar datos a servidores
+externos? ¿Qué estrategia de prompting produce los mejores resultados? ¿A qué coste computacional?
+
+Una revisión sistemática reciente de 27 estudios sobre LLMs en IR revela que \textbf{ningún trabajo
+previo ha evaluado modelos locales en este dominio}.
+Este Trabajo de Fin de Grado aborda directamente ese vacío, presentando una evaluación empírica
+y sistemática de seis modelos LLM ---tres locales (Qwen 2.5 7B, Llama 3.1 8B, Llama 3.2 3B,
+ejecutados mediante Ollama) y tres accedidos mediante API (Llama 3.1 70B, Llama 3.1 8B, Mistral 7B,
+a través de NVIDIA NIM)--- sobre cinco tareas de IR: clasificación funcional/no funcional (A1),
+detección de ambigüedad (A2), evaluación de completitud (A3), detección de inconsistencias (V1)
+y evaluación de testabilidad (V2).
+
+Se implementa un diseño factorial completo de 750 configuraciones
+(5 tareas $\times$ 6 modelos $\times$ 5 estrategias $\times$ 5 iteraciones) con cinco estrategias
+de prompting: \textit{Question Refinement}, \textit{Cognitive Verifier}, \textit{Persona + Context},
+\textit{Few-Shot} y \textit{Chain of Thought}.
+Los resultados se analizan con ANOVA, pruebas t de Welch y tamaños del efecto (Cohen's d) para
+responder a tres preguntas de investigación sobre (1) la brecha de rendimiento local--API,
+(2) la estrategia de prompt óptima, y (3) los trade-offs rendimiento--coste--privacidad.
+
+Como contribuciones adicionales, se desarrollan datasets anotados para las tareas de completitud
+y testabilidad, que carecen de recursos públicos consolidados, y se construye un sistema completo
+que incluye el pipeline experimental con soporte a checkpoint/reanudación, una API REST (FastAPI)
+y un frontend interactivo (Streamlit) para el análisis de documentos de requisitos en tiempo real.
+
+\bigskip
+
+\noindent\textbf{Palabras clave:} Ingeniería de Requisitos, Modelos de Lenguaje Grande,
+prompting, evaluación empírica, modelos locales, NVIDIA NIM, Ollama, clasificación de requisitos.
+
+\cdpchapter{Abstract}
+
+Large Language Models (LLMs) have opened new possibilities for the automation of Requirements
+Engineering (RE) tasks, yet practical questions remain open: how capable are models that can
+be run locally, without sending data to external servers? Which prompting strategy produces the
+best results? At what computational cost?
+
+A recent systematic review of 27 studies on LLMs in RE reveals that \textbf{no prior work has
+evaluated local models in this domain}.
+This Bachelor's Thesis directly addresses that gap by presenting a systematic empirical evaluation
+of six LLMs ---three local models (Qwen 2.5 7B, Llama 3.1 8B, Llama 3.2 3B, run via Ollama)
+and three API-accessed models (Llama 3.1 70B, Llama 3.1 8B, Mistral 7B, via NVIDIA NIM)---
+on five RE tasks: functional/non-functional classification (A1), ambiguity detection (A2),
+completeness evaluation (A3), inconsistency detection (V1), and testability evaluation (V2).
+
+A full factorial design of 750 configurations is implemented
+(5 tasks $\times$ 6 models $\times$ 5 strategies $\times$ 5 iterations) with five prompting
+strategies: Question Refinement, Cognitive Verifier, Persona + Context, Few-Shot, and
+Chain of Thought.
+Results are analysed using ANOVA, Welch's t-tests, and effect sizes (Cohen's d) to answer
+three research questions on (1) the local--API performance gap, (2) the optimal prompting
+strategy, and (3) performance--cost--privacy trade-offs.
+
+As additional contributions, annotated datasets are built for the completeness and testability
+tasks (which lack public benchmarks), and a complete system is developed comprising the
+experimental pipeline with checkpoint/resume support, a REST API (FastAPI), and an
+interactive frontend (Streamlit) for real-time requirements document analysis.
+
+\bigskip
+
+\noindent\textbf{Keywords:} Requirements Engineering, Large Language Models, prompt engineering,
+empirical evaluation, local models, NVIDIA NIM, Ollama, requirements classification.

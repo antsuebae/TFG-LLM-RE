@@ -1,0 +1,318 @@
+\begin{thebibliography}{}
+
+\bibitem [\protect \citeauthoryear {%
+Boehm%
+\ \BBA {} Papaccio%
+}{%
+Boehm%
+\ \BBA {} Papaccio%
+}{%
+{\protect \APACyear {1988}}%
+}]{%
+boehm1988understanding}
+\APACinsertmetastar {%
+boehm1988understanding}%
+\begin{APACrefauthors}%
+Boehm, B\BPBI W.%
+\BCBT {}\ \BBA {} Papaccio, P\BPBI N.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{1988}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Understanding and Controlling Software Costs}
+  {Understanding and controlling software costs}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{IEEE Transactions on Software
+  Engineering}{14}{10}{1462--1477}.
+\newblock
+\begin{APACrefDOI} \doi{10.1109/32.6191} \end{APACrefDOI}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Brown%
+\ \protect \BOthers {.}}{%
+Brown%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2020}}%
+}]{%
+brown2020language}
+\APACinsertmetastar {%
+brown2020language}%
+\begin{APACrefauthors}%
+Brown, T\BPBI B.%
+, Mann, B.%
+, Ryder, N.%
+, Subbiah, M.%
+, Kaplan, J.%
+, Dhariwal, P.%
+\BDBL {}others%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2020}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Language Models Are Few-Shot Learners} {Language models
+  are few-shot learners}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Advances in Neural Information Processing Systems
+  (NeurIPS)}{33}{}{1877--1901}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Cheng%
+\ \protect \BOthers {.}}{%
+Cheng%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2025}}%
+}]{%
+cheng2024llms}
+\APACinsertmetastar {%
+cheng2024llms}%
+\begin{APACrefauthors}%
+Cheng, H.%
+, Husen, J\BPBI H.%
+, Lu, Y.%
+, Racharak, T.%
+, Yoshioka, N.%
+, Ubayashi, N.%
+\BCBL {}\ \BBA {} Washizaki, H.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2025}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Generative {AI} for Requirements Engineering: A
+  Systematic Literature Review} {Generative {AI} for requirements engineering:
+  A systematic literature review}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Software: Practice and Experience}{}{}{}.
+\newblock
+\APACrefnote{Preprint: arXiv:2409.06741. VERIFICAR: confirmar que este es el
+  paper de referencia y actualizar el dato ``0\,\% de estudios evalua modelos
+  locales''}
+\newblock
+\begin{APACrefDOI} \doi{10.1002/spe.70029} \end{APACrefDOI}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Cleland-Huang%
+, Settimi%
+, Zou%
+\BCBL {}\ \BBA {} Solc%
+}{%
+Cleland-Huang%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2007}}%
+}]{%
+cleland2007promise}
+\APACinsertmetastar {%
+cleland2007promise}%
+\begin{APACrefauthors}%
+Cleland-Huang, J.%
+, Settimi, R.%
+, Zou, X.%
+\BCBL {}\ \BBA {} Solc, P.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2007}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Automated Classification of Non-Functional Requirements}
+  {Automated classification of non-functional requirements}.{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {Requirements Engineering} {Requirements engineering}\
+  (\BVOL~12, \BPGS\ 103--120).
+\newblock
+\APACaddressPublisher{}{Springer}.
+\newblock
+\APACrefnote{Dataset PROMISE NFR}
+\newblock
+\begin{APACrefDOI} \doi{10.1007/s00766-007-0045-1} \end{APACrefDOI}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Femmer%
+, M{\'e}ndez~Fern{\'a}ndez%
+, Wagner%
+\BCBL {}\ \BBA {} Eder%
+}{%
+Femmer%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2017}}%
+}]{%
+femmer2017rapid}
+\APACinsertmetastar {%
+femmer2017rapid}%
+\begin{APACrefauthors}%
+Femmer, H.%
+, M{\'e}ndez~Fern{\'a}ndez, D.%
+, Wagner, S.%
+\BCBL {}\ \BBA {} Eder, S.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2017}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Rapid Quality Assurance with Requirements Smells} {Rapid
+  quality assurance with requirements smells}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Journal of Systems and Software}{123}{}{190--213}.
+\newblock
+\begin{APACrefDOI} \doi{10.1016/j.jss.2016.02.047} \end{APACrefDOI}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Ronanki%
+, Cabrero-Daniel%
+, Horkoff%
+\BCBL {}\ \BBA {} Berger%
+}{%
+Ronanki%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2024}}%
+}]{%
+ronanki2024evaluating}
+\APACinsertmetastar {%
+ronanki2024evaluating}%
+\begin{APACrefauthors}%
+Ronanki, K.%
+, Cabrero-Daniel, B.%
+, Horkoff, J.%
+\BCBL {}\ \BBA {} Berger, C.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2024}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Requirements Engineering Using Generative {AI}: Prompts
+  and Prompting Patterns} {Requirements engineering using generative {AI}:
+  Prompts and prompting patterns}.{\BBCQ}
+\newblock
+\BIn{} A.~Nguyen-Duc, P.~Abrahamsson\BCBL {}\ \BBA {} F.~Khomh\ (\BEDS),
+  \APACrefbtitle {Generative {AI} for Effective Software Development}
+  {Generative {AI} for effective software development}\ (\BPGS\ 109--127).
+\newblock
+\APACaddressPublisher{}{Springer Nature Switzerland}.
+\newblock
+\APACrefnote{Preprint: arXiv:2311.03832}
+\newblock
+\begin{APACrefDOI} \doi{10.1007/978-3-031-55642-5\_5} \end{APACrefDOI}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Sommerville%
+}{%
+Sommerville%
+}{%
+{\protect \APACyear {2016}}%
+}]{%
+sommerville2016software}
+\APACinsertmetastar {%
+sommerville2016software}%
+\begin{APACrefauthors}%
+Sommerville, I.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYear{2016}.
+\newblock
+\APACrefbtitle {Software Engineering} {Software engineering}\
+  (\PrintOrdinal{10th}\ \BEd).
+\newblock
+\APACaddressPublisher{}{Pearson}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Vaswani%
+\ \protect \BOthers {.}}{%
+Vaswani%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2017}}%
+}]{%
+vaswani2017attention}
+\APACinsertmetastar {%
+vaswani2017attention}%
+\begin{APACrefauthors}%
+Vaswani, A.%
+, Shazeer, N.%
+, Parmar, N.%
+, Uszkoreit, J.%
+, Jones, L.%
+, Gomez, A\BPBI N.%
+\BDBL {}Polosukhin, I.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2017}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Attention Is All You Need} {Attention is all you
+  need}.{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {Advances in Neural Information Processing Systems
+  (NeurIPS)} {Advances in neural information processing systems (neurips)}\
+  (\BVOL~30, \BPGS\ 5998--6008).
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Wei%
+\ \protect \BOthers {.}}{%
+Wei%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2022}}%
+}]{%
+wei2022chain}
+\APACinsertmetastar {%
+wei2022chain}%
+\begin{APACrefauthors}%
+Wei, J.%
+, Wang, X.%
+, Schuurmans, D.%
+, Bosma, M.%
+, Ichter, B.%
+, Xia, F.%
+\BDBL {}Zhou, D.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2022}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Chain-of-Thought Prompting Elicits Reasoning in Large
+  Language Models} {Chain-of-thought prompting elicits reasoning in large
+  language models}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Advances in Neural Information Processing Systems
+  (NeurIPS)}{35}{}{24824--24837}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+White%
+\ \protect \BOthers {.}}{%
+White%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2023}}%
+}]{%
+white2024prompt}
+\APACinsertmetastar {%
+white2024prompt}%
+\begin{APACrefauthors}%
+White, J.%
+, Fu, Q.%
+, Hays, S.%
+, Sandborn, M.%
+, Olea, C.%
+, Gilbert, H.%
+\BDBL {}Schmidt, D\BPBI C.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2023}{}{}.
+\newblock
+\APACrefbtitle {A Prompt Pattern Catalog to Enhance Prompt Engineering with
+  {ChatGPT}.} {A prompt pattern catalog to enhance prompt engineering with
+  {ChatGPT}.}
+\newblock
+\begin{APACrefURL} \url{https://arxiv.org/abs/2302.11382} \end{APACrefURL}
+\PrintBackRefs{\CurrentBib}
+
+\end{thebibliography}

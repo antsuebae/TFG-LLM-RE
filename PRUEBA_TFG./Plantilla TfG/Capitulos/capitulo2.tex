@@ -1,0 +1,239 @@
+% !TEX root = ../proyect.tex
+
+\chapter{Estado del Arte}\label{cap:estadoarte}
+
+Este capítulo proporciona el marco teórico necesario para contextualizar el trabajo.
+Se revisan, en primer lugar, los fundamentos de la Ingeniería de Requisitos y las tareas que la
+componen. A continuación se describen los Modelos de Lenguaje Grande, su arquitectura y tipología.
+Seguidamente se analiza el estado actual de la aplicación de LLMs en IR, centrándonos en las revisiones
+sistemáticas más recientes. Por último se caracterizan las principales estrategias de prompting y se
+delimita el gap que motiva este trabajo.
+
+
+\section{Ingeniería de Requisitos}\label{sec:ir}
+
+La Ingeniería de Requisitos (IR) es la disciplina de la ingeniería del software que se ocupa de
+identificar, documentar, analizar, priorizar y validar los requisitos de un sistema software antes de
+iniciar su construcción \cite{sommerville2016software}.
+Su importancia radica en que los errores de requisitos son los más costosos de corregir: estudios
+clásicos de \citeA{boehm1988understanding} demuestran que corregir un error en fase de mantenimiento
+puede costar hasta 100 veces más que hacerlo en la fase de requisitos.
+
+Los requisitos de software se clasifican habitualmente en dos grandes categorías \cite{cleland2007promise}:
+
+\begin{description}
+    \item[\textbf{Requisitos Funcionales (RF)}:] Describen \textit{qué} debe hacer el sistema, es decir,
+    las funciones, capacidades y comportamientos que el sistema debe proporcionar. Ejemplo: \textit{``El
+    sistema permitirá al usuario autenticarse mediante usuario y contraseña''}.
+
+    \item[\textbf{Requisitos No Funcionales (RNF)}:] Describen \textit{cómo} debe comportarse el sistema,
+    expresando restricciones de calidad como rendimiento, seguridad, usabilidad o mantenibilidad.
+    Ejemplo: \textit{``El tiempo de respuesta del sistema no superará los 2 segundos en el 95\% de las
+    peticiones''}.
+\end{description}
+
+\subsection{Tareas principales de la Ingeniería de Requisitos}
+
+Las tareas que componen el proceso de IR son diversas. Las más relevantes para este trabajo son:
+
+\begin{itemize}
+    \item \textbf{Clasificación Funcional / No Funcional (A1):} Determinar la naturaleza de cada
+    requisito. La clasificación errónea puede llevar a que requisitos de rendimiento o seguridad no
+    reciban el tratamiento adecuado.
+
+    \item \textbf{Detección de Ambigüedad (A2):} Identificar requisitos que admiten múltiples
+    interpretaciones. \citeA{femmer2017rapid} proponen un catálogo de \textit{requirements smells}
+    ---patrones lingüísticos asociados a ambigüedad--- que incluye términos vagos, referencias
+    implícitas y condiciones incompletas.
+
+    \item \textbf{Evaluación de Completitud (A3):} Comprobar si un requisito proporciona toda la
+    información necesaria para su implementación sin tener que recurrir a suposiciones.
+
+    \item \textbf{Detección de Inconsistencias (V1):} Verificar que dos o más requisitos no se
+    contradicen entre sí, lo que podría originar comportamientos indefinidos en el sistema.
+
+    \item \textbf{Evaluación de Testabilidad (V2):} Determinar si un requisito puede ser verificado
+    mediante una prueba objetiva y reproducible.
+\end{itemize}
+
+\subsection{Desafíos actuales en IR}
+
+A pesar de décadas de investigación, la IR sigue enfrentando retos significativos en la práctica
+industrial \cite{cheng2024llms}:
+
+\begin{itemize}
+    \item Los documentos de requisitos suelen redactarse en lenguaje natural, lo que introduce ambigüedad
+    intrínseca difícil de eliminar.
+    \item La revisión manual de grandes documentos es costosa en tiempo y propensa a errores humanos.
+    \item La trazabilidad entre requisitos y código es difícil de mantener en proyectos de larga duración.
+    \item No existe una métrica universal de calidad de requisitos aceptada por toda la comunidad.
+\end{itemize}
+
+Estos desafíos motivan la búsqueda de herramientas automatizadas que asistan a los ingenieros de
+requisitos. El procesamiento del lenguaje natural (PLN) ha proporcionado enfoques relevantes durante
+décadas, y más recientemente los LLMs han abierto nuevas posibilidades.
+
+
+\section{Modelos de Lenguaje Grande (LLMs)}\label{sec:llms}
+
+Un Modelo de Lenguaje Grande es un sistema de aprendizaje profundo entrenado sobre vastas cantidades
+de texto para predecir la distribución de probabilidad del siguiente token dada una secuencia de
+tokens precedentes.
+La arquitectura predominante en los LLMs actuales es el Transformador (\textit{Transformer}),
+introducido por \citeA{vaswani2017attention}.
+
+\subsection{Arquitectura Transformer}
+
+El Transformador utiliza mecanismos de atención multi-cabeza que permiten al modelo relacionar cualquier
+par de posiciones de la secuencia de entrada independientemente de su distancia.
+Esto supera las limitaciones de las redes recurrentes (RNN, LSTM) que procesaban el texto de forma
+secuencial y sufrían de gradiente desvaneciente en secuencias largas.
+
+La arquitectura \textit{decoder-only}, adoptada por modelos como GPT, Llama y Mistral, genera texto
+de forma autorregresiva: el modelo predice un token, lo concatena a la entrada y predice el siguiente.
+Este diseño resulta especialmente adecuado para tareas de generación de texto, incluyendo la
+clasificación cuando se formula como tarea generativa.
+
+\subsection{Evolución y modelos actuales}
+
+La escala de los LLMs ha crecido de forma exponencial. GPT-3 \cite{brown2020language} demostró con
+175.000 millones de parámetros capacidades emergentes como el aprendizaje en contexto (\textit{in-context
+learning}) que no eran predecibles extrapolando modelos más pequeños.
+
+Posteriormente, el ajuste por instrucciones (\textit{instruction tuning}) y el aprendizaje por
+refuerzo con retroalimentación humana (RLHF, \textit{Reinforcement Learning from Human Feedback})
+mejoraron notablemente la alineación de los modelos con las instrucciones del usuario, dando lugar a
+modelos como ChatGPT, GPT-4, y las familias Llama 3 y Mistral.
+
+\subsection{Tipología de modelos según el modo de acceso}
+
+Desde el punto de vista práctico, los LLMs se pueden clasificar según su modo de acceso:
+
+\begin{description}
+    \item[\textbf{Modelos locales}:] Se ejecutan íntegramente en el hardware del usuario, sin enviar
+    datos a servidores externos. Requieren suficiente memoria RAM o VRAM para almacenar los pesos del
+    modelo. La cuantización (\textit{quantization}) permite reducir el tamaño de los pesos (de 16 bits
+    a 4 u 8 bits) a costa de una pequeña pérdida de precisión, haciendo posible ejecutar modelos de
+    7--8B de parámetros en GPUs de consumo (8 GB VRAM).
+
+    \item[\textbf{Modelos de API}:] Se acceden mediante llamadas HTTP a servicios en la nube. El
+    proveedor gestiona la infraestructura y el usuario paga por los tokens procesados. Ofrecen acceso a
+    modelos mucho más grandes (70B--405B de parámetros) sin necesidad de hardware especializado, pero
+    implican costes por uso y el envío de datos fuera del control del usuario.
+\end{description}
+
+\subsection{Modelos evaluados en este trabajo}
+
+Los modelos seleccionados en este estudio representan un espectro amplio de tamaños y modalidades
+de acceso:
+
+\begin{itemize}
+    \item \textbf{Qwen 2.5 7B Instruct} (local, cuantizado Q5\_K\_M): Desarrollado por Alibaba Cloud.
+    Destaca por su rendimiento en tareas de razonamiento con un tamaño reducido.
+    \item \textbf{Llama 3.1 8B Instruct} (local, cuantizado Q4\_K\_M): Familia Meta AI, de referencia
+    en modelos open-source.
+    \item \textbf{Llama 3.2 3B Instruct} (local, cuantizado Q4\_K\_M): Variante ultraligera de Meta AI
+    para hardware con recursos muy limitados.
+    \item \textbf{Llama 3.1 70B Instruct} (API, NVIDIA NIM): La variante más grande de Llama 3.1,
+    con capacidades comparables a GPT-4 en muchos benchmarks.
+    \item \textbf{Llama 3.1 8B Instruct} (API, NVIDIA NIM): Misma arquitectura que la versión local
+    pero servida en infraestructura optimizada.
+    \item \textbf{Mistral 7B Instruct v0.3} (API, NVIDIA NIM): Desarrollado por Mistral AI, conocido
+    por su eficiencia y rendimiento en benchmarks estándar.
+\end{itemize}
+
+
+\section{Aplicación de LLMs en Ingeniería de Requisitos}\label{sec:llms-re}
+
+\subsection{Revisión sistemática de Cheng et al.}
+
+La revisión sistemática de \citeA{cheng2024llms} constituye la referencia más completa y reciente
+sobre el uso de LLMs en IR.
+El estudio analiza 27 artículos publicados entre 2017 y 2024, e identifica las siguientes tendencias:
+
+\begin{itemize}
+    \item La tarea más estudiada es la \textbf{clasificación de requisitos} (F/NF), presente en 14 de
+    los 27 estudios.
+    \item GPT-3.5 y GPT-4 son los modelos dominantes, apareciendo en el 74\% de los estudios.
+    \item El \textbf{0\% de los estudios evalúa modelos de código abierto ejecutados de forma local},
+    lo que constituye el principal gap identificado.
+    \item Los enfoques de prompting \textit{zero-shot} y \textit{few-shot} son los más empleados,
+    mientras que técnicas más elaboradas como \textit{Chain of Thought} apenas han sido exploradas
+    en el contexto de IR.
+\end{itemize}
+
+\subsection{Trabajos relacionados en clasificación de requisitos}
+
+La clasificación de requisitos F/NF ha recibido atención significativa antes de la era de los LLMs,
+mediante enfoques basados en máquinas de vectores de soporte (SVM) y aprendizaje profundo sobre el
+dataset PROMISE \cite{cleland2007promise}.
+Con la llegada de los LLMs, \citeA{ronanki2024evaluating} demuestran que GPT-3.5 alcanza un F1-score
+superior al 90\% en esta tarea utilizando prompts adecuados, superando a los clasificadores tradicionales
+sin necesidad de entrenamiento específico.
+
+\subsection{Detección de ambigüedad y otros atributos de calidad}
+
+La detección automática de ambigüedad en requisitos es una tarea más desafiante.
+\citeA{femmer2017rapid} proponen un enfoque basado en reglas lingüísticas que detecta \textit{smells}
+de requisitos, mientras que trabajos más recientes exploran el uso de modelos BERT y LLMs para esta
+tarea.
+\citeA{cheng2024llms} reportan que la detección de ambigüedad y la evaluación de la completitud
+tienen una representación mucho menor en la literatura, lo que indica oportunidades de investigación.
+
+
+\section{Estrategias de Prompting}\label{sec:prompting}
+
+La ingeniería de prompts (\textit{prompt engineering}) hace referencia al diseño sistemático de las
+instrucciones que se proporcionan a un LLM para maximizar la calidad de sus respuestas.
+\citeA{white2024prompt} identifican 26 patrones de prompt reutilizables, análogos a los patrones de
+diseño en ingeniería del software, aplicados a la mejora de la calidad del código.
+\citeA{ronanki2024evaluating} adaptan tres de estos patrones al contexto de IR.
+
+Las cinco estrategias evaluadas en este trabajo son:
+
+\begin{description}
+    \item[\textbf{Question Refinement (QR)}:]
+    El modelo recibe instrucción de reformular mentalmente la pregunta o tarea antes de responder,
+    clarificando el enunciado cuando sea ambiguo. Basado en el patrón homónimo de \citeA{white2024prompt}.
+
+    \item[\textbf{Cognitive Verifier (CV)}:]
+    Se solicita al modelo que descomponga el problema en subpreguntas más simples, responda cada una
+    por separado y sintetice una respuesta final. Fomenta el razonamiento estructurado.
+
+    \item[\textbf{Persona + Context (PC)}:]
+    Se asigna al modelo una identidad experta (por ejemplo, ``ingeniero de requisitos senior con
+    10 años de experiencia en IEEE 830'') y se proporciona contexto sobre la tarea. Influye en el
+    \textit{prior} del modelo sobre el dominio.
+
+    \item[\textbf{Few-Shot (FS)}:]
+    Se incluyen varios ejemplos etiquetados en el prompt (entre 3 y 5) antes de presentar el caso a
+    clasificar. Técnica estándar de aprendizaje en contexto demostrada por \citeA{brown2020language}.
+
+    \item[\textbf{Chain of Thought (CoT)}:]
+    Se solicita explícitamente al modelo que razone paso a paso antes de emitir su respuesta final,
+    facilitando la introspección del proceso de decisión. Introducido por \citeA{wei2022chain}.
+\end{description}
+
+
+\section{Gap identificado y motivación del estudio}\label{sec:gap}
+
+La síntesis de la revisión de la literatura permite identificar con claridad las brechas que este
+trabajo pretende cubrir:
+
+\begin{enumerate}
+    \item \textbf{Ausencia de modelos locales:} Como señala \citeA{cheng2024llms}, ningún estudio
+    previo evalúa modelos LLM ejecutados localmente en tareas de IR. Este trabajo es, hasta donde se
+    tiene conocimiento, el primero en hacerlo de forma sistemática y con múltiples modelos.
+
+    \item \textbf{Comparativa multi-estrategia y multi-modelo:} Los estudios existentes evalúan,
+    como mucho, uno o dos modelos con un subconjunto reducido de estrategias de prompting.
+    Este trabajo implementa un diseño factorial completo de 6 modelos × 5 estrategias.
+
+    \item \textbf{Cobertura de tareas poco estudiadas:} Las tareas de evaluación de completitud
+    y testabilidad carecen de datasets públicos consolidados. Este trabajo contribuye con datasets
+    anotados para ambas tareas.
+
+    \item \textbf{Análisis de trade-offs:} No existen estudios que analicen explícitamente el
+    compromiso entre calidad de la respuesta y coste computacional (latencia, tokens por segundo)
+    en el contexto de IR, información esencial para la adopción práctica.
+\end{enumerate}
