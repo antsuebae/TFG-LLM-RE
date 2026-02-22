@@ -131,8 +131,70 @@ docker_up() {
     echo -e "  ./run.sh docker-models"
 }
 
+install_nvidia_toolkit() {
+    if command -v nvidia-ctk &> /dev/null; then
+        echo -e "${GREEN}nvidia-container-toolkit ya esta instalado.${NC}"
+        return 0
+    fi
+
+    echo -e "${YELLOW}nvidia-container-toolkit no encontrado. Instalando...${NC}"
+
+    if [ ! -f /etc/os-release ]; then
+        echo -e "${RED}No se pudo detectar la distribucion. Instala nvidia-container-toolkit manualmente:${NC}"
+        echo -e "  https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html"
+        exit 1
+    fi
+
+    # shellcheck source=/dev/null
+    . /etc/os-release
+
+    case "${ID:-}" in
+        fedora|rhel|centos|rocky|almalinux)
+            echo -e "${CYAN}Detectado: ${PRETTY_NAME} (dnf)${NC}"
+            sudo dnf install -y nvidia-container-toolkit
+            ;;
+        ubuntu|debian|linuxmint|pop)
+            echo -e "${CYAN}Detectado: ${PRETTY_NAME} (apt)${NC}"
+            curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+                | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+            curl -sL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+                | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+                | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null
+            sudo apt-get update -qq
+            sudo apt-get install -y nvidia-container-toolkit
+            ;;
+        opensuse*|sles)
+            echo -e "${CYAN}Detectado: ${PRETTY_NAME} (zypper)${NC}"
+            sudo zypper install -y nvidia-container-toolkit
+            ;;
+        arch|manjaro|endeavouros|garuda)
+            echo -e "${CYAN}Detectado: ${PRETTY_NAME} (AUR)${NC}"
+            if command -v yay &> /dev/null; then
+                yay -S --noconfirm nvidia-container-toolkit
+            elif command -v paru &> /dev/null; then
+                paru -S --noconfirm nvidia-container-toolkit
+            else
+                echo -e "${RED}Instala un helper de AUR (yay/paru) y vuelve a intentarlo.${NC}"
+                exit 1
+            fi
+            ;;
+        *)
+            echo -e "${RED}Distribucion '${ID}' no reconocida.${NC}"
+            echo -e "${YELLOW}Instala nvidia-container-toolkit manualmente:${NC}"
+            echo -e "  https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html"
+            exit 1
+            ;;
+    esac
+
+    echo -e "${CYAN}Configurando runtime Docker para NVIDIA...${NC}"
+    sudo nvidia-ctk runtime configure --runtime=docker
+    sudo systemctl restart docker
+    echo -e "${GREEN}nvidia-container-toolkit instalado y configurado.${NC}"
+}
+
 docker_up_gpu() {
-    echo -e "${CYAN}Arrancando servicios Docker (modo GPU, requiere nvidia-container-toolkit)...${NC}"
+    install_nvidia_toolkit
+    echo -e "${CYAN}Arrancando servicios Docker (modo GPU)...${NC}"
     docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
     echo ""
     echo -e "${GREEN}Servicios activos:${NC}"
@@ -195,6 +257,9 @@ show_help() {
     echo "  docker-models    Descargar modelos de Ollama en el contenedor"
     echo "  docker-logs      Ver logs de los servicios (docker-logs [servicio])"
     echo ""
+    echo -e "${YELLOW}  Nota GPU:${NC} docker-up-gpu instala nvidia-container-toolkit automaticamente"
+    echo "             si no esta presente (Fedora/RHEL, Ubuntu/Debian, openSUSE, Arch)."
+    echo ""
     echo -e "${YELLOW}Ejemplos:${NC}"
     echo "  ./run.sh setup"
     echo "  ./run.sh pipeline requisitos.txt"
@@ -206,6 +271,7 @@ show_help() {
     echo "  ./run.sh analysis ../results/results_classification_XXXXX.csv"
     echo "  ./run.sh check"
     echo "  ./run.sh docker-build && ./run.sh docker-up && ./run.sh docker-models"
+    echo "  ./run.sh docker-build && ./run.sh docker-up-gpu && ./run.sh docker-models"
     echo ""
 }
 
