@@ -100,12 +100,11 @@ Documentacion interactiva en `http://localhost:8000/docs`.
 
 ## Ejecucion con Docker
 
-Alternativa que no requiere instalar Python, Ollama ni dependencias en el sistema host. Requiere Docker y `nvidia-container-toolkit` para acceso a GPU.
+Alternativa que no requiere instalar Python, Ollama ni dependencias en el sistema host. Solo requiere Docker.
 
 ### Requisitos
 
 - [Docker](https://docs.docker.com/get-docker/) con Docker Compose
-- [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) (para GPU en contenedor)
 
 ### Inicio rapido
 
@@ -113,7 +112,7 @@ Alternativa que no requiere instalar Python, Ollama ni dependencias en el sistem
 # 1. Construir la imagen
 ./run.sh docker-build
 
-# 2. Arrancar todos los servicios
+# 2. Arrancar todos los servicios (modo CPU, sin GPU)
 ./run.sh docker-up
 
 # 3. Descargar modelos en el contenedor (solo la primera vez, ~15 min)
@@ -126,7 +125,16 @@ Los servicios quedan accesibles en:
 |----------|-----|
 | Streamlit | http://localhost:8501 |
 | API REST | http://localhost:8000/docs |
-| Ollama | http://localhost:11434 |
+
+Ollama corre internamente en la red Docker (no expuesto al host). Para acceder a Ollama desde el host mientras Docker esta activo, usa el Ollama local del sistema.
+
+### Con GPU
+
+```bash
+./run.sh docker-up-gpu
+```
+
+Si `nvidia-container-toolkit` no esta instalado, el script lo detecta e instala automaticamente segun la distribucion (Fedora/RHEL, Ubuntu/Debian, openSUSE, Arch). Requiere `sudo`.
 
 ### Gestion de servicios
 
@@ -138,8 +146,6 @@ Los servicios quedan accesibles en:
 ```
 
 Los modelos de Ollama se almacenan en un volumen Docker nombrado (`ollama_data`) y persisten entre reinicios. Los resultados de experimentos se montan desde `./results/` del host.
-
-> **Nota:** Si no tienes GPU o prefieres usar solo modelos API (NVIDIA NIM), elimina el bloque `deploy:` del servicio `ollama` en `docker-compose.yml`.
 
 ---
 
