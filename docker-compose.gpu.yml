@@ -1,0 +1,17 @@
+# Override para habilitar GPU en el contenedor de Ollama.
+# Requiere nvidia-container-toolkit instalado y configurado en el host.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+# O bien:
+#   ./run.sh docker-up-gpu
+
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

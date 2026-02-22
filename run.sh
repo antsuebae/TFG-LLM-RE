@@ -119,8 +119,21 @@ docker_build() {
 }
 
 docker_up() {
-    echo -e "${CYAN}Arrancando servicios Docker...${NC}"
+    echo -e "${CYAN}Arrancando servicios Docker (modo CPU)...${NC}"
     docker compose up -d
+    echo ""
+    echo -e "${GREEN}Servicios activos:${NC}"
+    echo -e "  Streamlit → http://localhost:8501"
+    echo -e "  API REST  → http://localhost:8000/docs"
+    echo -e "  Ollama    → http://localhost:11434"
+    echo ""
+    echo -e "${YELLOW}Si es la primera vez, descarga los modelos con:${NC}"
+    echo -e "  ./run.sh docker-models"
+}
+
+docker_up_gpu() {
+    echo -e "${CYAN}Arrancando servicios Docker (modo GPU, requiere nvidia-container-toolkit)...${NC}"
+    docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
     echo ""
     echo -e "${GREEN}Servicios activos:${NC}"
     echo -e "  Streamlit → http://localhost:8501"
@@ -174,12 +187,13 @@ show_help() {
     echo "  analysis     Generar graficos y analisis estadistico"
     echo "  check        Verificar estado de Ollama, NVIDIA NIM y Docker"
     echo ""
-    echo -e "${YELLOW}Ejecucion en Docker (requiere Docker + nvidia-container-toolkit):${NC}"
-    echo "  docker-build   Construir la imagen Docker"
-    echo "  docker-up      Arrancar todos los servicios (Streamlit + API + Ollama)"
-    echo "  docker-down    Detener todos los servicios"
-    echo "  docker-models  Descargar modelos de Ollama en el contenedor"
-    echo "  docker-logs    Ver logs de los servicios (docker-logs [servicio])"
+    echo -e "${YELLOW}Ejecucion en Docker:${NC}"
+    echo "  docker-build     Construir la imagen Docker"
+    echo "  docker-up        Arrancar todos los servicios en modo CPU"
+    echo "  docker-up-gpu    Arrancar servicios con GPU (requiere nvidia-container-toolkit)"
+    echo "  docker-down      Detener todos los servicios"
+    echo "  docker-models    Descargar modelos de Ollama en el contenedor"
+    echo "  docker-logs      Ver logs de los servicios (docker-logs [servicio])"
     echo ""
     echo -e "${YELLOW}Ejemplos:${NC}"
     echo "  ./run.sh setup"
@@ -205,10 +219,11 @@ case "${1:-help}" in
     experiment)    shift; experiment "$@" ;;
     analysis)      shift; analysis "$@" ;;
     check)         check_ollama ;;
-    docker-build)  docker_build ;;
-    docker-up)     docker_up ;;
-    docker-down)   docker_down ;;
-    docker-models) docker_models ;;
-    docker-logs)   shift; docker_logs "$@" ;;
+    docker-build)   docker_build ;;
+    docker-up)      docker_up ;;
+    docker-up-gpu)  docker_up_gpu ;;
+    docker-down)    docker_down ;;
+    docker-models)  docker_models ;;
+    docker-logs)    shift; docker_logs "$@" ;;
     help|*)        show_help ;;
 esac

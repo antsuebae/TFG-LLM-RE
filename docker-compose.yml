@@ -4,17 +4,9 @@ services:
   ollama:
     image: ollama/ollama
     container_name: tfg-ollama
-    ports:
-      - "11434:11434"
+    # Puerto no expuesto al host: app y api se conectan via red interna Docker
     volumes:
       - ollama_data:/root/.ollama   # modelos descargados persisten entre reinicios
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     restart: unless-stopped
 
   # ── Frontend Streamlit ────────────────────────────────────────────────────
