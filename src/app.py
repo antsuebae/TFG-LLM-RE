@@ -89,6 +89,7 @@ st.markdown("""
 # ── Model configs ────────────────────────────────────────────
 MODEL_CONFIGS = {
     "qwen7b": {"name": "qwen2.5:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
+    "qwen9b": {"name": "qwen3.5:9b", "type": "ollama", "short_name": "qwen9b"},
     "llama8b": {"name": "llama3.1:8b-instruct-q4_K_M", "type": "ollama", "short_name": "llama8b"},
     "llama3b": {"name": "llama3.2:3b-instruct-q4_K_M", "type": "ollama", "short_name": "llama3b"},
     "nim_llama70b": {"name": "meta/llama-3.1-70b-instruct", "type": "nvidia_nim", "short_name": "nim_llama70b"},
@@ -98,6 +99,7 @@ MODEL_CONFIGS = {
 
 MODEL_LABELS = {
     "qwen7b": "Qwen 2.5 7B (local)",
+    "qwen9b": "Qwen 3.5 9B (local)",
     "llama8b": "Llama 8B (local)",
     "llama3b": "Llama 3.2 3B (local)",
     "nim_llama70b": "Llama 70B (NIM)",
@@ -476,7 +478,7 @@ if page == "Pipeline Documento":
                         'Inconsistencias': len(res['inconsistencies']),
                         'Tiempo (s)': f"{res['elapsed']:.1f}",
                     })
-                st.dataframe(pd.DataFrame(summary_rows), use_container_width=True)
+                st.dataframe(pd.DataFrame(summary_rows), width='stretch')
 
                 # Heatmap de calidad: modelo x estrategia
                 if len(result_models) > 1 or len(result_strategies) > 1:
@@ -492,7 +494,7 @@ if page == "Pipeline Documento":
                     heatmap_df = pd.DataFrame(heatmap_data).T
                     heatmap_df.index.name = "Modelo"
                     st.dataframe(heatmap_df.style.background_gradient(cmap='RdYlGn', vmin=0, vmax=100),
-                                 use_container_width=True)
+                                 width='stretch')
 
             # ── Tabs por modelo, sub-tabs por estrategia ─────
             model_tabs = st.tabs([MODEL_LABELS.get(m, m) for m in result_models])
@@ -518,26 +520,38 @@ if page == "Pipeline Documento":
 
                             # Metricas resumen
                             total = len(df)
+                            n_req = len(df[df['item_type'] == 'REQ']) if 'item_type' in df.columns else total
+                            n_uc = len(df[df['item_type'] == 'UC']) if 'item_type' in df.columns else 0
+                            n_us = len(df[df['item_type'] == 'US']) if 'item_type' in df.columns else 0
+                            type_parts = [f"{n_req} REQ"]
+                            if n_uc > 0:
+                                type_parts.append(f"{n_uc} CU")
+                            if n_us > 0:
+                                type_parts.append(f"{n_us} HU")
                             col1, col2, col3, col4, col5 = st.columns(5)
-                            col1.metric("Requisitos", total)
+                            col1.metric("Elementos", total, help=", ".join(type_parts))
                             col2.metric("Ambiguos", len(df[df['is_ambiguous'] == True]) if 'is_ambiguous' in df.columns else 0)
                             col3.metric("Incompletos", len(df[df['is_complete'] == False]) if 'is_complete' in df.columns else 0)
                             col4.metric("No Testables", len(df[df['is_testable'] == False]) if 'is_testable' in df.columns else 0)
                             col5.metric("Calidad Media", f"{df['quality_score'].mean():.0f}%" if 'quality_score' in df.columns else "N/A")
 
                             # Tabla detallada
-                            st.subheader("Detalle por Requisito")
+                            st.subheader("Detalle por Elemento")
+                            _ITEM_TYPE_LABELS = {'REQ': 'Requisito', 'UC': 'Caso de Uso', 'US': 'Historia de Usuario'}
                             _pipe_col_map = {
-                                'text': 'Requisito', 'classification': 'Tipo',
+                                'text': 'Texto', 'item_type': 'Categoria',
+                                'classification': 'Tipo F/NF',
                                 'is_ambiguous': 'Ambiguo', 'is_complete': 'Completo',
                                 'is_testable': 'Testable', 'quality_score': 'Calidad',
                             }
                             _avail = [c for c in _pipe_col_map if c in df.columns]
                             display_df = df[_avail].rename(columns=_pipe_col_map).copy()
-                            if 'Requisito' in display_df.columns:
-                                display_df['Requisito'] = display_df['Requisito'].str[:100]
+                            if 'Categoria' in display_df.columns:
+                                display_df['Categoria'] = display_df['Categoria'].map(_ITEM_TYPE_LABELS).fillna('Requisito')
+                            if 'Texto' in display_df.columns:
+                                display_df['Texto'] = display_df['Texto'].str[:100]
                             display_df.index = range(1, len(display_df) + 1)
-                            st.dataframe(display_df, use_container_width=True, height=400)
+                            st.dataframe(display_df, width='stretch', height=400)
 
                             # Advertencias de calidad automaticas
                             pipeline_warnings = generate_all_warnings(df)
@@ -993,7 +1007,7 @@ elif page == "Validar Consistencia":
             margin=dict(l=40, r=20, t=50, b=40),
             yaxis=dict(autorange='reversed'),
         )
-        st.plotly_chart(_fig_mat, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(_fig_mat, width='stretch', config={'displayModeBar': False})
 
         # Lista de inconsistencias
         if _inconsistent:
@@ -1062,7 +1076,7 @@ elif page == "Resultados Experimentos":
                 })
             runs_df = pd.DataFrame(runs_summary)
             display_runs_df = runs_df.drop(columns=['run_dir'])
-            st.dataframe(display_runs_df, use_container_width=True)
+            st.dataframe(display_runs_df, width='stretch')
 
             # Seleccionar ejecuciones para comparar
             run_labels = [f"{r['Fecha']} | {r['Modelo']} | {r['Estrategia']} | {r['Documento']}" for r in runs_summary]
@@ -1075,7 +1089,7 @@ elif page == "Resultados Experimentos":
                     st.subheader("Comparacion de ejecuciones seleccionadas")
                     compare_rows = [runs_summary[i] for i in selected_indices]
                     compare_df = pd.DataFrame(compare_rows).drop(columns=['run_dir'])
-                    st.dataframe(compare_df, use_container_width=True)
+                    st.dataframe(compare_df, width='stretch')
 
                 # Detalle de cada ejecucion seleccionada
                 for idx in selected_indices:
@@ -1095,7 +1109,7 @@ elif page == "Resultados Experimentos":
                             if 'Requisito' in display_df.columns:
                                 display_df['Requisito'] = display_df['Requisito'].str[:100]
                             display_df.index = range(1, len(display_df) + 1)
-                            st.dataframe(display_df, use_container_width=True)
+                            st.dataframe(display_df, width='stretch')
 
                             # Download HTML report
                             html_path = run_path / "informe.html"
@@ -1145,7 +1159,7 @@ elif page == "Resultados Experimentos":
         with ctrl_col1:
             version_sel = st.radio(
                 "Version",
-                ["v1", "v2", "Ambas"],
+                ["v2"],
                 horizontal=True,
                 key="bench_version",
             )
@@ -1267,7 +1281,7 @@ elif page == "Resultados Experimentos":
                             st.info("No hay datos de tiempo disponibles.")
                         else:
                             _model_colors = {
-                                'qwen7b': '#2980b9', 'llama8b': '#1a5276', 'llama3b': '#5dade2',
+                                'qwen7b': '#2980b9', 'qwen9b': '#1abc9c', 'llama8b': '#1a5276', 'llama3b': '#5dade2',
                                 'nim_llama70b': '#c0392b', 'nim_llama8b': '#922b21', 'nim_mistral': '#f1948a',
                             }
                             _strat_symbols = {s: sym for sym, s in enumerate(
@@ -1316,7 +1330,7 @@ elif page == "Resultados Experimentos":
                             )
                             fig_sc.update_xaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
                             fig_sc.update_yaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
-                            st.plotly_chart(fig_sc, use_container_width=True,
+                            st.plotly_chart(fig_sc, width='stretch',
                                             config={'displayModeBar': False})
                             st.caption("Cada punto = modelo + estrategia. "
                                        "Esquina superior izquierda = mejor rendimiento en menos tiempo.")
@@ -1372,7 +1386,7 @@ elif page == "Resultados Experimentos":
                         )
                         fig_rank.update_xaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
                         fig_rank.update_yaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
-                        st.plotly_chart(fig_rank, use_container_width=True,
+                        st.plotly_chart(fig_rank, width='stretch',
                                         config={'displayModeBar': False})
                         st.caption("Lineas horizontales = la estrategia funciona igual en todos los modelos. "
                                    "Cruces entre lineas = el mejor prompt depende del modelo (RQ2).")
@@ -1417,7 +1431,7 @@ elif page == "Resultados Experimentos":
                         )
                         fig_viol.update_xaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
                         fig_viol.update_yaxes(gridcolor='rgba(128,128,128,0.2)', zeroline=False)
-                        st.plotly_chart(fig_viol, use_container_width=True,
+                        st.plotly_chart(fig_viol, width='stretch',
                                         config={'displayModeBar': False})
                         _sc1, _sc2 = st.columns(2)
                         _local_f1 = _cmp_df[_cmp_df['tipo'] == 'Local (Ollama)']['f1']
@@ -1454,11 +1468,11 @@ elif page == "Resultados Experimentos":
                     display_summary.style.background_gradient(
                         subset=['F1', 'Accuracy'], cmap='RdYlGn', vmin=0.0, vmax=1.0
                     ),
-                    use_container_width=True,
+                    width='stretch',
                     hide_index=True,
                 )
             else:
-                st.dataframe(df, use_container_width=True)
+                st.dataframe(df, width='stretch')
 
     with tab_cmp:
         import matplotlib.pyplot as plt
@@ -1475,7 +1489,7 @@ elif page == "Resultados Experimentos":
         # ── Controles ─────────────────────────────────────────────
         ctrl1, ctrl2 = st.columns([1, 2])
         with ctrl1:
-            version_cmp = st.radio("Version", ["v1", "v2", "Ambas"], horizontal=True, key="cmp_version")
+            version_cmp = st.radio("Version", ["v2"], horizontal=True, key="cmp_version")
         with ctrl2:
             dirs_cmp = [v for v in ["v1", "v2"] if version_cmp in (v, "Ambas")]
             avail_tasks_cmp = [
@@ -1502,7 +1516,7 @@ elif page == "Resultados Experimentos":
             api_models   = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'nvidia_nim']
 
             if 'model' not in df_cmp.columns or strategy_col_cmp not in df_cmp.columns:
-                st.dataframe(df_cmp, use_container_width=True)
+                st.dataframe(df_cmp, width='stretch')
             else:
                 metrics_cmp = compute_metrics_per_config(df_cmp, task_cmp)
                 local_m = metrics_cmp[metrics_cmp['model'].isin(local_models)]
@@ -1549,7 +1563,7 @@ elif page == "Resultados Experimentos":
                     .sort_values(['tipo', 'F1'], ascending=[True, False]).reset_index(drop=True)
                 st.dataframe(
                     model_agg.style.background_gradient(subset=['F1', 'Accuracy'], cmap='RdYlGn', vmin=0, vmax=1),
-                    use_container_width=True, hide_index=True,
+                    width='stretch', hide_index=True,
                 )
 
                 st.divider()
@@ -1566,7 +1580,7 @@ elif page == "Resultados Experimentos":
                     .sort_values(['tipo', 'F1 medio'], ascending=[True, False]).reset_index(drop=True)
                 st.dataframe(
                     best_pm.style.background_gradient(subset=['F1 medio'], cmap='RdYlGn', vmin=0, vmax=1),
-                    use_container_width=True, hide_index=True,
+                    width='stretch', hide_index=True,
                 )
 
                 st.divider()
@@ -1620,7 +1634,7 @@ elif page == "Progreso Experimentos":
     EXPECTED_SEEDS = [42, 123, 456, 789, 1024]
     CONFIGS_PER_TASK = len(EXPECTED_MODELS) * len(EXPECTED_STRATEGIES) * EXPECTED_ITERATIONS  # 150
     TOTAL_CONFIGS = len(EXPECTED_TASKS) * CONFIGS_PER_TASK  # 750
-    STALE_SECONDS = 3600  # 1 hora — configs lentos (CoT con modelos locales) pueden tardar >10min
+    STALE_SECONDS = 7200  # 2 horas — configs lentos (CoT con modelos locales) pueden tardar >10min
 
     task_labels = {
         'classification': 'Clasificacion F/NF',
@@ -1766,10 +1780,11 @@ elif page == "Progreso Experimentos":
             # Configs esperadas segun modelos presentes en este proceso
             n_models_in = len(models_in) if models_in else len(EXPECTED_MODELS)
             expected_configs = n_models_in * len(EXPECTED_STRATEGIES) * EXPECTED_ITERATIONS
-            # Activo = checkpoint reciente que no ha completado todas las configs
-            # Un resultado CSV (type=result) nunca es "en curso"
-            is_active = (f['type'] == 'checkpoint' and f['active']
-                         and len(configs) < expected_configs)
+            # Activo = checkpoint reciente sin completar, o CSV recién escrito (experimento recién terminado)
+            is_active = (
+                (f['type'] == 'checkpoint' and f['active'] and len(configs) < expected_configs)
+                or (f['type'] == 'result' and f['active'])
+            )
             # ETA estimado por proceso
             cfg_times = {}
             for r in records:
@@ -1904,7 +1919,7 @@ elif page == "Progreso Experimentos":
                               zeroline=False, showline=False)
             fig1.update_yaxes(gridcolor='rgba(136,136,136,0.2)',
                               zeroline=False, showline=False)
-            st.plotly_chart(fig1, use_container_width=True,
+            st.plotly_chart(fig1, width='stretch',
                            config={'displayModeBar': False},
                            key=f'prog_model_{proc_id}')
 
@@ -1943,7 +1958,7 @@ elif page == "Progreso Experimentos":
                 fig2.add_annotation(text='Sin datos de velocidad',
                                     x=0.5, y=0.5, xref='paper', yref='paper',
                                     showarrow=False, font=dict(size=12, color='#888'))
-            st.plotly_chart(fig2, use_container_width=True,
+            st.plotly_chart(fig2, width='stretch',
                            config={'displayModeBar': False},
                            key=f'prog_tps_{proc_id}')
 
@@ -1984,7 +1999,7 @@ elif page == "Progreso Experimentos":
                 matrix_df.style.background_gradient(
                     cmap='RdYlGn', vmin=0, vmax=EXPECTED_ITERATIONS
                 ).format("{:.0f}/" + str(EXPECTED_ITERATIONS)),
-                use_container_width=True
+                width='stretch'
             )
 
             try:
@@ -2007,11 +2022,11 @@ elif page == "Progreso Experimentos":
                     time_df.style.background_gradient(
                         cmap='YlOrRd', vmin=0, vmax=_t_max
                     ).format(_fmt_time),
-                    use_container_width=True
+                    width='stretch'
                 )
             except Exception:
                 st.dataframe(time_df if 'time_df' in dir() else pd.DataFrame(),
-                             use_container_width=True)
+                             width='stretch')
 
         # ── Detalle de archivos ───────────────────────────────
         with st.expander("Detalle de archivos monitorizados"):
@@ -2028,7 +2043,7 @@ elif page == "Progreso Experimentos":
                     'Estado': 'En curso' if p['active'] else ('Completado' if f['type'] == 'result' else 'Interrumpido'),
                     'Ultima modificacion': datetime.fromtimestamp(f['mtime']).strftime('%Y-%m-%d %H:%M:%S'),
                 })
-            st.dataframe(pd.DataFrame(file_rows), use_container_width=True)
+            st.dataframe(pd.DataFrame(file_rows), width='stretch')
 
         st.caption(f"Ultima actualizacion: {datetime.now().strftime('%H:%M:%S')}")
 

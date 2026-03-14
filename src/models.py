@@ -65,7 +65,8 @@ class OllamaModel:
                     options={
                         "temperature": self.temperature,
                         "num_predict": max_tokens,
-                    }
+                    },
+                    think=False,
                 )
 
             response = _retry_with_backoff(_call)

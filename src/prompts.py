@@ -317,22 +317,28 @@ REWRITE_PROMPT = (
 
 # ── Prompt de extraccion de requisitos desde texto bruto ───
 EXTRACTION_PROMPT = (
-    'Eres un experto en ingenieria de requisitos. Extrae UNICAMENTE los requisitos '
-    'de software del siguiente texto. Descarta cabeceras, comentarios, numeros de pagina, '
-    'indices, nombres de autores, fechas, versiones y cualquier texto que no sea un requisito.\n\n'
-    'Un requisito de software es una declaracion que describe:\n'
-    '- QUE debe hacer el sistema (funcional): "The system shall allow...", "El sistema debera permitir..."\n'
-    '- COMO debe comportarse (no funcional): "The system shall respond within...", "El sistema debera soportar..."\n\n'
-    'Incluye requisitos en cualquier idioma (espanol, ingles, etc.).\n'
-    'Las lineas que empiezan con "El sistema debera", "The system shall/must/should" son requisitos.\n\n'
+    'Eres un experto en ingenieria de requisitos. Extrae los elementos de ingenieria de '
+    'requisitos del siguiente texto. Descarta cabeceras, comentarios, numeros de pagina, '
+    'indices, nombres de autores, fechas, versiones y cualquier texto que no sea relevante.\n\n'
+    'Clasifica cada elemento extraido con uno de estos prefijos:\n'
+    '- REQ: para requisitos de software (funcionales o no funcionales)\n'
+    '  Ejemplo: "El sistema debera permitir login con email", "The system shall respond within 2s"\n'
+    '- UC: para casos de uso (describen interacciones actor-sistema con flujo de pasos)\n'
+    '  Ejemplo: "El usuario accede al sistema, introduce credenciales y el sistema valida el acceso"\n'
+    '- US: para historias de usuario (formato "Como [rol], quiero [accion], para [beneficio]")\n'
+    '  Ejemplo: "Como administrador, quiero gestionar usuarios, para controlar el acceso"\n\n'
+    'Incluye elementos en cualquier idioma (espanol, ingles, etc.).\n\n'
     'Ejemplo:\n'
-    'Texto: "# Requisitos\\nEl sistema debera permitir login con email.\\n# Notas\\nVersion 1.0"\n'
-    'Requisitos:\n'
-    'REQ: El sistema debera permitir login con email.\n\n'
+    'Texto: "# Requisitos\\nEl sistema debera permitir login.\\nCU-01: El usuario accede y se autentica.\\n'
+    'Como cliente, quiero ver mi historial, para revisar pedidos.\\n# Notas\\nVersion 1.0"\n'
+    'Elementos:\n'
+    'REQ: El sistema debera permitir login.\n'
+    'UC: El usuario accede y se autentica.\n'
+    'US: Como cliente, quiero ver mi historial, para revisar pedidos.\n\n'
     'Texto:\n"""\n{text}\n"""\n\n'
-    'Devuelve SOLO los requisitos extraidos, uno por linea, con prefijo "REQ: ".\n'
-    'Si no hay requisitos validos, responde "NO_REQUIREMENTS".\n\n'
-    'Requisitos:'
+    'Devuelve SOLO los elementos extraidos, uno por linea, con su prefijo (REQ:, UC: o US:).\n'
+    'Si no hay elementos validos, responde "NO_REQUIREMENTS".\n\n'
+    'Elementos:'
 )
 
 
@@ -654,41 +660,46 @@ def parse_combined_response(response: str) -> dict:
     return result
 
 
-def parse_extraction_response(response: str) -> list[str]:
-    """Parse LLM extraction response into list of requirements.
+def parse_extraction_response(response: str) -> list[dict]:
+    """Parse LLM extraction response into list of items with type.
 
-    Extracts lines prefixed with 'REQ:'. Falls back to non-empty lines >= 10 chars.
+    Extracts lines prefixed with 'REQ:', 'UC:' or 'US:'.
+    Falls back to non-empty lines >= 10 chars (typed as 'REQ').
+
+    Returns:
+        List of dicts with keys 'text' and 'item_type' ('REQ', 'UC', 'US').
     """
     if 'NO_REQUIREMENTS' in response.upper():
         return []
 
-    # Try extracting REQ: prefixed lines
-    requirements = []
+    # Mapping of prefixes to item types
+    _PREFIX_RE = re.compile(r'^(REQ|UC|US)\s*:\s*(.+)', re.IGNORECASE)
+
+    items = []
     for line in response.split('\n'):
         line = line.strip()
-        m = re.match(r'^REQ\s*:\s*(.+)', line, re.IGNORECASE)
+        m = _PREFIX_RE.match(line)
         if m:
-            req = m.group(1).strip()
-            if req:
-                requirements.append(req)
+            item_type = m.group(1).upper()
+            text = m.group(2).strip()
+            if text:
+                items.append({'text': text, 'item_type': item_type})
 
-    if requirements:
-        return requirements
+    if items:
+        return items
 
-    # Fallback: non-empty lines >= 10 chars that look like requirements
+    # Fallback: non-empty lines >= 10 chars (default to REQ)
     for line in response.split('\n'):
         line = line.strip()
-        # Skip empty, very short, or meta lines
         if len(line) < 10:
             continue
         if line.upper().startswith(('NO_REQ', 'NOTE:', 'NOTA:')):
             continue
-        # Strip leading numbering/bullets
         clean = re.sub(r'^[\d\.\)\-\*]+\s*', '', line).strip()
         if len(clean) >= 10:
-            requirements.append(clean)
+            items.append({'text': clean, 'item_type': 'REQ'})
 
-    return requirements
+    return items
 
 
 def build_combined_prompt(strategy: str, requirement: str) -> str:
