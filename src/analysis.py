@@ -22,6 +22,17 @@ FIGSIZE = (12, 7)
 DPI = 300
 PALETTE = "Set2"
 
+# Etiquetas legibles para los modelos (clave = valor en columna 'model' del CSV)
+MODEL_LABELS = {
+    "qwen7b":      "Qwen 2.5 7B (local)",
+    "qwen9b":      "Qwen 3.5 9B (local)",
+    "llama8b":     "Llama 3.1 8B (local)",
+    "llama3b":     "Llama 3.2 3B (local)",
+    "nim_llama70b": "Llama 3.1 70B (NIM)",
+    "nim_llama8b":  "Llama 3.1 8B (NIM)",
+    "nim_mistral":  "Mistral 7B (NIM)",
+}
+
 
 def load_results(results_path: str) -> pd.DataFrame:
     """Carga resultados desde CSV."""
@@ -73,7 +84,9 @@ def compute_metrics_per_config(df: pd.DataFrame, task: str = "classification") -
                     'avg_tokens_per_second': avg_tps,
                 })
 
-    return pd.DataFrame(rows)
+    result = pd.DataFrame(rows)
+    result['model'] = result['model'].map(lambda m: MODEL_LABELS.get(m, m))
+    return result
 
 
 # ============================================================
@@ -211,7 +224,7 @@ def plot_speed_comparison(metrics_df: pd.DataFrame, output_path: Optional[str] =
     model_speed = metrics_df.groupby('model')['avg_tokens_per_second'].mean().sort_values(ascending=False)
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    colors = ['#2ecc71' if 'nim' not in m else '#3498db' for m in model_speed.index]
+    colors = ['#2ecc71' if 'NIM)' not in m else '#3498db' for m in model_speed.index]
     model_speed.plot(kind='bar', ax=ax, color=colors, edgecolor='black', linewidth=0.5)
 
     ax.set_title('Velocidad de Inferencia (tokens/s)', fontsize=14, fontweight='bold')
@@ -264,9 +277,9 @@ def paired_ttest_local_vs_api(metrics_df: pd.DataFrame, metric: str = "f1",
                                api_models: Optional[List[str]] = None) -> dict:
     """T-test pareado: modelos locales vs API."""
     if local_models is None:
-        local_models = ['qwen7b', 'llama8b', 'llama3b']
+        local_models = [MODEL_LABELS.get(m, m) for m in ['qwen7b', 'llama8b', 'llama3b', 'qwen9b']]
     if api_models is None:
-        api_models = ['nim_llama70b', 'nim_llama8b', 'nim_mistral']
+        api_models = [MODEL_LABELS.get(m, m) for m in ['nim_llama70b', 'nim_llama8b', 'nim_mistral']]
 
     local_scores = metrics_df[metrics_df['model'].isin(local_models)][metric].values
     api_scores = metrics_df[metrics_df['model'].isin(api_models)][metric].values
@@ -519,7 +532,7 @@ def plot_model_ranking(ranking_df: pd.DataFrame, metric: str = "f1",
     col_std = f'{metric}_global_std'
 
     fig, ax = plt.subplots(figsize=(10, max(4, len(ranking_df) * 0.7)))
-    colors = ['#2ecc71' if 'nim' not in m else '#3498db' for m in ranking_df['model']]
+    colors = ['#2ecc71' if 'NIM)' not in m else '#3498db' for m in ranking_df['model']]
 
     bars = ax.barh(ranking_df['model'], ranking_df[col_mean], xerr=ranking_df[col_std],
                    color=colors, edgecolor='black', linewidth=0.5, capsize=4)
@@ -695,7 +708,7 @@ def plot_efficiency_frontier(metrics_df: pd.DataFrame, metric: str = "f1",
 
     fig, ax = plt.subplots(figsize=(10, 7))
 
-    colors = ['#2ecc71' if 'nim' not in m else '#3498db' for m in model_stats['model']]
+    colors = ['#2ecc71' if 'NIM)' not in m else '#3498db' for m in model_stats['model']]
     sizes = [120] * len(model_stats)
 
     scatter = ax.scatter(model_stats['avg_tokens_per_second'], model_stats[metric],
@@ -737,7 +750,7 @@ def plot_f1_vs_time(metrics_df: pd.DataFrame, output_path: Optional[str] = None)
 
     fig, ax = plt.subplots(figsize=(10, 7))
 
-    colors = ['#2ecc71' if 'nim' not in m else '#3498db' for m in model_stats['model']]
+    colors = ['#2ecc71' if 'NIM)' not in m else '#3498db' for m in model_stats['model']]
 
     ax.scatter(model_stats['avg_time_seconds'], model_stats['f1'],
                c=colors, s=120, edgecolors='black', linewidth=0.8, zorder=5)
@@ -777,7 +790,7 @@ def generate_efficiency_table(metrics_df: pd.DataFrame, fmt: str = "markdown") -
     }).round(3).reset_index()
 
     model_stats.columns = ['Modelo', 'F1', 'Accuracy', 'Tokens/s', 'Tiempo (s)']
-    model_stats['Tipo'] = ['Local' if 'nim' not in m else 'API' for m in model_stats['Modelo']]
+    model_stats['Tipo'] = ['Local' if '(NIM)' not in m else 'API' for m in model_stats['Modelo']]
     model_stats['Eficiencia (F1/s)'] = (model_stats['F1'] / model_stats['Tiempo (s)']).round(3)
     model_stats = model_stats.sort_values('Eficiencia (F1/s)', ascending=False)
 

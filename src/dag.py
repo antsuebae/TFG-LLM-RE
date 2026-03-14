@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # ── Configuracion de modelos (compartida con pipeline.py) ────
 MODEL_CONFIGS = {
     "qwen7b": {"name": "qwen2.5:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
+    "qwen9b": {"name": "qwen3.5:9b", "type": "ollama", "short_name": "qwen9b"},
     "llama8b": {"name": "llama3.1:8b-instruct-q4_K_M", "type": "ollama", "short_name": "llama8b"},
     "llama3b": {"name": "llama3.2:3b-instruct-q4_K_M", "type": "ollama", "short_name": "llama3b"},
     "nim_llama70b": {"name": "meta/llama-3.1-70b-instruct", "type": "nvidia_nim", "short_name": "nim_llama70b"},
@@ -233,12 +234,16 @@ def _node_extract_requirements(ctx: dict) -> dict:
     """Node 2: Extraccion LLM de requisitos desde texto bruto."""
     if ctx.get('skip_extraction', True):
         n = len(ctx.get('requirements', []))
-        logger.info(f"[extract] Extraccion LLM saltada, {n} requisitos cargados")
+        # Ensure item_types exists for non-LLM paths
+        if 'item_types' not in ctx:
+            ctx['item_types'] = ['REQ'] * n
+        logger.info(f"[extract] Extraccion LLM saltada, {n} elementos cargados")
         return ctx
 
     raw_text = ctx.get('raw_text', '')
     if not raw_text.strip():
         ctx['requirements'] = []
+        ctx['item_types'] = []
         return ctx
 
     model = ctx['model']
@@ -268,37 +273,43 @@ def _node_extract_requirements(ctx: dict) -> dict:
         logger.warning(f"[extract] Error en chunk: {resp['error']}")
         return []
 
-    all_reqs = []
+    all_items = []
     chunk_results = _run_concurrent_or_sequential(extract_chunk, chunks, model_type)
-    for reqs in chunk_results:
-        if reqs:
-            all_reqs.extend(reqs)
+    for items in chunk_results:
+        if items:
+            all_items.extend(items)
 
     # Deduplicate preserving order
     seen = set()
-    unique_reqs = []
-    for req in all_reqs:
-        normalized = req.strip().lower()
+    unique_items = []
+    for item in all_items:
+        normalized = item['text'].strip().lower()
         if normalized not in seen:
             seen.add(normalized)
-            unique_reqs.append(req)
+            unique_items.append(item)
 
-    if unique_reqs:
-        ctx['requirements'] = unique_reqs
-        logger.info(f"[extract] {len(unique_reqs)} requisitos extraidos por LLM desde {len(chunks)} chunks")
+    if unique_items:
+        ctx['requirements'] = [item['text'] for item in unique_items]
+        ctx['item_types'] = [item['item_type'] for item in unique_items]
+        counts = {}
+        for item in unique_items:
+            counts[item['item_type']] = counts.get(item['item_type'], 0) + 1
+        logger.info(f"[extract] {len(unique_items)} elementos extraidos por LLM desde {len(chunks)} chunks: {counts}")
     else:
         # Fallback: el LLM no extrajo nada, usar parser regex
-        logger.warning(f"[extract] LLM no extrajo requisitos de {len(chunks)} chunks, usando fallback regex")
+        logger.warning(f"[extract] LLM no extrajo elementos de {len(chunks)} chunks, usando fallback regex")
         from pipeline import _parse_text_lines, _clean_pdf_artifacts
         clean_text = _clean_pdf_artifacts(raw_text)
         ctx['requirements'] = _parse_text_lines(clean_text)
-        logger.info(f"[extract] Fallback regex: {len(ctx['requirements'])} requisitos")
+        ctx['item_types'] = ['REQ'] * len(ctx['requirements'])
+        logger.info(f"[extract] Fallback regex: {len(ctx['requirements'])} elementos")
     return ctx
 
 
 def _node_combined_analysis(ctx: dict) -> dict:
     """Node 3: Analisis combinado (4 tareas en 1 llamada LLM)."""
     requirements = ctx.get('requirements', [])
+    item_types = ctx.get('item_types', ['REQ'] * len(requirements))
     if not requirements:
         ctx['analysis_rows'] = []
         return ctx
@@ -307,7 +318,8 @@ def _node_combined_analysis(ctx: dict) -> dict:
     model_type = ctx['model_type']
     strategy = ctx['strategy']
 
-    def analyze_one(req):
+    def analyze_one(args):
+        req, item_type = args
         try:
             prompt = build_combined_prompt(strategy, req)
             resp = model.generate(prompt, max_tokens=1024)
@@ -317,10 +329,13 @@ def _node_combined_analysis(ctx: dict) -> dict:
                 # Check if classification failed — fallback to individual calls
                 if parsed['classification'] == 'INVALID':
                     logger.warning(f"[combined] Fallback a llamadas individuales para: {req[:60]}...")
-                    return _fallback_individual_analysis(model, req, strategy, resp['time_seconds'])
+                    row = _fallback_individual_analysis(model, req, strategy, resp['time_seconds'])
+                    row['item_type'] = item_type
+                    return row
 
                 return {
                     'text': req,
+                    'item_type': item_type,
                     'classification': parsed['classification'],
                     'is_ambiguous': parsed['is_ambiguous'],
                     'ambiguity_type': parsed['ambiguity_type'],
@@ -333,11 +348,14 @@ def _node_combined_analysis(ctx: dict) -> dict:
                 }
             else:
                 logger.warning(f"[combined] Error en llamada combinada: {resp['error']}")
-                return _fallback_individual_analysis(model, req, strategy, 0)
+                row = _fallback_individual_analysis(model, req, strategy, 0)
+                row['item_type'] = item_type
+                return row
         except Exception as e:
             logger.error(f"[combined] Error total analizando requisito: {e}")
             return {
                 'text': req,
+                'item_type': item_type,
                 'classification': 'ERROR',
                 'is_ambiguous': 'ERROR',
                 'ambiguity_type': '',
@@ -349,7 +367,8 @@ def _node_combined_analysis(ctx: dict) -> dict:
                 'combined_time': 0,
             }
 
-    rows = _run_concurrent_or_sequential(analyze_one, requirements, model_type)
+    items_with_types = list(zip(requirements, item_types))
+    rows = _run_concurrent_or_sequential(analyze_one, items_with_types, model_type)
     # Filter out None results from errors
     ctx['analysis_rows'] = [r for r in rows if r is not None]
     return ctx

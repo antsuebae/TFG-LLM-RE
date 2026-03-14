@@ -1,11 +1,14 @@
 # Configuracion del Experimento
 # TFG: Optimizacion de la respuesta de los LLMs en el proceso de RE
 
-# Modelos a evaluar (5 total)
+# Modelos a evaluar (7 total)
 models:
   local:
     - name: "qwen2.5:7b-instruct-q5_K_M"
       short_name: "qwen7b"
+      type: "ollama"
+    - name: "qwen3.5:9b"
+      short_name: "qwen9b"
       type: "ollama"
     - name: "llama3.1:8b-instruct-q4_K_M"
       short_name: "llama8b"

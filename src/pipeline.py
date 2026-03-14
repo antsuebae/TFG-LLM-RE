@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # Modelos disponibles
 MODEL_CONFIGS = {
     "qwen7b": {"name": "qwen2.5:7b-instruct-q5_K_M", "type": "ollama", "short_name": "qwen7b"},
+    "qwen9b": {"name": "qwen3.5:9b", "type": "ollama", "short_name": "qwen9b"},
     "llama8b": {"name": "llama3.1:8b-instruct-q4_K_M", "type": "ollama", "short_name": "llama8b"},
     "llama3b": {"name": "llama3.2:3b-instruct-q4_K_M", "type": "ollama", "short_name": "llama3b"},
     "nim_llama70b": {"name": "meta/llama-3.1-70b-instruct", "type": "nvidia_nim", "short_name": "nim_llama70b"},
@@ -249,6 +250,13 @@ def generate_html_report(results_df: pd.DataFrame, inconsistencies: list[dict],
     avg_quality = results_df['quality_score'].mean()
     n_inconsistencies = len(inconsistencies)
 
+    # Conteo por tipo de elemento
+    _type_labels = {'REQ': 'Requisitos', 'UC': 'Casos de Uso', 'US': 'Historias de Usuario'}
+    has_item_types = 'item_type' in results_df.columns
+    n_req = len(results_df[results_df['item_type'] == 'REQ']) if has_item_types else total
+    n_uc = len(results_df[results_df['item_type'] == 'UC']) if has_item_types else 0
+    n_us = len(results_df[results_df['item_type'] == 'US']) if has_item_types else 0
+
     # Requisitos con problemas
     problems_df = results_df[
         (results_df['is_ambiguous'] == True) |
@@ -279,6 +287,9 @@ def generate_html_report(results_df: pd.DataFrame, inconsistencies: list[dict],
     .tag {{ display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }}
     .tag-f {{ background: #d4edda; color: #155724; }}
     .tag-nf {{ background: #cce5ff; color: #004085; }}
+    .tag-req {{ background: #e2e3e5; color: #383d41; }}
+    .tag-uc {{ background: #d1ecf1; color: #0c5460; }}
+    .tag-us {{ background: #fff3cd; color: #856404; }}
     .tag-yes {{ background: #f8d7da; color: #721c24; }}
     .tag-no {{ background: #d4edda; color: #155724; }}
     .quality-bar {{ height: 20px; border-radius: 10px; background: #eee; overflow: hidden; }}
@@ -293,7 +304,10 @@ def generate_html_report(results_df: pd.DataFrame, inconsistencies: list[dict],
 <p class="meta">Modelo: <strong>{model_name}</strong> | Estrategia: <strong>{strategy}</strong> | Fecha: {datetime.now():%Y-%m-%d %H:%M}</p>
 
 <div class="summary">
-    <div class="card"><div class="number">{total}</div><div class="label">Requisitos</div></div>
+    <div class="card"><div class="number">{total}</div><div class="label">Elementos</div></div>
+    <div class="card"><div class="number">{n_req}</div><div class="label">Requisitos</div></div>
+    {"" if n_uc == 0 else f'<div class="card"><div class="number">{n_uc}</div><div class="label">Casos de Uso</div></div>'}
+    {"" if n_us == 0 else f'<div class="card"><div class="number">{n_us}</div><div class="label">Historias de Usuario</div></div>'}
     <div class="card"><div class="number">{n_functional}</div><div class="label">Funcionales</div></div>
     <div class="card"><div class="number">{n_nonfunctional}</div><div class="label">No Funcionales</div></div>
     <div class="card"><div class="number {'bad' if n_ambiguous > total*0.3 else 'warning' if n_ambiguous > 0 else 'good'}">{n_ambiguous}</div><div class="label">Ambiguos</div></div>
@@ -303,12 +317,16 @@ def generate_html_report(results_df: pd.DataFrame, inconsistencies: list[dict],
     <div class="card"><div class="number {'bad' if n_inconsistencies > 0 else 'good'}">{n_inconsistencies}</div><div class="label">Inconsistencias</div></div>
 </div>
 
-<h2>Detalle por Requisito</h2>
+<h2>Detalle por Elemento</h2>
 <table>
-<tr><th>#</th><th>Requisito</th><th>Tipo</th><th>Ambiguo</th><th>Completo</th><th>Testable</th><th>Calidad</th></tr>
+<tr><th>#</th><th>Elemento</th><th>Categoria</th><th>Tipo F/NF</th><th>Ambiguo</th><th>Completo</th><th>Testable</th><th>Calidad</th></tr>
 """
 
     for idx, row in results_df.iterrows():
+        item_type = row.get('item_type', 'REQ') if has_item_types else 'REQ'
+        _type_tag_map = {'REQ': ('tag-req', 'Requisito'), 'UC': ('tag-uc', 'Caso de Uso'), 'US': ('tag-us', 'Historia de Usuario')}
+        type_css, type_label = _type_tag_map.get(item_type, ('tag-req', 'Requisito'))
+        type_tag = f'<span class="tag {type_css}">{type_label}</span>'
         cls_tag = f'<span class="tag tag-f">F</span>' if row['classification'] == 'F' else f'<span class="tag tag-nf">NF</span>'
         amb_tag = f'<span class="tag tag-yes">Si</span>' if row['is_ambiguous'] else f'<span class="tag tag-no">No</span>'
         comp_tag = f'<span class="tag tag-no">No</span>' if not row['is_complete'] else f'<span class="tag tag-no" style="background:#d4edda;color:#155724">Si</span>'
@@ -319,7 +337,7 @@ def generate_html_report(results_df: pd.DataFrame, inconsistencies: list[dict],
         quality_bar = f'<div class="quality-bar"><div class="quality-fill" style="width:{q}%;background:{color}"></div></div>'
 
         text = row['text'][:120] + ('...' if len(str(row['text'])) > 120 else '')
-        html += f'<tr><td>{idx+1}</td><td>{text}</td><td>{cls_tag}</td><td>{amb_tag}</td><td>{comp_tag}</td><td>{test_tag}</td><td>{quality_bar} {q:.0f}%</td></tr>\n'
+        html += f'<tr><td>{idx+1}</td><td>{text}</td><td>{type_tag}</td><td>{cls_tag}</td><td>{amb_tag}</td><td>{comp_tag}</td><td>{test_tag}</td><td>{quality_bar} {q:.0f}%</td></tr>\n'
 
     html += '</table>\n'
 
@@ -368,13 +386,26 @@ def generate_markdown_report(results_df: pd.DataFrame, inconsistencies: list[dic
     total = len(results_df)
     avg_quality = results_df['quality_score'].mean()
 
+    has_item_types = 'item_type' in results_df.columns
+    _type_labels_md = {'REQ': 'Requisito', 'UC': 'Caso de Uso', 'US': 'Historia'}
+    n_req = len(results_df[results_df['item_type'] == 'REQ']) if has_item_types else total
+    n_uc = len(results_df[results_df['item_type'] == 'UC']) if has_item_types else 0
+    n_us = len(results_df[results_df['item_type'] == 'US']) if has_item_types else 0
+
     lines = [
         f"# Informe de Analisis de Requisitos\n",
         f"**Modelo:** {model_name} | **Estrategia:** {strategy} | **Fecha:** {datetime.now():%Y-%m-%d %H:%M}\n",
         f"## Resumen\n",
         f"| Metrica | Valor |",
         f"|---------|-------|",
-        f"| Total requisitos | {total} |",
+        f"| Total elementos | {total} |",
+        f"| Requisitos | {n_req} |",
+    ]
+    if n_uc > 0:
+        lines.append(f"| Casos de uso | {n_uc} |")
+    if n_us > 0:
+        lines.append(f"| Historias de usuario | {n_us} |")
+    lines.extend([
         f"| Funcionales (F) | {len(results_df[results_df['classification'] == 'F'])} |",
         f"| No Funcionales (NF) | {len(results_df[results_df['classification'] == 'NF'])} |",
         f"| Ambiguos | {len(results_df[results_df['is_ambiguous'] == True])} |",
@@ -383,16 +414,18 @@ def generate_markdown_report(results_df: pd.DataFrame, inconsistencies: list[dic
         f"| Calidad media | {avg_quality:.0f}% |",
         f"| Inconsistencias | {len(inconsistencies)} |",
         f"\n## Detalle\n",
-        f"| # | Requisito | Tipo | Ambiguo | Completo | Testable | Calidad |",
-        f"|---|-----------|------|---------|----------|----------|---------|",
-    ]
+        f"| # | Elemento | Categoria | Tipo F/NF | Ambiguo | Completo | Testable | Calidad |",
+        f"|---|----------|-----------|-----------|---------|----------|----------|---------|",
+    ])
 
     for idx, row in results_df.iterrows():
         text = str(row['text'])[:80] + ('...' if len(str(row['text'])) > 80 else '')
+        item_type = row.get('item_type', 'REQ') if has_item_types else 'REQ'
+        cat = _type_labels_md.get(item_type, 'Requisito')
         amb = 'Si' if row['is_ambiguous'] else 'No'
         comp = 'Si' if row['is_complete'] else 'No'
         test = 'Si' if row['is_testable'] else 'No'
-        lines.append(f"| {idx+1} | {text} | {row['classification']} | {amb} | {comp} | {test} | {row['quality_score']:.0f}% |")
+        lines.append(f"| {idx+1} | {text} | {cat} | {row['classification']} | {amb} | {comp} | {test} | {row['quality_score']:.0f}% |")
 
     if inconsistencies:
         lines.append(f"\n## Inconsistencias Detectadas\n")
