@@ -11,8 +11,6 @@ permissions:
 jobs:
   analyze-requirements:
     runs-on: ubuntu-latest
-    # Solo ejecutar si hay NVIDIA_API_KEY configurada
-    if: ${{ secrets.NVIDIA_API_KEY != '' }}
 
     steps:
       - uses: actions/checkout@v4
