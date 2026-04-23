@@ -10,6 +10,7 @@ models:
     - name: "qwen3.5:9b"
       short_name: "qwen9b"
       type: "ollama"
+      num_ctx: 4096
     - name: "llama3.1:8b-instruct-q4_K_M"
       short_name: "llama8b"
       type: "ollama"
