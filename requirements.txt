@@ -32,3 +32,6 @@ pypdf>=4.0
 
 # Frontend
 streamlit>=1.38
+
+# Language detection
+langdetect>=1.0.9

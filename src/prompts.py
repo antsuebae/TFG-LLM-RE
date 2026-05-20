@@ -114,7 +114,7 @@ PROMPTS = {
         "few_shot": (
             'Determina si el requisito es ambiguo.\n\n'
             'Ejemplos:\n'
-            '- "The system should be fast" -> AMBIGUOUS: YES, TYPE: vague_term, WORDS: fast\n'
+            '- "The system should be user-friendly" -> AMBIGUOUS: YES, TYPE: vague_term, WORDS: user-friendly\n'
             '- "The system shall respond within 200ms" -> AMBIGUOUS: NO, TYPE: none, WORDS: none\n'
             '- "It should handle the data properly" -> AMBIGUOUS: YES, TYPE: pronoun, WORDS: it, properly\n'
             '- "The system shall encrypt all passwords using AES-256" -> AMBIGUOUS: NO, TYPE: none, WORDS: none\n\n'
@@ -394,11 +394,11 @@ COMBINED_PROMPTS = {
         'TESTABLE: YES\n'
         'TESTABILITY_REASON: measurable\n\n'
         'Ejemplo 2 (requisito con problemas):\n'
-        'Requisito: "The system should handle data properly and be fast"\n'
+        'Requisito: "The system should handle data properly and be user-friendly"\n'
         'CLASSIFICATION: NF\n'
         'AMBIGUOUS: YES\n'
         'AMBIGUITY_TYPE: vague_term\n'
-        'AMBIGUOUS_WORDS: properly, fast\n'
+        'AMBIGUOUS_WORDS: properly, user-friendly\n'
         'COMPLETE: NO\n'
         'MISSING: error_handling, boundary_conditions, acceptance_criteria\n'
         'TESTABLE: NO\n'
@@ -430,13 +430,15 @@ STRATEGY_NAMES = ["question_refinement", "cognitive_verifier", "persona_context"
                   "few_shot", "chain_of_thought"]
 
 
-def build_prompt(task: str, strategy: str, **kwargs) -> str:
+def build_prompt(task: str, strategy: str, context_prompt: str = '', **kwargs) -> str:
     """
     Construye el prompt segun la tarea y estrategia.
 
     Args:
         task: classification, ambiguity, completeness, inconsistency, testability
         strategy: question_refinement, cognitive_verifier, persona_context, few_shot, chain_of_thought
+        context_prompt: Optional domain context. For few_shot, injected just before
+            the final "Requisito:" line so it takes precedence over examples.
         **kwargs: Variables del template (requirement, requirement_a, requirement_b)
 
     Returns:
@@ -447,7 +449,21 @@ def build_prompt(task: str, strategy: str, **kwargs) -> str:
     if strategy not in PROMPTS[task]:
         raise ValueError(f"Estrategia desconocida: {strategy}. Opciones: {STRATEGY_NAMES}")
 
-    return PROMPTS[task][strategy].format(**kwargs)
+    base = PROMPTS[task][strategy].format(**kwargs)
+
+    if not context_prompt:
+        return base
+
+    ctx_block = f"Contexto del dominio:\n{context_prompt}\n\n"
+
+    if strategy == 'few_shot':
+        # Find the last "Requisito:" in the prompt (the actual requirement,
+        # not the example ones). Inject context just before it.
+        last_req = base.rfind('\nRequisito:')
+        if last_req != -1:
+            return base[:last_req + 1] + ctx_block + base[last_req + 1:]
+
+    return ctx_block + base
 
 
 # ============================================================
@@ -702,19 +718,38 @@ def parse_extraction_response(response: str) -> list[dict]:
     return items
 
 
-def build_combined_prompt(strategy: str, requirement: str) -> str:
+def build_combined_prompt(strategy: str, requirement: str,
+                          context_prompt: str = '') -> str:
     """Build a combined analysis prompt for the given strategy.
 
     Args:
         strategy: One of the 5 strategy names.
         requirement: The requirement text to analyze.
+        context_prompt: Optional domain context to inject into the prompt.
+            For few_shot, injected just before "Ahora analiza:" so it takes
+            precedence over the examples. For other strategies, prepended.
 
     Returns:
         Formatted combined prompt string.
     """
     if strategy not in COMBINED_PROMPTS:
         raise ValueError(f"Estrategia desconocida: {strategy}. Opciones: {STRATEGY_NAMES}")
-    return COMBINED_PROMPTS[strategy].format(requirement=requirement)
+
+    base = COMBINED_PROMPTS[strategy].format(requirement=requirement)
+
+    if not context_prompt:
+        return base
+
+    ctx_block = f"Contexto del dominio:\n{context_prompt}\n\n"
+
+    if strategy == 'few_shot':
+        # Inject just before "Ahora analiza:" so context overrides examples
+        marker = 'Ahora analiza:\n'
+        if marker in base:
+            return base.replace(marker, ctx_block + marker, 1)
+
+    # Default: prepend context
+    return ctx_block + base
 
 
 def build_extraction_prompt(text: str) -> str:
@@ -746,3 +781,86 @@ def parse_response(task: str, response: str):
     if task not in PARSERS:
         raise ValueError(f"No parser for task: {task}. Options: {list(PARSERS.keys())}")
     return PARSERS[task](response)
+
+
+# ── Domain filter prompt & parser ─────────────────────────────────────────────
+
+DOMAIN_FILTER_PROMPT = """\
+Eres un experto en ingeniería de requisitos. Se ha analizado el siguiente requisito:
+
+Requisito: "{requirement}"
+
+Análisis previo (sin conocimiento del dominio):
+- Clasificación: {classification}
+- ¿Es ambiguo?: {is_ambiguous} — términos: {ambiguous_words}
+- ¿Es completo?: {is_complete} — elementos faltantes: {missing_elements}
+- ¿Es testable?: {is_testable} — razón: {testability_reason}
+
+El sistema opera en el siguiente dominio:
+{context}
+
+Tu tarea: revisa si el análisis previo sigue siendo correcto dado el contexto del dominio.
+En dominios especializados, términos aparentemente vagos pueden tener significados técnicos
+precisos (p. ej., "rápido" en pagos SEPA = <10s, "seguro" en banca = TLS 1.3 + OAuth 2.0).
+- Si el contexto del dominio clarifica o acota el significado de un término marcado como
+  ambiguo, cambia AMBIGUOUS a NO.
+- Si el dominio especifica criterios de aceptación implícitos que hacen el requisito
+  verificable, cambia TESTABLE a YES.
+- Si el dominio aporta el contexto que cubre los elementos considerados faltantes,
+  cambia COMPLETE a YES.
+Solo cambia un valor si el contexto lo justifica de forma clara y explícita.
+
+Responde ÚNICAMENTE en este formato (sin texto adicional):
+AMBIGUOUS: YES/NO
+COMPLETE: YES/NO
+TESTABLE: YES/NO
+REASON: <una línea explicando los cambios realizados, o NONE si no hay cambios>
+"""
+
+
+def parse_domain_filter_response(text: str, original: dict) -> dict:
+    """Parsea la respuesta del nodo domain_filter.
+
+    Args:
+        text: Raw LLM response.
+        original: Row dict with current flag values (used as fallback).
+
+    Returns:
+        Dict with keys: is_ambiguous, is_complete, is_testable,
+                        domain_filter_reason, domain_filter_applied.
+    """
+    result = {
+        'is_ambiguous': original.get('is_ambiguous'),
+        'is_complete': original.get('is_complete'),
+        'is_testable': original.get('is_testable'),
+        'domain_filter_reason': 'NONE',
+        'domain_filter_applied': False,
+    }
+
+    for line in text.strip().splitlines():
+        line = line.strip()
+        if ':' not in line:
+            continue
+        key, _, val = line.partition(':')
+        key = key.strip().upper()
+        val = val.strip()
+
+        if key == 'AMBIGUOUS':
+            new_val = val.upper().startswith('YES')
+            if new_val != result['is_ambiguous']:
+                result['is_ambiguous'] = new_val
+                result['domain_filter_applied'] = True
+        elif key == 'COMPLETE':
+            new_val = val.upper().startswith('YES')
+            if new_val != result['is_complete']:
+                result['is_complete'] = new_val
+                result['domain_filter_applied'] = True
+        elif key == 'TESTABLE':
+            new_val = val.upper().startswith('YES')
+            if new_val != result['is_testable']:
+                result['is_testable'] = new_val
+                result['domain_filter_applied'] = True
+        elif key == 'REASON':
+            result['domain_filter_reason'] = val
+
+    return result
