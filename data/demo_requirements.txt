@@ -1,0 +1,24 @@
+# DEMO: Sistema de pagos online
+#
+# PASO 1 — Ejecutar SIN contexto:
+#   Los requisitos 1, 2, 3 y 5 deben salir ambiguos
+#   (rápidamente, seguro, completo, fácil de usar no tienen definición técnica)
+#   El requisito 4 debe salir correcto (está bien especificado).
+#
+# PASO 2 — Ejecutar CON el siguiente contexto (copiar en "Contexto del dominio"):
+#   'Rápidamente' = latencia máxima de 2 s por transacción según el SLA firmado.
+#
+#   Resultado esperado: solo el req 1 deja de ser ambiguo.
+#   Los requisitos 2, 3 y 5 siguen siendo ambiguos porque
+#   'seguro', 'completo' y 'fácil de usar' no están definidos en el dominio.
+#
+# BONUS — Para demostrar que el contexto también acepta convenciones metodológicas,
+#          cargar 'demo_requirements_usecase.txt' con el contexto:
+#   Los requisitos funcionales están descritos como casos de uso.
+#   Revisa que la secuencia normal incluya tanto pasos de actor como pasos de sistema.
+
+El sistema debe procesar pagos rápidamente.
+El sistema debe ser seguro.
+El sistema debe mantener el historial de transacciones completo.
+El sistema permitirá al usuario introducir su correo y contraseña, verificándolos en un máximo de 500 ms, rechazando credenciales incorrectas y registrando el intento fallido.
+El sistema debe ser fácil de usar.

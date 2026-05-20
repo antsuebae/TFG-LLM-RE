@@ -2,7 +2,7 @@
 Frontend Streamlit para el TFG de Ingenieria de Requisitos con LLMs.
 
 Paginas:
-1. Pipeline Documento - Analisis completo multi-modelo sobre un documento
+1. Análisis de Documento - Analisis completo multi-modelo sobre un documento
 2. Clasificar Requisito (F/NF)
 3. Analizar Calidad (ambiguedad, completitud, testabilidad)
 4. Validar Consistencia (pares de requisitos)
@@ -21,6 +21,13 @@ import json
 import time
 import tempfile
 
+# Plotly en tema claro de forma global
+try:
+    import plotly.io as pio
+    pio.templates.default = "plotly_white"
+except ImportError:
+    pass
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 os.chdir(Path(__file__).parent)
@@ -34,7 +41,7 @@ from warnings_analysis import generate_all_warnings, check_input_warnings
 
 # ── Page config ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="RE-LLM: Analisis de Requisitos",
+    page_title="Verificación de Requisitos con IA",
     page_icon="📋",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -43,45 +50,377 @@ st.set_page_config(
 # ── Custom CSS ───────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Sidebar */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* ── Acento global: eliminar rojo de Streamlit, usar azul acero ── */
+    :root {
+        --primary-color: #2471A3 !important;
+    }
+    /* Cualquier elemento que use el rojo de acento de Streamlit */
+    a, a:visited { color: #2471A3 !important; }
+    [style*="color: rgb(255, 75, 75)"],
+    [style*="color: #ff4b4b"],
+    [style*="color:#ff4b4b"] {
+        color: #2471A3 !important;
+    }
+    /* Spinner / status activo */
+    [data-testid="stSpinner"] svg circle,
+    [data-testid="stSpinner"] svg path { stroke: #2471A3 !important; }
+
+    /* ── Base: fondo blanco, texto oscuro ── */
+    html, body, [data-testid="stAppViewContainer"],
+    [data-testid="stApp"], .stApp, .main,
+    [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
+        background-color: #F7F9FC !important;
+        color: #1C2833 !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    [data-testid="stHeader"] {
+        background-color: #FFFFFF !important;
+        border-bottom: 1px solid #E0E6ED;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    /* Eliminar fondo oscuro residual en el cuerpo Streamlit */
+    .block-container {
+        background-color: transparent !important;
+        padding-top: 2rem;
+    }
+
+    /* ── Sidebar ── */
     section[data-testid="stSidebar"] {
-        border-right: 1px solid #D5DBDB;
+        background: linear-gradient(180deg, #1B3A5C 0%, #1B4F72 100%) !important;
+        border-right: none;
     }
+    section[data-testid="stSidebar"] * {
+        color: #E8EEF4 !important;
+    }
+    section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] .stMarkdown h1 {
-        color: #1B4F72;
+        color: #FFFFFF !important;
+        font-size: 1.3rem !important;
+        letter-spacing: 0.04em;
+        font-weight: 700 !important;
     }
-
-    /* Tables */
-    .stDataFrame {
-        border-radius: 6px;
-        overflow: hidden;
+    section[data-testid="stSidebar"] .stRadio label {
+        color: #C5D8E8 !important;
+        font-size: 0.9rem;
     }
-
-    /* Primary buttons */
-    .stButton > button[kind="primary"] {
-        background-color: #1B4F72;
-        border: none;
-        border-radius: 6px;
+    section[data-testid="stSidebar"] .stRadio [aria-checked="true"] ~ span {
+        color: #FFFFFF !important;
         font-weight: 600;
     }
-    .stButton > button[kind="primary"]:hover {
-        background-color: #154360;
+    section[data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.15) !important;
+    }
+    section[data-testid="stSidebar"] [data-testid="stCaption"] {
+        color: #8AABC5 !important;
+        font-size: 0.78rem;
     }
 
-    /* Status containers */
-    details[data-testid="stExpander"] {
-        border-radius: 6px;
-        border: 1px solid #D5DBDB;
+    /* ── Encabezados ── */
+    h1 { color: #1B3A5C !important; font-weight: 700 !important; font-size: 1.8rem !important; }
+    h2 { color: #1B3A5C !important; font-weight: 600 !important; }
+    h3 { color: #1B4F72 !important; font-weight: 600 !important; }
+    h4, h5, h6 { color: #2C3E50 !important; }
+    p, li, span, label { color: #1C2833; }
+
+    /* ── Métricas en tarjeta ── */
+    [data-testid="stMetric"] {
+        background: #FFFFFF;
+        border: 1px solid #E0E6ED;
+        border-left: 4px solid #1B4F72;
+        border-radius: 8px;
+        padding: 14px 16px !important;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+    [data-testid="stMetricLabel"] > div {
+        color: #5D6D7E !important;
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    [data-testid="stMetricValue"] > div {
+        color: #1B3A5C !important;
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stMetricDelta"] { color: #2E86C1 !important; }
+
+    /* ── Botones primarios ── */
+    .stButton > button[kind="primary"],
+    .stButton > button[kind="primaryFormSubmit"],
+    button[data-testid="baseButton-primary"],
+    button[data-testid="stBaseButton-primary"] {
+        background: linear-gradient(135deg, #2E86C1, #85C1E9) !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        padding: 0.55rem 1.4rem !important;
+        box-shadow: 0 2px 8px rgba(46,134,193,0.3) !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button[kind="primary"]:hover,
+    button[data-testid="baseButton-primary"]:hover,
+    button[data-testid="stBaseButton-primary"]:hover {
+        background: linear-gradient(135deg, #1A6FA0, #5DADE2) !important;
+        box-shadow: 0 4px 14px rgba(46,134,193,0.4) !important;
+        transform: translateY(-1px) !important;
+    }
+    .stButton > button[kind="secondary"],
+    button[data-testid="baseButton-secondary"],
+    button[data-testid="stBaseButton-secondary"] {
+        border: 1px solid #2E86C1 !important;
+        color: #2E86C1 !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        background-color: #FFFFFF !important;
+    }
+    .stButton > button[kind="secondary"]:hover,
+    button[data-testid="stBaseButton-secondary"]:hover {
+        background-color: #EAF4FB !important;
     }
 
-    /* Download buttons */
-    .stDownloadButton > button {
-        border-radius: 6px;
+    /* ── Tabs ── */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #EAF0F6 !important;
+        border-radius: 10px;
+        padding: 4px !important;
+        gap: 2px;
+        border-bottom: none !important;
     }
-
-    /* Tabs */
     .stTabs [data-baseweb="tab"] {
+        background-color: transparent !important;
+        color: #5D6D7E !important;
         font-weight: 500;
+        border-radius: 8px;
+        padding: 8px 16px !important;
+        font-size: 0.875rem;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #2E86C1 !important;
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 6px rgba(46,134,193,0.25);
+    }
+    .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
+    .stTabs [data-baseweb="tab-border"]    { display: none !important; }
+
+    /* ── Inputs y textareas ── */
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stTextInput"] input {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D5DBDB !important;
+        border-radius: 8px !important;
+        color: #1C2833 !important;
+        font-size: 0.9rem;
+    }
+    [data-testid="stTextArea"] textarea:focus,
+    [data-testid="stTextInput"] input:focus {
+        border-color: #2E86C1 !important;
+        box-shadow: 0 0 0 2px rgba(46,134,193,0.15) !important;
+    }
+
+    /* ── Selectbox y multiselect ── */
+    [data-testid="stSelectbox"] > div > div,
+    [data-testid="stMultiSelect"] > div > div {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D5DBDB !important;
+        border-radius: 8px !important;
+        color: #1C2833 !important;
+    }
+
+    /* ── Expanders ── */
+    details[data-testid="stExpander"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D5DBDB !important;
+        border-radius: 10px !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }
+    details[data-testid="stExpander"] summary,
+    [data-testid="stExpanderHeader"],
+    details[data-testid="stExpander"] > summary {
+        background-color: #FFFFFF !important;
+        color: #1B3A5C !important;
+        font-weight: 600 !important;
+        padding: 12px 16px !important;
+    }
+    details[data-testid="stExpander"] summary *,
+    [data-testid="stExpanderHeader"] * {
+        color: #1B3A5C !important;
+        background-color: transparent !important;
+    }
+    details[data-testid="stExpander"] summary:hover,
+    [data-testid="stExpanderHeader"]:hover {
+        background-color: #F0F5FA !important;
+    }
+    details[data-testid="stExpander"] summary svg {
+        fill: #5D6D7E !important;
+    }
+
+    /* ── Alertas/info/warning ── */
+    [data-testid="stAlert"] {
+        border-radius: 8px;
+        border-left-width: 4px;
+    }
+
+    /* ── DataFrames ── */
+    .stDataFrame {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #E0E6ED;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    /* ── Progress bars ── */
+    [data-testid="stProgressBar"] > div {
+        background-color: #E0E6ED;
+        border-radius: 4px;
+    }
+    [data-testid="stProgressBar"] > div > div {
+        background: linear-gradient(90deg, #1B4F72, #2E86C1);
+        border-radius: 4px;
+    }
+
+    /* ── Download buttons ── */
+    .stDownloadButton > button {
+        border-radius: 8px;
+        border: 1px solid #1B4F72 !important;
+        color: #1B4F72 !important;
+        font-weight: 500;
+    }
+    .stDownloadButton > button:hover {
+        background-color: #EAF0F6 !important;
+    }
+
+    /* ── Divider ── */
+    hr {
+        border-color: #E0E6ED !important;
+        margin: 1.2rem 0;
+    }
+
+    /* ── Checkboxes y radios: label ── */
+    [data-testid="stCheckbox"] label,
+    [data-testid="stRadio"] label {
+        color: #1C2833 !important;
+        font-size: 0.9rem;
+    }
+    /* Radio: borde y punto interior del elemento seleccionado */
+    [data-testid="stRadio"] [role="radio"][aria-checked="true"] {
+        border-color: #2E86C1 !important;
+    }
+    [data-testid="stRadio"] [role="radio"][aria-checked="true"] > div {
+        background-color: #2E86C1 !important;
+    }
+    /* Checkbox: fondo cuando está marcado */
+    [data-testid="stCheckbox"] [role="checkbox"][aria-checked="true"],
+    [data-baseweb="checkbox"] [role="checkbox"][aria-checked="true"] {
+        background-color: #2E86C1 !important;
+        border-color: #2E86C1 !important;
+    }
+    /* Selectbox y multiselect: borde de foco y chips seleccionados */
+    [data-testid="stSelectbox"] [data-baseweb="select"]:focus-within,
+    [data-testid="stMultiSelect"] [data-baseweb="select"]:focus-within {
+        border-color: #2E86C1 !important;
+        box-shadow: 0 0 0 2px rgba(46,134,193,0.15) !important;
+    }
+    [data-baseweb="tag"] {
+        background-color: #2E86C1 !important;
+        border-color: #2E86C1 !important;
+    }
+
+    /* ── Slider ── */
+    [data-testid="stSlider"] [role="slider"] {
+        background-color: #2E86C1 !important;
+    }
+
+    /* ── Status container (spinner) ── */
+    [data-testid="stStatusWidget"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E0E6ED;
+        border-radius: 10px;
+    }
+
+    /* ── File uploader: fondo claro ── */
+    [data-testid="stFileUploader"] {
+        background-color: #FFFFFF !important;
+        border-radius: 10px !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        background-color: #F7F9FC !important;
+        border: 2px dashed #B0C4D8 !important;
+        border-radius: 8px !important;
+    }
+    [data-testid="stFileUploaderDropzone"]:hover {
+        background-color: #EAF0F6 !important;
+        border-color: #2E86C1 !important;
+    }
+    [data-testid="stFileUploaderDropzone"] *,
+    [data-testid="stFileUploaderDropzoneInstructions"] * {
+        color: #5D6D7E !important;
+    }
+    [data-testid="stFileUploaderFile"] {
+        background-color: #EAF0F6 !important;
+        border-radius: 6px !important;
+        border: 1px solid #D5DBDB !important;
+    }
+    [data-testid="stFileUploaderFile"] * {
+        color: #1C2833 !important;
+    }
+    /* Barra de progreso de subida */
+    [data-testid="stFileUploaderDropzone"] > div:last-child {
+        background-color: #EAF0F6 !important;
+    }
+
+    /* ── Multiselect tags: acero-azul en vez de rojo ── */
+    [data-baseweb="tag"] {
+        background-color: #2471A3 !important;
+        border-color: #2471A3 !important;
+        border-radius: 6px !important;
+    }
+    [data-baseweb="tag"] span,
+    [data-baseweb="tag"] * {
+        color: #FFFFFF !important;
+    }
+    [data-baseweb="tag"] svg path { fill: #FFFFFF !important; }
+
+    /* ── Radio buttons: punto azul acero en vez de rojo ── */
+    [data-baseweb="radio"] [data-checked="true"] > div > div {
+        background-color: #2471A3 !important;
+        border-color: #2471A3 !important;
+    }
+    [data-baseweb="radio"]:hover > div > div {
+        border-color: #2471A3 !important;
+    }
+    /* Sidebar: dot de nav activo en azul claro (sobre fondo oscuro) */
+    section[data-testid="stSidebar"] [data-baseweb="radio"] [data-checked="true"] > div > div {
+        background-color: #A8D8EA !important;
+        border-color: #A8D8EA !important;
+    }
+    section[data-testid="stSidebar"] [data-baseweb="radio"] > div > div {
+        border-color: rgba(168,216,234,0.5) !important;
+    }
+
+    /* ── Checkboxes: acento azul ── */
+    [data-baseweb="checkbox"] [data-checked="true"] > div > div {
+        background-color: #2471A3 !important;
+        border-color: #2471A3 !important;
+    }
+    [data-baseweb="checkbox"]:hover > div > div {
+        border-color: #2471A3 !important;
+    }
+
+    /* selector adicional para versiones antiguas de Streamlit */
+    [data-testid="stFormSubmitButton"] button {
+        background: linear-gradient(135deg, #2E86C1, #85C1E9) !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px rgba(46,134,193,0.3) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -147,11 +486,10 @@ def get_model_instance(model_key: str, temperature: float = 0.4):
 
 # ── Sidebar ──────────────────────────────────────────────────
 st.sidebar.title("RE-LLM")
-st.sidebar.markdown("Analisis de Requisitos con LLMs")
+st.sidebar.markdown("Verificación de calidad de requisitos asistida por IA")
 
-_PAGES = ["Pipeline Documento", "Clasificar Requisito", "Analizar Calidad",
-           "Validar Consistencia", "Resultados Experimentos",
-           "Progreso Experimentos"]
+_PAGES = ["Análisis de Documento", "Características de Calidad",
+           "Resultados", "Progreso Experimentos"]
 
 # Restaurar página desde URL al hacer F5
 if "nav_page" not in st.session_state:
@@ -162,17 +500,16 @@ def _on_nav_change():
     st.query_params["page"] = st.session_state["nav_page"]
 
 page = st.sidebar.radio(
-    "Navegacion",
+    "Navegación",
     _PAGES,
     key="nav_page",
     on_change=_on_nav_change,
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Modelos locales:** Ollama")
-st.sidebar.markdown("**Modelos API:** NVIDIA NIM")
 nim_configured = bool(os.getenv("NVIDIA_API_KEY"))
-st.sidebar.markdown(f"NVIDIA NIM: {'Configurado' if nim_configured else 'No configurado'}")
+_nim_status = "✓ Configurada" if nim_configured else "✗ No configurada"
+st.sidebar.caption(f"NVIDIA NIM API: {_nim_status}")
 
 
 # ============================================================
@@ -183,6 +520,7 @@ def run_pipeline_for_model(requirements: list[str], model_key: str,
                            filepath: str = None,
                            use_llm_extraction: bool = False,
                            doc_name: str = 'documento',
+                           context_prompt: str = '',
                            progress_callback=None) -> dict:
     """Ejecuta el pipeline DAG para un modelo. Returns dict with results."""
     from dag import run_dag_pipeline, run_dag_pipeline_from_requirements
@@ -198,6 +536,7 @@ def run_pipeline_for_model(requirements: list[str], model_key: str,
             use_llm_extraction=True,
             skip_inconsistency=skip_inconsistency,
             max_pairs=30,
+            context_prompt=context_prompt,
             progress_callback=progress_callback,
         )
     else:
@@ -209,6 +548,7 @@ def run_pipeline_for_model(requirements: list[str], model_key: str,
             skip_inconsistency=skip_inconsistency,
             max_pairs=30,
             doc_name=doc_name,
+            context_prompt=context_prompt,
             progress_callback=progress_callback,
         )
 
@@ -226,62 +566,83 @@ def run_pipeline_for_model(requirements: list[str], model_key: str,
 
 
 # ============================================================
-# PAGE 1: Pipeline Documento (MULTI-MODELO)
+# PAGE 1: Análisis de Documento (MULTI-MODELO)
 # ============================================================
-if page == "Pipeline Documento":
-    st.title("Pipeline Completo de Analisis de Requisitos")
-    st.markdown("Sube un documento y ejecuta el analisis con uno o varios modelos.")
+if page == "Análisis de Documento":
+    st.title("Verificación de Calidad de Requisitos Asistida por IA")
+    st.markdown("Sube un documento y ejecuta el análisis con uno o varios modelos.")
 
-    # ── Upload / seleccionar archivo ─────────────────────────
-    input_mode = st.radio("Origen del documento", ["Subir archivo", "Archivo existente"],
-                          horizontal=True)
+    # ── Subida de documento ───────────────────────────────────
+    # Leer de session_state para que persistan entre reruns
+    requirements = st.session_state.get('pipeline_requirements', [])
+    doc_filepath = st.session_state.get('pipeline_doc_filepath')
+    doc_suffix = st.session_state.get('pipeline_doc_suffix', '')
 
-    requirements = []
-
-    # Track filepath for LLM extraction
-    doc_filepath = None
-    doc_suffix = ''
-
-    if input_mode == "Subir archivo":
-        uploaded = st.file_uploader("Documento de requisitos",
-                                     type=['txt', 'md', 'csv', 'pdf'])
-        if uploaded:
-            # Save to temp file (keep it for potential LLM extraction)
+    uploaded = st.file_uploader(
+        "Documento de requisitos",
+        type=['txt', 'md', 'csv', 'pdf'],
+        help="Formatos admitidos: TXT, Markdown, CSV (una columna de texto) y PDF.",
+        key="pipeline_file_uploader",
+    )
+    if uploaded:
+        # Solo recargar si cambió el archivo
+        if uploaded.name != st.session_state.get('pipeline_doc_name'):
             suffix = Path(uploaded.name).suffix
             tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
             tmp.write(uploaded.read())
             tmp.close()
-            doc_filepath = tmp.name
-            doc_suffix = suffix.lower()
-
             from pipeline import load_requirements
             try:
                 requirements = load_requirements(tmp.name)
+                st.session_state['pipeline_requirements'] = requirements
                 st.session_state['pipeline_doc_name'] = uploaded.name
                 st.session_state['pipeline_doc_filepath'] = tmp.name
-                st.session_state['pipeline_doc_suffix'] = doc_suffix
-                st.success(f"**{len(requirements)}** requisitos cargados desde {uploaded.name}")
+                st.session_state['pipeline_doc_suffix'] = suffix.lower()
+                st.session_state['pipeline_load_source'] = 'uploader'
+                doc_filepath = tmp.name
+                doc_suffix = suffix.lower()
             except Exception as e:
                 st.error(f"Error al cargar: {e}")
-    else:
-        data_dir = Path(__file__).parent.parent / "data"
-        files = sorted(data_dir.glob("*"))
-        doc_files = [f for f in files if f.suffix in ('.txt', '.md', '.csv', '.pdf')]
-        if doc_files:
-            selected = st.selectbox("Archivo", doc_files,
-                                     format_func=lambda x: x.name)
-            doc_filepath = str(selected)
-            doc_suffix = selected.suffix.lower()
+        if requirements:
+            doc_name = st.session_state.get('pipeline_doc_name', uploaded.name)
+            st.success(f"**{len(requirements)}** requisitos cargados desde **{doc_name}**")
+    elif not uploaded and st.session_state.get('pipeline_load_source') == 'uploader':
+        # Solo limpiar si el archivo vino del uploader y el usuario lo quitó
+        for k in ['pipeline_requirements', 'pipeline_doc_name', 'pipeline_doc_filepath',
+                  'pipeline_doc_suffix', 'pipeline_load_source']:
+            st.session_state.pop(k, None)
+        requirements = []
 
-            from pipeline import load_requirements
-            try:
-                requirements = load_requirements(str(selected))
-                st.session_state['pipeline_doc_name'] = selected.name
-                st.session_state['pipeline_doc_filepath'] = str(selected)
-                st.session_state['pipeline_doc_suffix'] = doc_suffix
-                st.success(f"**{len(requirements)}** requisitos cargados desde {selected.name}")
-            except Exception as e:
-                st.error(f"Error al cargar: {e}")
+    # Mostrar el nombre del dataset cargado desde ejemplo (persiste entre reruns)
+    if not uploaded and st.session_state.get('pipeline_doc_name'):
+        st.success(f"**{len(requirements)}** requisitos cargados desde **{st.session_state['pipeline_doc_name']}**")
+
+    # Datasets de ejemplo (colapsado por defecto)
+    with st.expander("Cargar dataset de ejemplo", expanded=False):
+        data_dir = Path(__file__).parent.parent / "data"
+        doc_files = sorted(
+            f for f in data_dir.glob("*") if f.suffix in ('.txt', '.md', '.csv', '.pdf')
+        )
+        if doc_files:
+            selected_ex = st.selectbox(
+                "Archivo de ejemplo",
+                doc_files,
+                format_func=lambda x: x.name,
+                key="pipeline_example_file"
+            )
+            if st.button("Cargar archivo", type="primary", key="btn_load_example"):
+                from pipeline import load_requirements
+                try:
+                    requirements = load_requirements(str(selected_ex))
+                    st.session_state['pipeline_requirements'] = requirements
+                    st.session_state['pipeline_doc_name'] = selected_ex.name
+                    st.session_state['pipeline_doc_filepath'] = str(selected_ex)
+                    st.session_state['pipeline_doc_suffix'] = selected_ex.suffix.lower()
+                    st.session_state['pipeline_load_source'] = 'example'
+                except Exception as e:
+                    st.error(f"Error al cargar: {e}")
+        else:
+            st.info("No hay archivos de ejemplo disponibles en /data.")
 
     if requirements:
         # Preview
@@ -291,7 +652,39 @@ if page == "Pipeline Documento":
 
         st.markdown("---")
 
-        # ── Configuracion ────────────────────────────────────
+        # ── Contexto del dominio (prompt previo) ─────────────
+        context_prompt = st.text_area(
+            "Contexto del dominio (opcional)",
+            height=80,
+            placeholder=(
+                "Ej: Los casos de uso son siempre requisitos funcionales. "
+                "En este dominio, 'rápido' significa menos de 2 segundos y no se considera ambiguo."
+            ),
+            help=(
+                "Este contexto se añade al inicio de cada prompt para guiar el análisis "
+                "con información específica del dominio. No reemplaza los criterios de análisis, "
+                "los complementa."
+            ),
+            key="pipeline_context_prompt",
+        )
+
+        if context_prompt.strip():
+            try:
+                from langdetect import detect, LangDetectException
+                sample_text = " ".join(requirements[:5])
+                req_lang = detect(sample_text)
+                ctx_lang = detect(context_prompt)
+                if req_lang != ctx_lang:
+                    st.warning(
+                        "El idioma del contexto no coincide con el de los requisitos. "
+                        "El modelo puede ignorar el contexto si no están en el mismo idioma."
+                    )
+            except Exception:
+                pass
+
+        st.markdown("---")
+
+        # ── Configuración ─────────────────────────────────────
         col_cfg1, col_cfg2, col_cfg3 = st.columns(3)
 
         with col_cfg1:
@@ -317,7 +710,7 @@ if page == "Pipeline Documento":
                 )
 
         with col_cfg3:
-            skip_inconsistency = st.checkbox("Saltar inconsistencias (mas rapido)", value=False)
+            skip_inconsistency = st.checkbox("Saltar inconsistencias (más rápido)", value=False)
             # LLM extraction: default True for PDF/TXT/MD, False for CSV
             current_suffix = st.session_state.get('pipeline_doc_suffix', '')
             default_llm_extract = current_suffix in ('.pdf', '.txt', '.md')
@@ -334,6 +727,9 @@ if page == "Pipeline Documento":
 
         # ── Ejecutar ─────────────────────────────────────────
         elif st.button("Ejecutar Pipeline", type="primary"):
+
+            st.info("El análisis se está ejecutando. **No cambies de página** hasta que termine — navegar interrumpe el progreso visual.")
+            st.session_state.pop('pipeline_results', None)  # limpiar resultados anteriores
 
             from dag import NODE_LABELS as DAG_NODE_LABELS
 
@@ -371,6 +767,7 @@ if page == "Pipeline Documento":
                             use_llm_extraction=True,
                             skip_inconsistency=skip_inconsistency,
                             max_pairs=30,
+                            context_prompt=context_prompt,
                             progress_callback=_extraction_cb,
                         )
                         extracted_requirements = ctx.get('requirements', [])
@@ -384,10 +781,10 @@ if page == "Pipeline Documento":
                             'elapsed': 0,
                         }
                         status_container.update(label=f"Combo 1/{total_combos}: {combo_label} - Completada", state="complete", expanded=False)
-                        st.info(f"Requisitos extraidos por LLM: {len(extracted_requirements)} (se reutilizaran)")
+                        st.info(f"Requisitos extraídos por LLM: {len(extracted_requirements)} (se reutilizarán)")
                     except Exception as e:
                         status_container.update(label=f"Combo 1/{total_combos}: {combo_label} - Error", state="error", expanded=False)
-                        st.error(f"Error en extraccion LLM: {e}")
+                        st.error(f"Error en extracción LLM: {e}")
                         extracted_requirements = requirements
 
             for i, (model_key, strat) in enumerate(combos):
@@ -418,6 +815,7 @@ if page == "Pipeline Documento":
                             filepath=None,
                             use_llm_extraction=False,
                             doc_name=current_doc_name,
+                            context_prompt=context_prompt,
                             progress_callback=_make_dag_cb(status_container),
                         )
                         status_container.update(label=f"Combo {i+1}/{total_combos}: {combo_label} - Completada", state="complete", expanded=False)
@@ -440,167 +838,205 @@ if page == "Pipeline Documento":
             all_results = st.session_state['pipeline_results']
             requirements = st.session_state['pipeline_reqs']
 
-            # Filter out results with empty DataFrames
-            all_results = {k: v for k, v in all_results.items()
-                          if not v['results_df'].empty}
+            all_results = {k: v for k, v in all_results.items() if not v['results_df'].empty}
             if not all_results:
                 st.error("Todas las ejecuciones fallaron. Revisa los logs del modelo.")
                 st.stop()
 
+            import plotly.graph_objects as go
+
             st.markdown("---")
-            st.header("Resultados")
+            st.header("Resultados del análisis")
 
-            # Extraer modelos y estrategias unicos de los resultados
-            result_models = sorted(set(k[0] for k in all_results.keys()))
-            result_strategies = sorted(set(k[1] for k in all_results.keys()))
+            combo_keys = list(all_results.keys())
 
-            # ── Tabla resumen comparativa ─────────────────────
-            if len(all_results) > 1:
-                st.subheader("Comparacion Modelo x Estrategia")
+            # ── Comparación si hay varios combos ─────────────
+            if len(combo_keys) > 1:
+                cmp_labels, cmp_quality, cmp_colors = [], [], []
+                for (mk, sk), res in all_results.items():
+                    avg_q = res['results_df']['quality_score'].mean() if 'quality_score' in res['results_df'].columns else 0
+                    cmp_labels.append(f"{MODEL_LABELS.get(mk, mk)}<br>{STRATEGY_LABELS.get(sk, sk)}")
+                    cmp_quality.append(avg_q)
+                order = sorted(range(len(cmp_quality)), key=lambda i: cmp_quality[i], reverse=True)
+                cmp_labels = [cmp_labels[i] for i in order]
+                cmp_quality = [cmp_quality[i] for i in order]
+                cmp_colors = ['#1B4F72' if i == 0 else '#5D9BD5' for i in range(len(cmp_labels))]
+                fig_cmp = go.Figure(go.Bar(
+                    x=cmp_labels, y=cmp_quality,
+                    marker_color=cmp_colors,
+                    text=[f"{q:.0f}%" for q in cmp_quality],
+                    textposition='outside',
+                ))
+                fig_cmp.update_layout(
+                    title=dict(text="Calidad media por modelo y estrategia", font=dict(size=14)),
+                    yaxis=dict(title="Calidad media (%)", range=[0, 115]),
+                    xaxis_title="", height=320,
+                    margin=dict(l=40, r=40, t=50, b=40),
+                    paper_bgcolor='white', plot_bgcolor='#F7F9FC',
+                )
+                fig_cmp.update_yaxes(gridcolor='rgba(128,128,128,0.15)', zeroline=False)
+                st.plotly_chart(fig_cmp, use_container_width=True, config={'displayModeBar': False}, key="fig_cmp_overview")
 
-                summary_rows = []
-                for (model_key, strat), res in all_results.items():
+            # ── Tabs: una por combo ───────────────────────────
+            if len(combo_keys) > 1:
+                _tab_labels = [
+                    f"{MODEL_LABELS.get(k[0], k[0])} · {STRATEGY_LABELS.get(k[1], k[1])}"
+                    for k in combo_keys
+                ]
+                result_tabs = st.tabs(_tab_labels)
+            else:
+                result_tabs = [st.container()]
+
+            for result_tab, combo_key in zip(result_tabs, combo_keys):
+                with result_tab:
+                    res = all_results[combo_key]
                     df = res['results_df']
-                    n_amb = len(df[df['is_ambiguous'] == True]) if 'is_ambiguous' in df.columns else 0
-                    n_inc = len(df[df['is_complete'] == False]) if 'is_complete' in df.columns else 0
-                    n_nt = len(df[df['is_testable'] == False]) if 'is_testable' in df.columns else 0
-                    n_f = len(df[df['classification'] == 'F']) if 'classification' in df.columns else 0
+                    inconsistencies = res['inconsistencies']
+                    model_key, strat = combo_key
+
+                    if len(combo_keys) == 1:
+                        st.caption(
+                            f"Modelo: **{MODEL_LABELS.get(model_key, model_key)}** · "
+                            f"Estrategia: **{STRATEGY_LABELS.get(strat, strat)}** · "
+                            f"Tiempo: {res['elapsed']:.1f}s"
+                        )
+
+                    total = len(df)
+                    n_amb = int((df['is_ambiguous'] == True).sum()) if 'is_ambiguous' in df.columns else 0
+                    n_inc = int((df['is_complete'] == False).sum()) if 'is_complete' in df.columns else 0
+                    n_nt  = int((df['is_testable'] == False).sum()) if 'is_testable' in df.columns else 0
+                    n_f   = int((df['classification'] == 'F').sum()) if 'classification' in df.columns else 0
                     avg_q = df['quality_score'].mean() if 'quality_score' in df.columns else 0
-                    summary_rows.append({
-                        'Modelo': MODEL_LABELS.get(model_key, model_key),
-                        'Estrategia': STRATEGY_LABELS.get(strat, strat),
-                        'Funcionales': n_f,
-                        'No Funcionales': len(df) - n_f,
-                        'Ambiguos': n_amb,
-                        'Incompletos': n_inc,
-                        'No Testables': n_nt,
-                        'Calidad Media': f"{avg_q:.0f}%",
-                        'Inconsistencias': len(res['inconsistencies']),
-                        'Tiempo (s)': f"{res['elapsed']:.1f}",
-                    })
-                st.dataframe(pd.DataFrame(summary_rows), width='stretch')
 
-                # Heatmap de calidad: modelo x estrategia
-                if len(result_models) > 1 or len(result_strategies) > 1:
-                    st.subheader("Calidad Media: Modelo x Estrategia")
-                    heatmap_data = {}
-                    for (model_key, strat), res in all_results.items():
-                        model_label = MODEL_LABELS.get(model_key, model_key)
-                        strat_label = STRATEGY_LABELS.get(strat, strat)
-                        if model_label not in heatmap_data:
-                            heatmap_data[model_label] = {}
-                        q = res['results_df']['quality_score'].mean() if 'quality_score' in res['results_df'].columns else 0
-                        heatmap_data[model_label][strat_label] = round(q, 1)
-                    heatmap_df = pd.DataFrame(heatmap_data).T
-                    heatmap_df.index.name = "Modelo"
-                    st.dataframe(heatmap_df.style.background_gradient(cmap='RdYlGn', vmin=0, vmax=100),
-                                 width='stretch')
+                    _ok_mask = pd.Series(True, index=df.index)
+                    if 'is_ambiguous' in df.columns: _ok_mask &= (df['is_ambiguous'] != True)
+                    if 'is_complete'  in df.columns: _ok_mask &= (df['is_complete']  != False)
+                    if 'is_testable'  in df.columns: _ok_mask &= (df['is_testable']  != False)
+                    n_ok = int(_ok_mask.sum())
 
-            # ── Tabs por modelo, sub-tabs por estrategia ─────
-            model_tabs = st.tabs([MODEL_LABELS.get(m, m) for m in result_models])
+                    # ── KPI cards ─────────────────────────────
+                    k1, k2, k3, k4, k5 = st.columns(5)
+                    k1.metric("Calidad media", f"{avg_q:.0f}%")
+                    k2.metric("Sin problemas", f"{n_ok} / {total}")
+                    k3.metric("Ambiguos",     n_amb, delta=f"{n_amb/total*100:.0f}%" if total else None, delta_color="inverse")
+                    k4.metric("Incompletos",  n_inc, delta=f"{n_inc/total*100:.0f}%" if total else None, delta_color="inverse")
+                    k5.metric("No testables", n_nt,  delta=f"{n_nt/total*100:.0f}%"  if total else None, delta_color="inverse")
 
-            for model_tab, model_key in zip(model_tabs, result_models):
-                with model_tab:
-                    # Estrategias para este modelo
-                    model_strategies = [s for s in result_strategies if (model_key, s) in all_results]
+                    # ── Gráfico: perfil de calidad ─────────────
+                    cats = ['F/NF — Funcionales', 'A2 — Sin ambigüedad', 'A3 — Completos', 'V2 — Testables']
+                    ok_vals  = [n_f, total - n_amb, total - n_inc, total - n_nt]
+                    bad_vals = [total - v for v in ok_vals]
 
-                    if len(model_strategies) > 1:
-                        strat_tabs = st.tabs([STRATEGY_LABELS.get(s, s) for s in model_strategies])
-                    else:
-                        strat_tabs = [model_tab]  # Single tab = the model tab itself
+                    fig_prof = go.Figure()
+                    fig_prof.add_trace(go.Bar(
+                        name='Correcto', y=cats, x=ok_vals, orientation='h',
+                        marker_color='#27AE60', opacity=0.85,
+                        text=[str(v) for v in ok_vals],
+                        textposition='inside', insidetextanchor='middle',
+                    ))
+                    fig_prof.add_trace(go.Bar(
+                        name='Con problema', y=cats, x=bad_vals, orientation='h',
+                        marker_color='#E74C3C', opacity=0.75,
+                        text=[str(v) for v in bad_vals],
+                        textposition='inside', insidetextanchor='middle',
+                    ))
+                    fig_prof.update_layout(
+                        barmode='stack',
+                        title=dict(text='Perfil de calidad del documento', font=dict(size=14)),
+                        xaxis=dict(title=f'Requisitos (total: {total})', range=[0, total + 1]),
+                        yaxis_title='',
+                        height=250,
+                        margin=dict(l=20, r=20, t=50, b=20),
+                        legend=dict(orientation='h', yanchor='bottom', y=1.05, xanchor='right', x=1),
+                        paper_bgcolor='white', plot_bgcolor='#F7F9FC',
+                    )
+                    fig_prof.update_xaxes(gridcolor='rgba(128,128,128,0.15)', zeroline=False)
+                    st.plotly_chart(fig_prof, use_container_width=True, config={'displayModeBar': False}, key=f"fig_prof_{combo_key[0]}_{combo_key[1]}")
 
-                    for strat_tab, strat in zip(strat_tabs, model_strategies):
-                        with strat_tab:
-                            res = all_results[(model_key, strat)]
-                            df = res['results_df']
-                            inconsistencies = res['inconsistencies']
+                    # ── Tabla color-coded ─────────────────────
+                    st.subheader("Tabla de requisitos")
+                    _col_map = {
+                        'text': 'Requisito', 'classification': 'F/NF',
+                        'is_ambiguous': 'Ambiguo', 'is_complete': 'Completo',
+                        'is_testable': 'Testable', 'quality_score': 'Calidad',
+                    }
+                    _avail = [c for c in _col_map if c in df.columns]
+                    disp = df[_avail].rename(columns=_col_map).copy()
+                    if 'Requisito' in disp.columns:
+                        disp['Requisito'] = disp['Requisito'].str[:120]
+                    if 'Calidad' in disp.columns:
+                        disp['Calidad'] = disp['Calidad'].apply(lambda x: f"{x:.0f}%")
+                    for bool_col in ('Ambiguo', 'Completo', 'Testable'):
+                        if bool_col in disp.columns:
+                            disp[bool_col] = disp[bool_col].map({True: 'Sí', False: 'No'}).fillna('')
+                    disp.index = range(1, len(disp) + 1)
 
-                            if len(model_strategies) <= 1:
-                                st.caption(f"Estrategia: {STRATEGY_LABELS.get(strat, strat)}")
+                    def _row_bg(row):
+                        n_issues = (
+                            int(row.get('Ambiguo') == 'Sí') +
+                            int(row.get('Completo') == 'No') +
+                            int(row.get('Testable') == 'No')
+                        )
+                        color = '#eafaf1' if n_issues == 0 else ('#fef9e7' if n_issues == 1 else '#fde8e4')
+                        return [f'background-color: {color}'] * len(row)
 
-                            # Metricas resumen
-                            total = len(df)
-                            n_req = len(df[df['item_type'] == 'REQ']) if 'item_type' in df.columns else total
-                            n_uc = len(df[df['item_type'] == 'UC']) if 'item_type' in df.columns else 0
-                            n_us = len(df[df['item_type'] == 'US']) if 'item_type' in df.columns else 0
-                            type_parts = [f"{n_req} REQ"]
-                            if n_uc > 0:
-                                type_parts.append(f"{n_uc} CU")
-                            if n_us > 0:
-                                type_parts.append(f"{n_us} HU")
-                            col1, col2, col3, col4, col5 = st.columns(5)
-                            col1.metric("Elementos", total, help=", ".join(type_parts))
-                            col2.metric("Ambiguos", len(df[df['is_ambiguous'] == True]) if 'is_ambiguous' in df.columns else 0)
-                            col3.metric("Incompletos", len(df[df['is_complete'] == False]) if 'is_complete' in df.columns else 0)
-                            col4.metric("No Testables", len(df[df['is_testable'] == False]) if 'is_testable' in df.columns else 0)
-                            col5.metric("Calidad Media", f"{df['quality_score'].mean():.0f}%" if 'quality_score' in df.columns else "N/A")
+                    st.dataframe(
+                        disp.style.apply(_row_bg, axis=1),
+                        use_container_width=True, height=380, hide_index=False,
+                    )
+                    st.caption("Verde = sin problemas · Amarillo = 1 problema · Rojo = 2 o más problemas")
 
-                            # Tabla detallada
-                            st.subheader("Detalle por Elemento")
-                            _ITEM_TYPE_LABELS = {'REQ': 'Requisito', 'UC': 'Caso de Uso', 'US': 'Historia de Usuario'}
-                            _pipe_col_map = {
-                                'text': 'Texto', 'item_type': 'Categoria',
-                                'classification': 'Tipo F/NF',
-                                'is_ambiguous': 'Ambiguo', 'is_complete': 'Completo',
-                                'is_testable': 'Testable', 'quality_score': 'Calidad',
-                            }
-                            _avail = [c for c in _pipe_col_map if c in df.columns]
-                            display_df = df[_avail].rename(columns=_pipe_col_map).copy()
-                            if 'Categoria' in display_df.columns:
-                                display_df['Categoria'] = display_df['Categoria'].map(_ITEM_TYPE_LABELS).fillna('Requisito')
-                            if 'Texto' in display_df.columns:
-                                display_df['Texto'] = display_df['Texto'].str[:100]
-                            display_df.index = range(1, len(display_df) + 1)
-                            st.dataframe(display_df, width='stretch', height=400)
+                    # ── Problemas agrupados ───────────────────
+                    total_issues = n_amb + n_inc + n_nt + len(inconsistencies)
+                    if total_issues > 0:
+                        st.subheader("Problemas detectados")
+                        pc1, pc2 = st.columns(2)
 
-                            # Advertencias de calidad automaticas
-                            pipeline_warnings = generate_all_warnings(df)
-                            _render_warnings(pipeline_warnings, "Advertencias de calidad")
+                        with pc1:
+                            if n_amb > 0 and 'is_ambiguous' in df.columns:
+                                amb_rows = df[df['is_ambiguous'] == True]
+                                with st.expander(f"Requisitos ambiguos — {n_amb}", expanded=n_amb <= 5):
+                                    for _, row in amb_rows.iterrows():
+                                        st.markdown(f"· {row['text'][:150]}")
+                                        parts = []
+                                        if row.get('ambiguity_type'): parts.append(f"Tipo: {row['ambiguity_type']}")
+                                        if row.get('ambiguous_words'): parts.append(f"Palabras: *{row['ambiguous_words']}*")
+                                        if parts: st.caption(" · ".join(parts))
 
-                            # Requisitos con problemas
-                            _prob_mask = pd.Series(False, index=df.index)
-                            if 'is_ambiguous' in df.columns:
-                                _prob_mask = _prob_mask | (df['is_ambiguous'] == True)
-                            if 'is_complete' in df.columns:
-                                _prob_mask = _prob_mask | (df['is_complete'] == False)
-                            if 'is_testable' in df.columns:
-                                _prob_mask = _prob_mask | (df['is_testable'] == False)
-                            problems = df[_prob_mask]
-                            if not problems.empty:
-                                with st.expander(f"Requisitos con problemas ({len(problems)})"):
-                                    for _, row in problems.iterrows():
-                                        issues = []
-                                        if row.get('is_ambiguous'):
-                                            issues.append(f"Ambiguo ({row.get('ambiguity_type', '')})")
-                                            if row.get('ambiguous_words'):
-                                                issues.append(f"Palabras: {row.get('ambiguous_words', '')}")
-                                        if not row.get('is_complete'):
-                                            issues.append(f"Incompleto - Falta: {row.get('missing_elements', '')}")
-                                        if not row.get('is_testable'):
-                                            issues.append(f"No testable ({row.get('testability_reason', '')})")
-                                        st.markdown(f"**{row['text'][:120]}**")
-                                        for issue in issues:
-                                            st.markdown(f"  - {issue}")
-                                        st.markdown("---")
+                            if n_nt > 0 and 'is_testable' in df.columns:
+                                nt_rows = df[df['is_testable'] == False]
+                                _reason_map = {'measurable': 'Medible', 'vague': 'Vago', 'subjective': 'Subjetivo'}
+                                with st.expander(f"Requisitos no testables — {n_nt}", expanded=n_nt <= 5):
+                                    for _, row in nt_rows.iterrows():
+                                        st.markdown(f"· {row['text'][:150]}")
+                                        r = _reason_map.get(row.get('testability_reason', ''), row.get('testability_reason', ''))
+                                        if r: st.caption(f"Motivo: {r}")
 
-                            # Inconsistencias
-                            if inconsistencies:
-                                with st.expander(f"Inconsistencias detectadas ({len(inconsistencies)})"):
+                        with pc2:
+                            if n_inc > 0 and 'is_complete' in df.columns:
+                                inc_rows = df[df['is_complete'] == False]
+                                with st.expander(f"Requisitos incompletos — {n_inc}", expanded=n_inc <= 5):
+                                    for _, row in inc_rows.iterrows():
+                                        st.markdown(f"· {row['text'][:150]}")
+                                        if row.get('missing_elements'): st.caption(f"Falta: {row['missing_elements']}")
+
+                            if len(inconsistencies) > 0:
+                                with st.expander(f"Inconsistencias entre requisitos — {len(inconsistencies)}", expanded=len(inconsistencies) <= 3):
                                     for inc in inconsistencies:
-                                        st.warning(
-                                            f"**Req #{inc['req_a_idx']}** vs **Req #{inc['req_b_idx']}**: "
-                                            f"{inc['description']}"
-                                        )
+                                        st.warning(f"**Req #{inc['req_a_idx']}** vs **Req #{inc['req_b_idx']}**: {inc['description']}")
 
-                            # Exportar
-                            csv_data = df.to_csv(index=False)
-                            st.download_button(
-                                f"Descargar CSV",
-                                csv_data,
-                                f"pipeline_{model_key}_{strat}_{datetime.now():%Y%m%d_%H%M}.csv",
-                                "text/csv",
-                                key=f"download_{model_key}_{strat}"
-                            )
+                    # ── Advertencias automáticas ──────────────
+                    pipeline_warnings = generate_all_warnings(df)
+                    _render_warnings(pipeline_warnings, "Advertencias de calidad")
+
+                    # ── Descarga CSV ──────────────────────────
+                    st.download_button(
+                        "Descargar CSV",
+                        df.to_csv(index=False),
+                        f"pipeline_{model_key}_{strat}_{datetime.now():%Y%m%d_%H%M}.csv",
+                        "text/csv",
+                        key=f"download_{model_key}_{strat}",
+                    )
 
             # ── Acciones finales ──────────────────────────────
             if len(all_results) >= 1:
@@ -618,7 +1054,9 @@ if page == "Pipeline Documento":
                             doc_name = st.session_state.get('pipeline_doc_name', 'documento')
                             run_dir = save_pipeline_results(
                                 res['results_df'], res['inconsistencies'],
-                                model_key, strat, doc_name, output_dir
+                                model_key, strat, doc_name, output_dir,
+                                context_prompt=context_prompt,
+                                skip_inconsistency=skip_inconsistency,
                             )
                             saved_dirs.append(run_dir)
                         st.success(f"{len(saved_dirs)} ejecuciones guardadas en: {output_dir}")
@@ -736,314 +1174,350 @@ if page == "Pipeline Documento":
 
 
 # ============================================================
-# PAGE 2: Clasificar Requisito
+# PAGE 2: Características de Calidad — 5 pestañas
 # ============================================================
-elif page == "Clasificar Requisito":
-    st.title("Clasificacion de Requisitos (F / NF)")
-    st.markdown("Clasifica un requisito como **Funcional (F)** o **No Funcional (NF)**.")
-
-    col1, col2 = st.columns([2, 1])
-
-    with col1:
-        req_text = st.text_area(
-            "Requisito a clasificar",
-            value="El sistema debera permitir a los usuarios restablecer su contrasena mediante correo electronico.",
-            height=100
-        )
-
-    with col2:
-        model_key = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()),
-                                  format_func=lambda x: MODEL_LABELS.get(x, x))
-        strategy = st.selectbox("Estrategia", STRATEGY_NAMES,
-                                format_func=lambda x: STRATEGY_LABELS.get(x, x))
-        temperature = st.slider("Temperatura", 0.0, 1.0, 0.4, 0.1)
-
-    # Advertencias de entrada
-    for w in check_input_warnings(req_text):
-        st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
-
-    if st.button("Clasificar", type="primary"):
-        with st.spinner("Clasificando..."):
-            try:
-                model = get_model_instance(model_key, temperature)
-                prompt = build_prompt("classification", strategy, requirement=req_text)
-                response = model.generate(prompt, max_tokens=512)
-
-                if response['success']:
-                    prediction = parse_response("classification", response['content'])
-
-                    col_r1, col_r2, col_r3 = st.columns(3)
-                    with col_r1:
-                        label = {"F": "Funcional", "NF": "No Funcional"}.get(prediction, "No determinado")
-                        st.metric("Clasificacion", f"{prediction} - {label}")
-                    with col_r2:
-                        st.metric("Tiempo", f"{response['time_seconds']:.2f}s")
-                    with col_r3:
-                        st.metric("Tokens/s", f"{response.get('tokens_per_second', 0):.1f}")
-
-                    with st.expander("Respuesta completa del modelo"):
-                        st.text(response['content'])
-                else:
-                    st.error(f"Error: {response['error']}")
-            except Exception as e:
-                st.error(f"Error: {e}")
-
-
-# ============================================================
-# PAGE 3: Analizar Calidad
-# ============================================================
-elif page == "Analizar Calidad":
-    st.title("Analisis de Calidad de Requisitos")
-
-    analysis_type = st.radio(
-        "Tipo de analisis",
-        ["Ambiguedad", "Completitud", "Testabilidad"],
-        horizontal=True
+elif page == "Características de Calidad":
+    st.title("Características de Calidad de Requisitos")
+    st.markdown(
+        "Analiza un requisito individualmente según las cinco características de calidad del experimento."
     )
 
-    task_map = {"Ambiguedad": "ambiguity", "Completitud": "completeness", "Testabilidad": "testability"}
-    task = task_map[analysis_type]
+    (tab_a1, tab_a2, tab_a3, tab_v1, tab_v2) = st.tabs([
+        "A1 · Clasificación F/NF",
+        "A2 · Ambigüedad",
+        "A3 · Completitud",
+        "V1 · Inconsistencias",
+        "V2 · Testabilidad",
+    ])
 
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        req_text = st.text_area("Requisito a analizar", height=100,
-                                value="El sistema debera responder a cualquier consulta en menos de 2 segundos.")
-    with col2:
-        model_key = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()), key="quality_model",
-                                  format_func=lambda x: MODEL_LABELS.get(x, x))
-        strategy = st.selectbox("Estrategia", STRATEGY_NAMES, key="quality_strategy",
-                                format_func=lambda x: STRATEGY_LABELS.get(x, x))
+    # ── Helper: widget de configuración reutilizable ──────────
+    def _cq_config(key_prefix: str, with_temperature: bool = False):
+        col1, col2 = st.columns([2, 1])
+        with col2:
+            mk = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()),
+                              format_func=lambda x: MODEL_LABELS.get(x, x),
+                              key=f"{key_prefix}_model")
+            sk = st.selectbox("Estrategia", STRATEGY_NAMES,
+                              format_func=lambda x: STRATEGY_LABELS.get(x, x),
+                              key=f"{key_prefix}_strat")
+            temp = 0.4
+            if with_temperature:
+                temp = st.slider("Temperatura", 0.0, 1.0, 0.4, 0.1,
+                                 key=f"{key_prefix}_temp")
+        return col1, mk, sk, temp
 
-    # Advertencias de entrada
-    for w in check_input_warnings(req_text):
-        st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
+    def _cq_timing(response):
+        c1, c2 = st.columns(2)
+        c1.metric("Tiempo", f"{response['time_seconds']:.2f}s")
+        c2.metric("Tokens/s", f"{response.get('tokens_per_second', 0):.1f}")
 
-    if st.button("Analizar", type="primary"):
-        with st.spinner("Analizando..."):
-            try:
-                model = get_model_instance(model_key)
-                prompt = build_prompt(task, strategy, requirement=req_text)
-                response = model.generate(prompt, max_tokens=512)
+    # ── A1: Clasificación F/NF ────────────────────────────────
+    with tab_a1:
+        st.caption("Determina si un requisito es **Funcional (F)** — describe *qué* hace el sistema — "
+                   "o **No Funcional (NF)** — describe *cómo* se comporta.")
+        col1, mk, sk, temp = _cq_config("a1", with_temperature=True)
+        with col1:
+            req_a1 = st.text_area(
+                "Requisito",
+                value="El sistema deberá permitir a los usuarios restablecer su contraseña "
+                      "mediante correo electrónico.",
+                height=110, key="a1_req"
+            )
+        for w in check_input_warnings(req_a1):
+            st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
 
-                if response['success']:
-                    parsed = parse_response(task, response['content'])
+        if st.button("Clasificar", type="primary", key="btn_a1"):
+            with st.spinner("Clasificando..."):
+                try:
+                    model = get_model_instance(mk, temp)
+                    response = model.generate(
+                        build_prompt("classification", sk, requirement=req_a1), max_tokens=512
+                    )
+                    if response['success']:
+                        pred = parse_response("classification", response['content'])
+                        label = {"F": "Funcional", "NF": "No Funcional"}.get(pred, "No determinado")
+                        color = "green" if pred == "F" else ("orange" if pred == "NF" else "red")
+                        st.markdown(f"### Resultado: :{color}[{pred} — {label}]")
+                        _cq_timing(response)
+                        with st.expander("Respuesta completa del modelo"):
+                            st.text(response['content'])
+                    else:
+                        st.error(f"Error: {response['error']}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-                    if task == "ambiguity":
+    # ── A2: Ambigüedad ────────────────────────────────────────
+    with tab_a2:
+        st.caption("Detecta si el requisito contiene **términos vagos**, **pronombres sin referencia** "
+                   "o **cuantificadores imprecisos** que impidan una única interpretación.")
+        col1, mk, sk, _ = _cq_config("a2")
+        with col1:
+            req_a2 = st.text_area(
+                "Requisito",
+                value="El sistema deberá ser rápido y manejar bien los datos del usuario.",
+                height=110, key="a2_req"
+            )
+        for w in check_input_warnings(req_a2):
+            st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
+
+        if st.button("Detectar ambigüedad", type="primary", key="btn_a2"):
+            with st.spinner("Analizando..."):
+                try:
+                    model = get_model_instance(mk)
+                    response = model.generate(
+                        build_prompt("ambiguity", sk, requirement=req_a2), max_tokens=512
+                    )
+                    if response['success']:
+                        parsed = parse_response("ambiguity", response['content'])
                         is_amb = parsed.get('is_ambiguous', False)
-                        status = "Ambiguo" if is_amb else "No ambiguo"
                         color = "red" if is_amb else "green"
-                        st.markdown(f"### Resultado: :{color}[{status}]")
+                        st.markdown(f"### Resultado: :{color}[{'Ambiguo' if is_amb else 'No ambiguo'}]")
                         if is_amb:
                             amb_type = parsed.get('ambiguity_type', '')
-                            if amb_type:
-                                st.markdown(f"**Tipo:** {amb_type}")
                             words = parsed.get('ambiguous_words', [])
+                            if amb_type:
+                                st.markdown(f"**Tipo:** `{amb_type}`")
                             if words:
                                 items = words if isinstance(words, list) else [words]
-                                st.markdown(f"**Palabras ambiguas:** {', '.join(str(w) for w in items)}")
+                                st.markdown(f"**Palabras ambiguas:** {', '.join(f'`{w}`' for w in items)}")
+                        _cq_timing(response)
+                        with st.expander("Respuesta completa del modelo"):
+                            st.text(response['content'])
+                    else:
+                        st.error(f"Error: {response['error']}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-                    elif task == "completeness":
+    # ── A3: Completitud ───────────────────────────────────────
+    with tab_a3:
+        st.caption("Evalúa si el requisito especifica todos los elementos necesarios: "
+                   "manejo de errores, condiciones límite, criterios de aceptación y precondiciones.")
+        col1, mk, sk, _ = _cq_config("a3")
+        with col1:
+            req_a3 = st.text_area(
+                "Requisito",
+                value="El sistema deberá procesar los pagos de los usuarios.",
+                height=110, key="a3_req"
+            )
+        for w in check_input_warnings(req_a3):
+            st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
+
+        if st.button("Evaluar completitud", type="primary", key="btn_a3"):
+            with st.spinner("Analizando..."):
+                try:
+                    model = get_model_instance(mk)
+                    response = model.generate(
+                        build_prompt("completeness", sk, requirement=req_a3), max_tokens=512
+                    )
+                    if response['success']:
+                        parsed = parse_response("completeness", response['content'])
                         is_comp = parsed.get('is_complete', False)
-                        status = "Completo" if is_comp else "Incompleto"
                         color = "green" if is_comp else "red"
-                        st.markdown(f"### Resultado: :{color}[{status}]")
+                        st.markdown(f"### Resultado: :{color}[{'Completo' if is_comp else 'Incompleto'}]")
                         missing = parsed.get('missing_elements', [])
                         if missing:
                             st.markdown("**Elementos faltantes:**")
                             items = missing if isinstance(missing, list) else [missing]
                             for elem in items:
-                                st.markdown(f"- {elem}")
+                                st.markdown(f"- `{elem}`")
+                        _cq_timing(response)
+                        with st.expander("Respuesta completa del modelo"):
+                            st.text(response['content'])
+                    else:
+                        st.error(f"Error: {response['error']}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-                    elif task == "testability":
+    # ── V1: Inconsistencias ───────────────────────────────────
+    with tab_v1:
+        st.caption("Detecta contradicciones entre pares de requisitos. "
+                   "Introduce uno por línea; se evaluarán todos los pares posibles.")
+
+        _CONSIST_PLACEHOLDER = (
+            "El sistema almacenará todos los datos del usuario localmente en su dispositivo.\n"
+            "Todos los datos de usuario deben almacenarse en una base de datos en la nube.\n"
+            "El sistema responderá a cualquier consulta en menos de 1 segundo.\n"
+            "El sistema procesará consultas complejas en un máximo de 10 segundos."
+        )
+        reqs_raw = st.text_area("Requisitos (uno por línea)", height=180,
+                                 placeholder=_CONSIST_PLACEHOLDER, key="consist_raw")
+
+        _cc1, _cc2 = st.columns(2)
+        with _cc1:
+            model_key_v1 = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()),
+                                         key="consist_model",
+                                         format_func=lambda x: MODEL_LABELS.get(x, x))
+        with _cc2:
+            strategy_v1 = st.selectbox("Estrategia", STRATEGY_NAMES,
+                                        key="consist_strategy",
+                                        format_func=lambda x: STRATEGY_LABELS.get(x, x))
+
+        MAX_REQS = 15
+        reqs = [r.strip() for r in reqs_raw.strip().splitlines() if r.strip()]
+        if len(reqs) > MAX_REQS:
+            st.warning(f"Máximo {MAX_REQS} requisitos para evitar tiempos excesivos. "
+                       f"Se usarán los primeros {MAX_REQS}.")
+            reqs = reqs[:MAX_REQS]
+        if reqs:
+            import itertools
+            pairs = list(itertools.combinations(range(len(reqs)), 2))
+            st.info(f"{len(reqs)} requisitos → **{len(pairs)} pares** a evaluar")
+
+        if st.button("Detectar inconsistencias", type="primary",
+                     disabled=(len(reqs) < 2), key="btn_consist"):
+            st.session_state.pop("consist_results", None)
+            _model = get_model_instance(model_key_v1)
+            _results = []
+            _pbar = st.progress(0, text="Evaluando pares...")
+            _total = len(pairs)
+            for _idx, (i, j) in enumerate(pairs):
+                try:
+                    _prompt = build_prompt("inconsistency", strategy_v1,
+                                           requirement_a=reqs[i], requirement_b=reqs[j])
+                    _resp = _model.generate(_prompt, max_tokens=512)
+                    _parsed = parse_response("inconsistency", _resp['content']) if _resp['success'] else {}
+                    _results.append({
+                        'i': i, 'j': j, 'req_a': reqs[i], 'req_b': reqs[j],
+                        'is_inconsistent': bool(_parsed.get('is_inconsistent', False)),
+                        'description': _parsed.get('description', ''),
+                        'success': _resp['success'],
+                        'time': _resp.get('time_seconds', 0),
+                    })
+                except Exception as _e:
+                    _results.append({
+                        'i': i, 'j': j, 'req_a': reqs[i], 'req_b': reqs[j],
+                        'is_inconsistent': False, 'description': str(_e),
+                        'success': False, 'time': 0,
+                    })
+                _pbar.progress((_idx + 1) / _total,
+                               text=f"Evaluando par {_idx + 1}/{_total}...")
+            _pbar.empty()
+            st.session_state["consist_results"] = {"reqs": reqs, "results": _results}
+
+        if "consist_results" in st.session_state:
+            _data = st.session_state["consist_results"]
+            _reqs = _data["reqs"]
+            _results = _data["results"]
+            _n = len(_reqs)
+            _inconsistent = [r for r in _results if r['is_inconsistent']]
+            _errors = [r for r in _results if not r['success']]
+
+            st.divider()
+            _k1, _k2, _k3, _k4 = st.columns(4)
+            _k1.metric("Requisitos", _n)
+            _k2.metric("Pares evaluados", len(_results))
+            _k3.metric("Inconsistencias", len(_inconsistent))
+            _k4.metric("Consistencia", f"{(1 - len(_inconsistent)/max(len(_results),1))*100:.0f}%")
+            if _errors:
+                st.warning(f"{len(_errors)} pares no pudieron evaluarse.")
+
+            st.divider()
+            import plotly.graph_objects as go
+            _labels = [f"R{i+1}" for i in range(_n)]
+            _matrix = [[None]*_n for _ in range(_n)]
+            for r in _results:
+                _matrix[r['i']][r['j']] = 1 if r['is_inconsistent'] else 0
+                _matrix[r['j']][r['i']] = 1 if r['is_inconsistent'] else 0
+            for i in range(_n):
+                _matrix[i][i] = -1
+            _hover = [["" ]*_n for _ in range(_n)]
+            for r in _results:
+                _txt = "Inconsistentes" if r['is_inconsistent'] else "Consistentes"
+                if r['description']:
+                    _txt += f"<br>{r['description'][:120]}"
+                _hover[r['i']][r['j']] = _txt
+                _hover[r['j']][r['i']] = _txt
+            for i in range(_n):
+                _hover[i][i] = f"R{i+1}: {_reqs[i][:60]}..."
+            _fig_mat = go.Figure(go.Heatmap(
+                z=_matrix, x=_labels, y=_labels, text=_hover,
+                hovertemplate="%{text}<extra></extra>",
+                colorscale=[[0, '#2ecc71'], [0.4, '#f39c12'], [0.6, '#e74c3c'], [1, '#e74c3c']],
+                zmin=-1, zmax=1, showscale=False, xgap=2, ygap=2,
+            ))
+            _fig_mat.update_layout(
+                title=dict(text="Matriz de consistencia (rojo = inconsistente, verde = consistente)",
+                           font=dict(size=13, color='#1B3A5C')),
+                height=max(300, _n * 45 + 100),
+                margin=dict(l=40, r=20, t=50, b=40),
+                paper_bgcolor='white', plot_bgcolor='#F7F9FC',
+                yaxis=dict(autorange='reversed'),
+            )
+            st.plotly_chart(_fig_mat, width='stretch', config={'displayModeBar': False})
+            if _inconsistent:
+                st.subheader(f"Inconsistencias detectadas ({len(_inconsistent)})")
+                for r in _inconsistent:
+                    with st.expander(f"R{r['i']+1} vs R{r['j']+1}"):
+                        _ic1, _ic2 = st.columns(2)
+                        _ic1.markdown(f"**R{r['i']+1}:** {r['req_a']}")
+                        _ic2.markdown(f"**R{r['j']+1}:** {r['req_b']}")
+                        if r['description']:
+                            st.error(r['description'])
+            else:
+                st.success("No se detectaron inconsistencias entre los requisitos.")
+            _csv_rows = [{
+                'req_a_idx': r['i']+1, 'req_b_idx': r['j']+1,
+                'req_a': r['req_a'], 'req_b': r['req_b'],
+                'inconsistente': r['is_inconsistent'], 'descripcion': r['description'],
+            } for r in _results]
+            st.download_button(
+                "Descargar resultados CSV",
+                pd.DataFrame(_csv_rows).to_csv(index=False),
+                "inconsistencias.csv", "text/csv", key="dl_consist_csv",
+            )
+
+    # ── V2: Testabilidad ──────────────────────────────────────
+    with tab_v2:
+        st.caption("Evalúa si el requisito es **verificable objetivamente**: "
+                   "debe contener métricas o criterios concretos que permitan diseñar "
+                   "un caso de prueba con resultado pass/fail.")
+        col1, mk, sk, _ = _cq_config("v2")
+        with col1:
+            req_v2 = st.text_area(
+                "Requisito",
+                value="El sistema deberá ser fácil de usar y agradable para los usuarios.",
+                height=110, key="v2_req"
+            )
+        for w in check_input_warnings(req_v2):
+            st.caption(f"{'⚠️' if w['level'] == 'warning' else 'ℹ️'} {w['message']}")
+
+        if st.button("Evaluar testabilidad", type="primary", key="btn_v2"):
+            with st.spinner("Analizando..."):
+                try:
+                    model = get_model_instance(mk)
+                    response = model.generate(
+                        build_prompt("testability", sk, requirement=req_v2), max_tokens=512
+                    )
+                    if response['success']:
+                        parsed = parse_response("testability", response['content'])
                         is_test = parsed.get('is_testable', False)
-                        status = "Testable" if is_test else "No testable"
                         color = "green" if is_test else "red"
-                        st.markdown(f"### Resultado: :{color}[{status}]")
+                        st.markdown(f"### Resultado: :{color}[{'Testable' if is_test else 'No testable'}]")
                         reason = parsed.get('reason', '')
                         if reason:
-                            st.markdown(f"**Razon:** {reason}")
-
-                    st.metric("Tiempo", f"{response['time_seconds']:.2f}s")
-
-                    with st.expander("Respuesta completa"):
-                        st.text(response['content'])
-                else:
-                    st.error(f"Error: {response['error']}")
-            except Exception as e:
-                st.error(f"Error: {e}")
-
-
-# ============================================================
-# PAGE 4: Validar Consistencia
-# ============================================================
-elif page == "Validar Consistencia":
-    st.title("Validacion de Consistencia entre Requisitos")
-    st.markdown("Introduce una lista de requisitos para detectar inconsistencias entre todos los pares posibles.")
-
-    _CONSIST_PLACEHOLDER = (
-        "El sistema almacenara todos los datos del usuario localmente en su dispositivo.\n"
-        "Todos los datos de usuario deben almacenarse en una base de datos en la nube.\n"
-        "El sistema respondera a cualquier consulta en menos de 1 segundo.\n"
-        "El sistema procesara consultas complejas en un maximo de 10 segundos."
-    )
-
-    reqs_raw = st.text_area("Requisitos (uno por linea)", height=200,
-                             placeholder=_CONSIST_PLACEHOLDER)
-
-    _cc1, _cc2 = st.columns(2)
-    with _cc1:
-        model_key = st.selectbox("Modelo", list(MODEL_CONFIGS.keys()), key="consist_model",
-                                  format_func=lambda x: MODEL_LABELS.get(x, x))
-    with _cc2:
-        strategy = st.selectbox("Estrategia", STRATEGY_NAMES, key="consist_strategy",
-                                format_func=lambda x: STRATEGY_LABELS.get(x, x))
-
-    MAX_REQS = 15
-    reqs = [r.strip() for r in reqs_raw.strip().splitlines() if r.strip()]
-
-    if len(reqs) > MAX_REQS:
-        st.warning(f"Maximo {MAX_REQS} requisitos para evitar tiempos excesivos. "
-                   f"Se usaran los primeros {MAX_REQS}.")
-        reqs = reqs[:MAX_REQS]
-
-    if reqs:
-        import itertools
-        pairs = list(itertools.combinations(range(len(reqs)), 2))
-        st.info(f"{len(reqs)} requisitos → **{len(pairs)} pares** a evaluar")
-
-    _btn_disabled = len(reqs) < 2
-    if st.button("Validar Consistencia", type="primary", disabled=_btn_disabled):
-        st.session_state.pop("consist_results", None)
-
-        _model = get_model_instance(model_key)
-        _results = []
-        _pbar = st.progress(0, text="Evaluando pares...")
-        _total = len(pairs)
-
-        for _idx, (i, j) in enumerate(pairs):
-            try:
-                _prompt = build_prompt("inconsistency", strategy,
-                                       requirement_a=reqs[i], requirement_b=reqs[j])
-                _resp = _model.generate(_prompt, max_tokens=512)
-                _parsed = parse_response("inconsistency", _resp['content']) if _resp['success'] else {}
-                _results.append({
-                    'i': i, 'j': j,
-                    'req_a': reqs[i], 'req_b': reqs[j],
-                    'is_inconsistent': bool(_parsed.get('is_inconsistent', False)),
-                    'description': _parsed.get('description', ''),
-                    'success': _resp['success'],
-                    'time': _resp.get('time_seconds', 0),
-                })
-            except Exception as _e:
-                _results.append({
-                    'i': i, 'j': j,
-                    'req_a': reqs[i], 'req_b': reqs[j],
-                    'is_inconsistent': False, 'description': str(_e),
-                    'success': False, 'time': 0,
-                })
-            _pbar.progress((_idx + 1) / _total,
-                           text=f"Evaluando par {_idx + 1}/{_total}...")
-
-        _pbar.empty()
-        st.session_state["consist_results"] = {"reqs": reqs, "results": _results}
-
-    # ── Mostrar resultados ────────────────────────────────────
-    if "consist_results" in st.session_state:
-        _data = st.session_state["consist_results"]
-        _reqs = _data["reqs"]
-        _results = _data["results"]
-        _n = len(_reqs)
-        _inconsistent = [r for r in _results if r['is_inconsistent']]
-        _errors = [r for r in _results if not r['success']]
-
-        st.divider()
-
-        # KPIs
-        _k1, _k2, _k3, _k4 = st.columns(4)
-        _k1.metric("Requisitos", _n)
-        _k2.metric("Pares evaluados", len(_results))
-        _k3.metric("Inconsistencias", len(_inconsistent))
-        _k4.metric("Consistencia", f"{(1 - len(_inconsistent)/max(len(_results),1))*100:.0f}%")
-
-        if _errors:
-            st.warning(f"{len(_errors)} pares no pudieron evaluarse.")
-
-        st.divider()
-
-        # Matriz de consistencia (heatmap interactivo)
-        import plotly.graph_objects as go
-        _labels = [f"R{i+1}" for i in range(_n)]
-        _matrix = [[None]*_n for _ in range(_n)]
-        for r in _results:
-            _matrix[r['i']][r['j']] = 1 if r['is_inconsistent'] else 0
-            _matrix[r['j']][r['i']] = 1 if r['is_inconsistent'] else 0
-        for i in range(_n):
-            _matrix[i][i] = -1  # diagonal
-
-        _hover = [["" ]*_n for _ in range(_n)]
-        for r in _results:
-            _txt = ("Inconsistentes" if r['is_inconsistent'] else "Consistentes")
-            if r['description']:
-                _txt += f"<br>{r['description'][:120]}"
-            _hover[r['i']][r['j']] = _txt
-            _hover[r['j']][r['i']] = _txt
-        for i in range(_n):
-            _hover[i][i] = f"R{i+1}: {_reqs[i][:60]}..."
-
-        _fig_mat = go.Figure(go.Heatmap(
-            z=_matrix,
-            x=_labels, y=_labels,
-            text=_hover,
-            hovertemplate="%{text}<extra></extra>",
-            colorscale=[[0, '#2ecc71'], [0.4, '#f39c12'], [0.6, '#e74c3c'], [1, '#e74c3c']],
-            zmin=-1, zmax=1,
-            showscale=False,
-            xgap=2, ygap=2,
-        ))
-        _fig_mat.update_layout(
-            title=dict(text="Matriz de consistencia (rojo = inconsistente, verde = consistente)",
-                       font=dict(size=13)),
-            height=max(300, _n * 45 + 100),
-            margin=dict(l=40, r=20, t=50, b=40),
-            yaxis=dict(autorange='reversed'),
-        )
-        st.plotly_chart(_fig_mat, width='stretch', config={'displayModeBar': False})
-
-        # Lista de inconsistencias
-        if _inconsistent:
-            st.subheader(f"Inconsistencias detectadas ({len(_inconsistent)})")
-            for r in _inconsistent:
-                with st.expander(f"R{r['i']+1} vs R{r['j']+1}"):
-                    _ic1, _ic2 = st.columns(2)
-                    _ic1.markdown(f"**R{r['i']+1}:** {r['req_a']}")
-                    _ic2.markdown(f"**R{r['j']+1}:** {r['req_b']}")
-                    if r['description']:
-                        st.error(r['description'])
-        else:
-            st.success("No se detectaron inconsistencias entre los requisitos.")
-
-        # Descarga CSV
-        _csv_rows = [{
-            'req_a_idx': r['i']+1, 'req_b_idx': r['j']+1,
-            'req_a': r['req_a'], 'req_b': r['req_b'],
-            'inconsistente': r['is_inconsistent'],
-            'descripcion': r['description'],
-        } for r in _results]
-        st.download_button(
-            "Descargar resultados CSV",
-            pd.DataFrame(_csv_rows).to_csv(index=False),
-            "consistencia.csv", "text/csv",
-        )
+                            _reason_labels = {
+                                'measurable': 'Medible — tiene criterios cuantificables',
+                                'vague': 'Vago — sin métricas precisas',
+                                'subjective': 'Subjetivo — depende de interpretación personal',
+                            }
+                            st.markdown(f"**Motivo:** {_reason_labels.get(reason, reason)}")
+                        _cq_timing(response)
+                        with st.expander("Respuesta completa del modelo"):
+                            st.text(response['content'])
+                    else:
+                        st.error(f"Error: {response['error']}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
 
 # ============================================================
 # PAGE 5: Resultados de Experimentos
 # ============================================================
-elif page == "Resultados Experimentos":
+elif page == "Resultados":
     st.title("Dashboard de Resultados")
 
-    tab_pipeline, tab_bench, tab_cmp = st.tabs(
-        ["Pipeline (documentos)", "Benchmark (experimentos)", "Comparar Local vs API"]
+    tab_pipeline, tab_bench = st.tabs(
+        ["Pipeline (documentos)", "Benchmark y Comparativa"]
     )
 
     with tab_pipeline:
@@ -1054,7 +1528,7 @@ elif page == "Resultados Experimentos":
 
         if not runs:
             st.warning("No hay ejecuciones del pipeline guardadas.")
-            st.info("Ejecuta el pipeline desde 'Pipeline Documento' y pulsa 'Guardar Informes'.")
+            st.info("Ejecuta el pipeline desde 'Análisis de Documento' y pulsa 'Guardar Informes'.")
         else:
             st.subheader(f"{len(runs)} ejecuciones encontradas")
 
@@ -1086,7 +1560,7 @@ elif page == "Resultados Experimentos":
                 selected_indices = [run_labels.index(label) for label in selected_runs]
 
                 if len(selected_indices) >= 2:
-                    st.subheader("Comparacion de ejecuciones seleccionadas")
+                    st.subheader("Comparación de ejecuciones seleccionadas")
                     compare_rows = [runs_summary[i] for i in selected_indices]
                     compare_df = pd.DataFrame(compare_rows).drop(columns=['run_dir'])
                     st.dataframe(compare_df, width='stretch')
@@ -1128,11 +1602,11 @@ elif page == "Resultados Experimentos":
         from analysis import compute_metrics_per_config
 
         TASK_DISPLAY = {
-            'classification':  'Clasificacion F/NF',
-            'ambiguity':       'Deteccion de Ambiguedad',
-            'completeness':    'Evaluacion de Completitud',
-            'inconsistency':   'Deteccion de Inconsistencias',
-            'testability':     'Evaluacion de Testabilidad',
+            'classification':  'Clasificación F/NF',
+            'ambiguity':       'Detección de Ambigüedad',
+            'completeness':    'Evaluación de Completitud',
+            'inconsistency':   'Detección de Inconsistencias',
+            'testability':     'Evaluación de Testabilidad',
         }
 
         def _load_benchmark(task: str, version: str) -> pd.DataFrame:
@@ -1158,7 +1632,7 @@ elif page == "Resultados Experimentos":
         ctrl_col1, ctrl_col2 = st.columns([1, 2])
         with ctrl_col1:
             version_sel = st.radio(
-                "Version",
+                "Versión",
                 ["v2"],
                 horizontal=True,
                 key="bench_version",
@@ -1180,7 +1654,7 @@ elif page == "Resultados Experimentos":
                     available_tasks.append(t)
 
             if not available_tasks:
-                st.warning("No hay resultados para la version seleccionada.")
+                st.warning("No hay resultados para la versión seleccionada.")
                 st.stop()
 
             task_sel = st.selectbox(
@@ -1193,7 +1667,7 @@ elif page == "Resultados Experimentos":
         df = _load_benchmark(task_sel, version_sel)
 
         if df.empty:
-            st.info("No hay datos para esta seleccion. Ejecuta los experimentos primero.")
+            st.info("No hay datos para esta selección. Ejecuta los experimentos primero.")
         else:
             strategy_col = 'strategy' if 'strategy' in df.columns else 'pattern'
 
@@ -1229,7 +1703,7 @@ elif page == "Resultados Experimentos":
                         st.pyplot(fig)
                         plt.close(fig)
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
                 with chart_tabs[1]:
                     try:
                         from analysis import plot_grouped_bars
@@ -1237,7 +1711,7 @@ elif page == "Resultados Experimentos":
                         st.pyplot(fig)
                         plt.close(fig)
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
                 with chart_tabs[2]:
                     try:
                         from analysis import plot_boxplots
@@ -1245,7 +1719,7 @@ elif page == "Resultados Experimentos":
                         st.pyplot(fig)
                         plt.close(fig)
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
                 with chart_tabs[3]:
                     try:
                         from analysis import plot_radar
@@ -1253,7 +1727,7 @@ elif page == "Resultados Experimentos":
                         st.pyplot(fig)
                         plt.close(fig)
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
                 with chart_tabs[4]:
                     try:
                         from analysis import plot_speed_comparison
@@ -1264,7 +1738,7 @@ elif page == "Resultados Experimentos":
                         else:
                             st.info("No hay datos de velocidad disponibles.")
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
 
                 with chart_tabs[5]:
                     try:
@@ -1318,7 +1792,7 @@ elif page == "Resultados Experimentos":
                                 ))
 
                             fig_sc.update_layout(
-                                title=dict(text="F1 vs Tiempo de inferencia por configuracion",
+                                title=dict(text="F1 vs Tiempo de inferencia por configuración",
                                            font=dict(size=14)),
                                 xaxis_title="Tiempo medio por requisito (s)",
                                 yaxis_title="F1-score",
@@ -1335,7 +1809,7 @@ elif page == "Resultados Experimentos":
                             st.caption("Cada punto = modelo + estrategia. "
                                        "Esquina superior izquierda = mejor rendimiento en menos tiempo.")
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
 
                 with chart_tabs[6]:
                     # Ranking de estrategias por modelo
@@ -1391,7 +1865,7 @@ elif page == "Resultados Experimentos":
                         st.caption("Lineas horizontales = la estrategia funciona igual en todos los modelos. "
                                    "Cruces entre lineas = el mejor prompt depende del modelo (RQ2).")
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
 
                 with chart_tabs[7]:
                     # Local vs API distribución de F1
@@ -1420,7 +1894,7 @@ elif page == "Resultados Experimentos":
                                 hovertemplate='F1: %{y:.3f}<extra>' + _tipo + '</extra>',
                             ))
                         fig_viol.update_layout(
-                            title=dict(text="Distribucion de F1: Modelos Locales vs API",
+                            title=dict(text="Distribución de F1: Modelos Locales vs API",
                                        font=dict(size=14)),
                             yaxis=dict(title="F1-score", range=[0, 1.05]),
                             xaxis_title="",
@@ -1446,12 +1920,12 @@ elif page == "Resultados Experimentos":
                                    "La caja interior muestra el rango intercuartilico; "
                                    "la linea central es la mediana.")
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
 
                 st.divider()
 
                 # ── Tabla de metricas ─────────────────────
-                st.subheader("Tabla de metricas")
+                st.subheader("Tabla de métricas")
                 display_summary = summary.copy()
                 display_summary['modelo'] = display_summary['model'].map(
                     lambda x: MODEL_LABELS.get(x, x))
@@ -1474,22 +1948,24 @@ elif page == "Resultados Experimentos":
             else:
                 st.dataframe(df, width='stretch')
 
-    with tab_cmp:
+        # ── Comparativa Local vs API ──────────────────────────────
+        st.divider()
+        st.subheader("Comparativa Local vs API")
         import matplotlib.pyplot as plt
         from analysis import compute_metrics_per_config
 
         TASK_DISPLAY_CMP = {
-            'classification':  'Clasificacion F/NF',
-            'ambiguity':       'Deteccion de Ambiguedad',
-            'completeness':    'Evaluacion de Completitud',
-            'inconsistency':   'Deteccion de Inconsistencias',
-            'testability':     'Evaluacion de Testabilidad',
+            'classification':  'Clasificación F/NF',
+            'ambiguity':       'Detección de Ambigüedad',
+            'completeness':    'Evaluación de Completitud',
+            'inconsistency':   'Detección de Inconsistencias',
+            'testability':     'Evaluación de Testabilidad',
         }
 
         # ── Controles ─────────────────────────────────────────────
         ctrl1, ctrl2 = st.columns([1, 2])
         with ctrl1:
-            version_cmp = st.radio("Version", ["v2"], horizontal=True, key="cmp_version")
+            version_cmp = st.radio("Versión", ["v2"], horizontal=True, key="cmp_version")
         with ctrl2:
             dirs_cmp = [v for v in ["v1", "v2"] if version_cmp in (v, "Ambas")]
             avail_tasks_cmp = [
@@ -1498,7 +1974,7 @@ elif page == "Resultados Experimentos":
                        for v in dirs_cmp if (EXPERIMENTS_DIR / v).exists())
             ]
             if not avail_tasks_cmp:
-                st.warning("No hay resultados para la version seleccionada.")
+                st.warning("No hay resultados para la versión seleccionada.")
                 st.stop()
             task_cmp = st.selectbox(
                 "Tarea", avail_tasks_cmp,
@@ -1509,7 +1985,7 @@ elif page == "Resultados Experimentos":
         df_cmp = _load_benchmark(task_cmp, version_cmp)
 
         if df_cmp.empty:
-            st.info("No hay datos para esta seleccion. Ejecuta los experimentos primero.")
+            st.info("No hay datos para esta selección. Ejecuta los experimentos primero.")
         else:
             strategy_col_cmp = 'strategy' if 'strategy' in df_cmp.columns else 'pattern'
             local_models = [k for k, v in MODEL_CONFIGS.items() if v['type'] == 'ollama']
@@ -1555,12 +2031,11 @@ elif page == "Resultados Experimentos":
                     precision=('precision', 'mean'),
                     recall=('recall', 'mean'),
                 ).round(3).reset_index()
-                model_agg['tipo']   = model_agg['model'].map(lambda m: 'Local' if m in local_models else 'API')
                 model_agg['modelo'] = model_agg['model'].map(lambda x: MODEL_LABELS.get(x, x))
-                model_agg = model_agg[['tipo', 'modelo', 'f1_mean', 'f1_std', 'accuracy', 'precision', 'recall']]\
+                model_agg = model_agg[['modelo', 'f1_mean', 'f1_std', 'accuracy', 'precision', 'recall']]\
                     .rename(columns={'f1_mean': 'F1', 'f1_std': 'F1 ±',
                                      'accuracy': 'Accuracy', 'precision': 'Precision', 'recall': 'Recall'})\
-                    .sort_values(['tipo', 'F1'], ascending=[True, False]).reset_index(drop=True)
+                    .sort_values('F1', ascending=False).reset_index(drop=True)
                 st.dataframe(
                     model_agg.style.background_gradient(subset=['F1', 'Accuracy'], cmap='RdYlGn', vmin=0, vmax=1),
                     width='stretch', hide_index=True,
@@ -1572,12 +2047,11 @@ elif page == "Resultados Experimentos":
                 st.subheader("Mejor estrategia por modelo")
                 best_s = metrics_cmp.groupby(['model', strategy_col_cmp])['f1'].mean().reset_index()
                 best_pm = best_s.loc[best_s.groupby('model')['f1'].idxmax()].copy()
-                best_pm['tipo']       = best_pm['model'].map(lambda m: 'Local' if m in local_models else 'API')
                 best_pm['modelo']     = best_pm['model'].map(lambda x: MODEL_LABELS.get(x, x))
                 best_pm['estrategia'] = best_pm[strategy_col_cmp].map(lambda x: STRATEGY_LABELS.get(x, x))
-                best_pm = best_pm[['tipo', 'modelo', 'estrategia', 'f1']]\
+                best_pm = best_pm[['modelo', 'estrategia', 'f1']]\
                     .rename(columns={'f1': 'F1 medio'})\
-                    .sort_values(['tipo', 'F1 medio'], ascending=[True, False]).reset_index(drop=True)
+                    .sort_values('F1 medio', ascending=False).reset_index(drop=True)
                 st.dataframe(
                     best_pm.style.background_gradient(subset=['F1 medio'], cmap='RdYlGn', vmin=0, vmax=1),
                     width='stretch', hide_index=True,
@@ -1597,7 +2071,7 @@ elif page == "Resultados Experimentos":
                         else:
                             st.info("No hay datos de velocidad disponibles.")
                     except Exception as e:
-                        st.error(f"Error generando grafica: {e}")
+                        st.error(f"Error generando gráfica: {e}")
                 else:
                     st.info("No hay datos de velocidad en los resultados cargados.")
 
@@ -1612,7 +2086,7 @@ elif page == "Resultados Experimentos":
                 | **Coste** | Solo hardware (GPU) | Gratuito con limites / Pay-per-use |
                 | **Latencia** | Dependiente de GPU local | Dependiente de red |
                 | **Escalabilidad** | Limitada por hardware | Alta |
-                | **Disponibilidad** | Siempre (offline) | Requiere conexion |
+                | **Disponibilidad** | Siempre (offline) | Requiere conexión |
                 """)
 
 
@@ -1637,10 +2111,10 @@ elif page == "Progreso Experimentos":
     STALE_SECONDS = 7200  # 2 horas — configs lentos (CoT con modelos locales) pueden tardar >10min
 
     task_labels = {
-        'classification': 'Clasificacion F/NF',
-        'ambiguity': 'Deteccion Ambiguedad',
+        'classification': 'Clasificación F/NF',
+        'ambiguity': 'Detección Ambigüedad',
         'completeness': 'Eval. Completitud',
-        'inconsistency': 'Deteccion Inconsistencias',
+        'inconsistency': 'Detección Inconsistencias',
         'testability': 'Eval. Testabilidad',
     }
 
@@ -1806,7 +2280,7 @@ elif page == "Progreso Experimentos":
                                        if p['task'] in EXPECTED_TASKS else 99))
 
         if not proc_list:
-            st.info("No hay datos de experimentos todavia.")
+            st.info("No hay datos de experimentos todavía.")
             return
 
         # ── Resumen rapido ─────────────────────────────────────
@@ -2041,11 +2515,11 @@ elif page == "Progreso Experimentos":
                     'Configs': len(p['configs']),
                     'Origen': p['origin'],
                     'Estado': 'En curso' if p['active'] else ('Completado' if f['type'] == 'result' else 'Interrumpido'),
-                    'Ultima modificacion': datetime.fromtimestamp(f['mtime']).strftime('%Y-%m-%d %H:%M:%S'),
+                    'Última modificación': datetime.fromtimestamp(f['mtime']).strftime('%Y-%m-%d %H:%M:%S'),
                 })
             st.dataframe(pd.DataFrame(file_rows), width='stretch')
 
-        st.caption(f"Ultima actualizacion: {datetime.now().strftime('%H:%M:%S')}")
+        st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
 
     st.markdown("---")
     _render_progress()

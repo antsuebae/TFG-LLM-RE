@@ -139,12 +139,12 @@ def _load_requirements_from_pdf(path: Path) -> list[str]:
     return _parse_text_lines(full_text)
 
 
-def analyze_requirement(model, req: str, strategy: str) -> dict:
+def analyze_requirement(model, req: str, strategy: str, context_prompt: str = '') -> dict:
     """Ejecuta todas las tareas individuales sobre un requisito."""
     result = {'text': req}
 
     # A1: Clasificacion
-    prompt = build_prompt('classification', strategy, requirement=req)
+    prompt = build_prompt('classification', strategy, context_prompt=context_prompt, requirement=req)
     resp = model.generate(prompt, max_tokens=512)
     if resp['success']:
         result['classification'] = parse_response('classification', resp['content'])
@@ -153,7 +153,7 @@ def analyze_requirement(model, req: str, strategy: str) -> dict:
     result['classification_time'] = resp['time_seconds']
 
     # A2: Ambiguedad
-    prompt = build_prompt('ambiguity', strategy, requirement=req)
+    prompt = build_prompt('ambiguity', strategy, context_prompt=context_prompt, requirement=req)
     resp = model.generate(prompt, max_tokens=512)
     if resp['success']:
         parsed = parse_response('ambiguity', resp['content'])
@@ -167,7 +167,7 @@ def analyze_requirement(model, req: str, strategy: str) -> dict:
     result['ambiguity_time'] = resp['time_seconds']
 
     # A3: Completitud
-    prompt = build_prompt('completeness', strategy, requirement=req)
+    prompt = build_prompt('completeness', strategy, context_prompt=context_prompt, requirement=req)
     resp = model.generate(prompt, max_tokens=512)
     if resp['success']:
         parsed = parse_response('completeness', resp['content'])
@@ -179,7 +179,7 @@ def analyze_requirement(model, req: str, strategy: str) -> dict:
     result['completeness_time'] = resp['time_seconds']
 
     # V2: Testabilidad
-    prompt = build_prompt('testability', strategy, requirement=req)
+    prompt = build_prompt('testability', strategy, context_prompt=context_prompt, requirement=req)
     resp = model.generate(prompt, max_tokens=512)
     if resp['success']:
         parsed = parse_response('testability', resp['content'])
@@ -806,7 +806,9 @@ def generate_srs_html(srs_markdown: str, metadata: dict) -> str:
 
 def save_pipeline_results(results_df: pd.DataFrame, inconsistencies: list[dict],
                           model_key: str, strategy: str, doc_name: str,
-                          base_dir: Path) -> Path:
+                          base_dir: Path,
+                          context_prompt: str = '',
+                          skip_inconsistency: bool = False) -> Path:
     """Guarda resultados del pipeline en un subdirectorio organizado con metadata.json.
 
     Returns:
@@ -839,6 +841,8 @@ def save_pipeline_results(results_df: pd.DataFrame, inconsistencies: list[dict],
         "model": model_key,
         "strategy": strategy,
         "n_requirements": total,
+        "context_prompt": context_prompt if context_prompt else None,
+        "skip_inconsistency": skip_inconsistency,
         "summary": {
             "functional": int(len(results_df[results_df['classification'] == 'F'])),
             "non_functional": int(len(results_df[results_df['classification'] == 'NF'])),

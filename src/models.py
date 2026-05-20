@@ -49,9 +49,10 @@ def _retry_with_backoff(func, max_retries=MAX_RETRIES):
 class OllamaModel:
     """Wrapper para modelos locales via Ollama."""
 
-    def __init__(self, model_name: str, temperature: float = 0.4):
+    def __init__(self, model_name: str, temperature: float = 0.4, num_ctx: Optional[int] = None):
         self.model_name = model_name
         self.temperature = temperature
+        self.num_ctx = num_ctx
 
     def generate(self, prompt: str, max_tokens: int = 256) -> dict:
         """Genera respuesta del modelo."""
@@ -59,13 +60,16 @@ class OllamaModel:
 
         try:
             def _call():
+                options = {
+                    "temperature": self.temperature,
+                    "num_predict": max_tokens,
+                }
+                if self.num_ctx is not None:
+                    options["num_ctx"] = self.num_ctx
                 return ollama.chat(
                     model=self.model_name,
                     messages=[{"role": "user", "content": prompt}],
-                    options={
-                        "temperature": self.temperature,
-                        "num_predict": max_tokens,
-                    },
+                    options=options,
                     think=False,
                 )
 
@@ -213,7 +217,8 @@ def get_model(model_config: dict, temperature: float = 0.4):
     model_name = model_config["name"]
 
     if model_type == "ollama":
-        return OllamaModel(model_name, temperature)
+        num_ctx = model_config.get("num_ctx")
+        return OllamaModel(model_name, temperature, num_ctx)
     elif model_type == "openai":
         return OpenAIModel(model_name, temperature)
     elif model_type == "nvidia_nim":

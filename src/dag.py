@@ -32,8 +32,10 @@ from prompts import (
     build_extraction_prompt,
     build_prompt,
     parse_combined_response,
+    parse_domain_filter_response,
     parse_extraction_response,
     parse_response,
+    DOMAIN_FILTER_PROMPT,
     REWRITE_PROMPT,
 )
 
@@ -122,6 +124,12 @@ class DAGExecutor:
             if name == 'inconsistency' and context.get('skip_inconsistency', False):
                 context['inconsistencies'] = []
                 logger.info(f"[DAG] Saltando nodo: {name}")
+                if self.progress_callback:
+                    self.progress_callback(name, i + 1, total, skipped=True)
+                continue
+
+            if name == 'domain_filter' and not context.get('context_prompt', '').strip():
+                logger.info(f"[DAG] Saltando nodo: {name} (sin contexto de dominio)")
                 if self.progress_callback:
                     self.progress_callback(name, i + 1, total, skipped=True)
                 continue
@@ -321,6 +329,9 @@ def _node_combined_analysis(ctx: dict) -> dict:
     def analyze_one(args):
         req, item_type = args
         try:
+            # context_prompt is intentionally NOT passed here.
+            # Domain context is applied in the dedicated domain_filter node (Node 5b)
+            # after the linguistic analysis, avoiding few-shot anchoring issues.
             prompt = build_combined_prompt(strategy, req)
             resp = model.generate(prompt, max_tokens=1024)
 
@@ -413,11 +424,16 @@ def _node_inconsistency(ctx: dict) -> dict:
         indices = rng.choice(len(pairs), size=max_pairs, replace=False)
         pairs = [pairs[i] for i in indices]
 
+    context_prompt = ctx.get('context_prompt', '')
+
     def check_pair(pair):
         i, j = pair
         prompt = build_prompt('inconsistency', strategy,
                               requirement_a=requirements[i],
                               requirement_b=requirements[j])
+        if context_prompt:
+            # Inconsistency has no few-shot examples, prepend is fine
+            prompt = f"Contexto del dominio:\n{context_prompt}\n\n{prompt}"
         resp = model.generate(prompt, max_tokens=512)
         if resp['success']:
             parsed = parse_response('inconsistency', resp['content'])
@@ -433,6 +449,71 @@ def _node_inconsistency(ctx: dict) -> dict:
 
     results = _run_concurrent_or_sequential(check_pair, pairs, model_type)
     ctx['inconsistencies'] = [r for r in results if r is not None]
+    return ctx
+
+
+def _node_domain_filter(ctx: dict) -> dict:
+    """Node 5b: Re-evaluación de flags a la luz del contexto de dominio del usuario.
+
+    Solo actúa sobre requisitos con al menos un problema detectado (quality_score < 100).
+    Si no hay context_prompt, el nodo no hace nada.
+    """
+    context_prompt = ctx.get('context_prompt', '').strip()
+    rows = ctx.get('analysis_rows', [])
+
+    if not context_prompt or not rows:
+        return ctx
+
+    model = ctx['model']
+    model_type = ctx['model_type']
+
+    from pipeline import compute_quality_score
+
+    def filter_one(row):
+        if row.get('classification') == 'ERROR':
+            return row
+
+        has_issue = (
+            row.get('is_ambiguous') is True or
+            row.get('is_complete') is False or
+            row.get('is_testable') is False
+        )
+        if not has_issue:
+            return row
+
+        prompt = DOMAIN_FILTER_PROMPT.format(
+            requirement=row['text'],
+            classification=row.get('classification', '?'),
+            is_ambiguous='YES' if row.get('is_ambiguous') else 'NO',
+            ambiguous_words=row.get('ambiguous_words', '') or 'ninguno',
+            is_complete='YES' if row.get('is_complete') else 'NO',
+            missing_elements=row.get('missing_elements', '') or 'ninguno',
+            is_testable='YES' if row.get('is_testable') else 'NO',
+            testability_reason=row.get('testability_reason', '') or 'N/A',
+            context=context_prompt,
+        )
+
+        resp = model.generate(prompt, max_tokens=256)
+        if not resp['success']:
+            logger.warning(f"[domain_filter] Fallo LLM: {resp.get('error', '')}")
+            return row
+
+        updates = parse_domain_filter_response(resp['content'], row)
+        row = row.copy()
+        row['is_ambiguous'] = updates['is_ambiguous']
+        row['is_complete'] = updates['is_complete']
+        row['is_testable'] = updates['is_testable']
+        row['domain_filter_reason'] = updates['domain_filter_reason'] if updates['domain_filter_applied'] else ''
+
+        if updates['domain_filter_applied']:
+            row['quality_score'] = compute_quality_score(row)
+            logger.info(
+                f"[domain_filter] '{row['text'][:55]}' → {updates['domain_filter_reason']}"
+            )
+
+        return row
+
+    ctx['analysis_rows'] = _run_concurrent_or_sequential(filter_one, rows, model_type)
     return ctx
 
 
@@ -456,7 +537,9 @@ def _node_report(ctx: dict) -> dict:
         strategy = ctx.get('strategy', 'unknown')
         run_dir = save_pipeline_results(
             ctx['results_df'], ctx.get('inconsistencies', []),
-            model_key, strategy, doc_name, output_path
+            model_key, strategy, doc_name, output_path,
+            context_prompt=ctx.get('context_prompt', ''),
+            skip_inconsistency=ctx.get('skip_inconsistency', False),
         )
         ctx['run_dir'] = str(run_dir)
 
@@ -495,15 +578,16 @@ def _node_rewriting(ctx: dict) -> dict:
 # ============================================================
 
 def _build_dag_nodes() -> list[DAGNode]:
-    """Construye los 7 nodos del DAG con sus dependencias."""
+    """Construye los 8 nodos del DAG con sus dependencias."""
     return [
-        DAGNode(name='load_document', func=_node_load_document, depends_on=[]),
+        DAGNode(name='load_document',        func=_node_load_document,        depends_on=[]),
         DAGNode(name='extract_requirements', func=_node_extract_requirements, depends_on=['load_document']),
-        DAGNode(name='combined_analysis', func=_node_combined_analysis, depends_on=['extract_requirements']),
-        DAGNode(name='inconsistency', func=_node_inconsistency, depends_on=['extract_requirements']),
-        DAGNode(name='quality_score', func=_node_quality_score, depends_on=['combined_analysis']),
-        DAGNode(name='rewriting', func=_node_rewriting, depends_on=['quality_score']),
-        DAGNode(name='report', func=_node_report, depends_on=['quality_score', 'inconsistency']),
+        DAGNode(name='combined_analysis',    func=_node_combined_analysis,    depends_on=['extract_requirements']),
+        DAGNode(name='inconsistency',        func=_node_inconsistency,        depends_on=['extract_requirements']),
+        DAGNode(name='quality_score',        func=_node_quality_score,        depends_on=['combined_analysis']),
+        DAGNode(name='domain_filter',        func=_node_domain_filter,        depends_on=['quality_score']),
+        DAGNode(name='rewriting',            func=_node_rewriting,            depends_on=['domain_filter']),
+        DAGNode(name='report',               func=_node_report,               depends_on=['domain_filter', 'inconsistency']),
     ]
 
 
@@ -513,13 +597,14 @@ def _build_dag_nodes() -> list[DAGNode]:
 
 # Node name labels for progress reporting
 NODE_LABELS = {
-    'load_document': 'Cargando documento',
+    'load_document':        'Cargando documento',
     'extract_requirements': 'Extrayendo requisitos (LLM)',
-    'combined_analysis': 'Analisis combinado (4 tareas)',
-    'quality_score': 'Calculando calidad',
-    'inconsistency': 'Detectando inconsistencias',
-    'report': 'Generando informe',
-    'rewriting': 'Reescribiendo requisitos',
+    'combined_analysis':    'Análisis combinado (4 tareas)',
+    'quality_score':        'Calculando calidad',
+    'inconsistency':        'Detectando inconsistencias',
+    'domain_filter':        'Aplicando contexto del dominio',
+    'report':               'Generando informe',
+    'rewriting':            'Reescribiendo requisitos',
 }
 
 
@@ -529,6 +614,7 @@ def run_dag_pipeline(filepath: str, model_key: str, strategy: str,
                      skip_inconsistency: bool = False,
                      enable_rewriting: bool = False,
                      max_pairs: int = 50,
+                     context_prompt: str = '',
                      progress_callback: Optional[Callable] = None) -> dict:
     """Ejecuta el pipeline DAG completo desde un archivo.
 
@@ -560,6 +646,7 @@ def run_dag_pipeline(filepath: str, model_key: str, strategy: str,
         'skip_inconsistency': skip_inconsistency,
         'enable_rewriting': enable_rewriting,
         'max_pairs': max_pairs,
+        'context_prompt': context_prompt,
     }
 
     nodes = _build_dag_nodes()
@@ -574,6 +661,7 @@ def run_dag_pipeline_from_requirements(requirements: list[str], model_key: str,
                                         enable_rewriting: bool = False,
                                         max_pairs: int = 50,
                                         doc_name: str = 'documento',
+                                        context_prompt: str = '',
                                         progress_callback: Optional[Callable] = None) -> dict:
     """Ejecuta el pipeline DAG desde requisitos ya cargados (sin Nodes 1-2).
 
@@ -605,6 +693,7 @@ def run_dag_pipeline_from_requirements(requirements: list[str], model_key: str,
         'enable_rewriting': enable_rewriting,
         'max_pairs': max_pairs,
         'doc_name': doc_name,
+        'context_prompt': context_prompt,
         'skip_extraction': True,  # requirements already provided
     }
 
